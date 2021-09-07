@@ -17,7 +17,7 @@ Coming soon.
 To install/update in R type:
 ```
 install.packages('remotes')
-remotes::install_url('https://raw.githubusercontent.com/nppackages/binsreg/master/R/scpi_0.1.tar.gz')
+remotes::install_url('https://raw.githubusercontent.com/nppackages/scpi/master/R/scpi_0.1.tar.gz')
 ```
 
 ## Stata Implementation
