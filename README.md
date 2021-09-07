@@ -35,6 +35,6 @@ Working paper coming soon.
 
 - Cattaneo, Feng and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf).<br>
 Working paper.<br>
-[Supplemental Appendix](https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA--Supplemental.pdf)
+[Supplemental Appendix](https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA--Supplement.pdf)
 
 <br><br>
