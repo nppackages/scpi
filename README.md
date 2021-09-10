@@ -8,6 +8,10 @@ This work was supported by the National Science Foundation through grants [SES-1
 
 https://nppackages.github.io/scpi
 
+## Queries and Requests
+
+Please email: [scpi_pkg@googlegroups.com](mailto:scpi_pkg@googlegroups.com)
+
 ## Python Implementation
 
 Coming soon.
