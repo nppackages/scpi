@@ -55,10 +55,6 @@ net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/
 
 - Replication files: [do-file](stata/scpi_illustration.do), [plot illustration](stata/scpi_illustration_plot.do), [data](stata/scpi_germany.dta).
 
-## Repository
-
-For source code and related files, visit [`scpi` repository](https://github.com/nppackages/scpi/).
-
 
 ## References
 
