@@ -1,0 +1,6 @@
+v 3
+d SCPI: Point estimation and inference for Synthetic Control methods
+d          https://nppackages.github.io/scpi/
+d
+
+p scpi

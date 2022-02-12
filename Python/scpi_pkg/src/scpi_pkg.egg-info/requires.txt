@@ -1,0 +1,9 @@
+cvxpy>=1.1.18
+dask>=2021.04.0
+nlopt>=2.7.0
+numpy>=1.20.1
+pandas>=1.2.4
+plotnine>=0.8.0
+scikit-learn>=0.24.1
+scipy>=1.7.1
+statsmodels>=0.12.2

@@ -1,0 +1,36 @@
+Package: scpi
+Title: Prediction Intervals for Synthetic Control Methods
+Version: 0.1
+Author: Matias Cattaneo, Yingjie Feng, Filippo Palomba, and Rocío Titiunik
+Maintainer: Filippo Palomba <fpalomba@princeton.edu>
+Description: The package computes point estimates and prediction intervals for Synthetic Control methods as proposed in Cattaneo, Feng, and Titiunik (2021).
+Depends: R (>= 4.1.0)
+License: GPL-2
+Encoding: UTF-8
+Imports: abind       (>= 1.4.5), 
+         CVXR        (>= 1.0.10),
+         doRNG       (>= 1.8.2),
+         doSNOW      (>= 1.0.19),
+         dplyr       (>= 1.0.7),
+         ECOSolveR   (>= 0.5.4),
+         fastDummies (>= 1.6.3),
+         foreach     (>= 1.5.1),
+         ggplot2     (>= 3.3.3),
+         magrittr    (>= 2.0.1),
+         Matrix      (>= 1.3.3),
+         nloptr      (>= 1.2.2.2),
+         parallel    (>= 4.1.0),
+         purrr       (>= 0.3.4),
+         Qtools      (>= 1.5.4),
+         rlang       (>= 0.4.11),
+         stats       (>= 4.1.0),
+         stringr     (>= 1.4.0),
+         tibble      (>= 3.1.2),
+         tidyr       (>= 1.1.3),
+         utils       (>= 4.1.1)
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

@@ -1,0 +1,20 @@
+v 3
+d STATA Package: SCPI
+d 
+d Authors: Matias D. Cattaneo, Princeton University, cattaneo@princeton.edu
+d          Yingjie Feng, Tsinghua University, fengyingjiepku@gmail.com 
+d          Filippo Palomba, Princeton University, fpalomba@princeton.edu
+d          Rocio Titiunik, Princeton University, titiunik@princeton.edu
+d
+d Date: 02-FEB-2022
+d Distribution-Date: 20220202
+d 
+f scdata.ado
+f scdata.sthlp
+f scest.ado
+f scest.sthlp
+f scpi.ado
+f scpi.sthlp
+f scpi_germany.dta
+f scplot.ado
+f scplot.sthlp
