@@ -152,7 +152,7 @@ weights are constrained to be non-negative and their L1 norm must be equal to 1.
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":scpi - Uncertainty Quantification for Synthetic Control Estimators.}.{p_end}
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":scpi - Uncertainty Quantification for Synthetic Control Estimators}.{p_end}
 
 {marker authors}{...}
 {title:Authors}
