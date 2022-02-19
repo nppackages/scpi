@@ -39,7 +39,7 @@ The command is a wrapper of the companion Python package. As such, the user need
 can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":Cattaneo, Feng, Palomba and Titiunik (2022)}{p_end}
+{browse "https://arxiv.org/abs/2202.05984":Cattaneo, Feng, Palomba and Titiunik (2022)}.{p_end}
 
 {p 8 8} Companion commands are: {help scest:scest} for point estimation, {help scpi:scpi} for inference procedures, and {help scplot:scplot} for SC plots.{p_end}
 
@@ -47,6 +47,8 @@ can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8}{browse "https://nppackages.github.io/scpi/":https://nppackages.github.io/scpi/}{p_end}
 
+{p 4 8}For an introduction to synthetic control methods, see {browse "https://economics.mit.edu/files/17847":Abadie (2021)} and 
+references therein.{p_end}
 
 {marker options}{...}
 {title:Options}
@@ -85,7 +87,7 @@ can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 
 {marker examples}{...}
-{title:Example: Cattaneo, Feng and Titiunik (2021) Germany Data}
+{title:Example: Germany Data}
 
 {p 4 8}Setup{p_end}
 {p 8 8}{cmd:. use scpi_germany.dta}{p_end}
@@ -120,12 +122,16 @@ can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 {marker references}{...}
 {title:References}
 
+{p 4 8}Abadie, A. 2021. 
+{browse "https://economics.mit.edu/files/17847":Using synthetic controls: Feasibility, data requirements, and methodological aspects.} 
+{it:Journal of Economic Literature}, 59(2), 391-425.{p_end}
+
 {p 4 8}Cattaneo, M. D., Feng, Y., and Titiunik, R. 2021. 
 {browse "https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction intervals for synthetic control methods}. 
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":scpi - Uncertainty Quantification for Synthetic Control Estimators}.{p_end}
+{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators, {it:arXiv}:2202.05984.}.{p_end}
 
 {marker authors}{...}
 {title:Authors}

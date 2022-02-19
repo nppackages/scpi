@@ -37,7 +37,7 @@ As such, the user needs to have a running version of Python with the package ins
 can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":Cattaneo, Feng, Palomba and Titiunik (2022)}.{p_end}
+{browse "https://arxiv.org/abs/2202.05984":Cattaneo, Feng, Palomba and Titiunik (2022)}.{p_end}
 
 {p 8 8} Companion commands are: {help scdata:scdata} for data preparation, {help scpi:scpi} for inference procedures, and {help scplot:scplot} for SC plots.{p_end}
 
@@ -45,6 +45,8 @@ can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8}{browse "https://nppackages.github.io/scpi/":https://nppackages.github.io/scpi/}{p_end}
 
+{p 4 8}For an introduction to synthetic control methods, see {browse "https://economics.mit.edu/files/17847":Abadie (2021)} and 
+references therein.{p_end}
 
 {marker options}{...}
 {title:Options}
@@ -53,17 +55,12 @@ can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {dlgtab:Constraint}
 
-{p 2 4} These options let the user specify the type of constraint to be imposed to estimate the SC weights. The user controls the norm of the weights to
+{p 2 4} These options let the user specify the type of constraint to be imposed to estimate the SC weights. The user controls the lower bound on the weights (option {opt lb}), the norm of the weights to
 be constrained (option {opt p}), the direction of the constraint on the norm (option {opt dir}), and the size of the constraint on the norm (option {opt q}). Alternatively,
 some popular constraints can be selected through the option {opt name}. A detailed description of the popular constraints implemented can be found in 
 {browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":Cattaneo, Feng, Palomba and Titiunik (2022)}. {p_end}
 
-{p 4 8}{cmd:name(}{it:string}{cmd:)} specifies the name of the constraint to be used. Options are:{p_end}
-{p 8 12}{opt simplex} classic SC estimator as proposed in {browse "https://economics.mit.edu/files/17847": Abadie (2021)}. Estimated 
-weights are constrained to be non-negative and their L1 norm must be equal to 1.{p_end}
-{p 8 12}{opt lasso} weights are estimated using a Lasso-type penalization{p_end}
-{p 8 12}{opt ridge} weights are estimated using a Ridge-type penalization.{p_end}
-{p 8 12}{opt ols} weights are estimated without constraints using least squares{p_end}
+{p 4 8}{cmd:lb(}{it:#}{cmd:)} specifies the lower bound on the weights. The default is {cmd:lb(0)}. {p_end}
 
 {p 4 8}{cmd:p(}{it:#}{cmd:)} sets the type of norm to be constrained. Options are:{p_end}
 {p 8 12} {opt 0} no constraint on the norm of the weights is imposed. {p_end}
@@ -76,7 +73,11 @@ weights are constrained to be non-negative and their L1 norm must be equal to 1.
 
 {p 4 8}{cmd:Q(}{it:#}{cmd:)} specifies the size of the constraint on the norm of the weights. {p_end}
 
-{p 4 8}{cmd:lb(}{it:#}{cmd:)} specifies the lower bound on the weights. The default is {cmd:lb(0)}. {p_end}
+{p 4 8}{cmd:name(}{it:string}{cmd:)} specifies the name of the constraint to be used. Options are:{p_end}
+{p 8 12}{opt simplex} classic synthetic control estimator where the weights are constrained to be non-negative and their L1 norm must be equal to 1.{p_end}
+{p 8 12}{opt lasso} weights are estimated using a Lasso-type penalization{p_end}
+{p 8 12}{opt ridge} weights are estimated using a Ridge-type penalization.{p_end}
+{p 8 12}{opt ols} weights are estimated without constraints using least squares{p_end}
 
 {dlgtab:Others}
 
@@ -90,7 +91,7 @@ weights are constrained to be non-negative and their L1 norm must be equal to 1.
 
 
 {marker examples}{...}
-{title:Example: Cattaneo, Feng and Titiunik (2021) Germany Data}
+{title:Example: Germany Data}
 
 {p 4 8}Setup{p_end}
 {p 8 8}{cmd:. use scpi_germany.dta}{p_end}
@@ -152,7 +153,7 @@ weights are constrained to be non-negative and their L1 norm must be equal to 1.
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":scpi - Uncertainty Quantification for Synthetic Control Estimators}.{p_end}
+{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators, {it:arXiv}:2202.05984.}.{p_end}
 
 {marker authors}{...}
 {title:Authors}

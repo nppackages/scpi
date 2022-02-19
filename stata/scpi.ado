@@ -115,9 +115,10 @@ version 17.0
 	ereturn scalar T1 = scalar(T1)
 	
 	ereturn matrix failed_sims     = failed_sims
-	ereturn matrix Sigma           = Sigma
 	capture ereturn matrix e_var = e_var
 	capture ereturn matrix e_mean = e_mean
+	capture ereturn matrix u_var = u_var
+	capture ereturn matrix u_mean = u_mean
 	capture ereturn matrix CI_all_qreg     = CI_all_qreg
 	capture ereturn matrix CI_all_ls       = CI_all_ls
 	capture ereturn matrix CI_all_gaussian = CI_all_gaussian
@@ -354,9 +355,12 @@ def scpi_wrapper(p, dir, Q, lb, name, u_missp, u_sigma, u_order, u_lags, u_alpha
 		names = [str(col) for col in res_pi.CI_all_qreg.columns.tolist()]
 		Matrix.setColNames("CI_all_qreg", names)	
 
-	Matrix.create("Sigma", res_pi.Sigma.shape[0], res_pi.Sigma.shape[1], 0)
-	Matrix.store("Sigma", res_pi.Sigma)
-	
+	Matrix.create("u_mean", res_pi.u_mean.shape[0], res_pi.u_mean.shape[1], 0)
+	Matrix.store("u_mean", res_pi.u_mean)
+
+	Matrix.create("u_var", res_pi.u_var.shape[0], res_pi.u_var.shape[1], 0)
+	Matrix.store("u_var", res_pi.u_var)
+
 	Matrix.create("failed_sims",res_pi.failed_sims.shape[0], res_pi.failed_sims.shape[1], 0)
 	Matrix.store("failed_sims", res_pi.failed_sims.values)
 	Matrix.setRowNames("failed_sims", ['lb','ub'])	
