@@ -36,7 +36,7 @@
 It allows the user to specify the outcome variable, the features of the treated unit to be matched, and covariate-adjustment feature by feature. 
 The command follows the terminology proposed in {browse "https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}. 
 The command is a wrapper of the companion Python package. As such, the user needs to have a running version of Python with the package installed. A tutorial on how to install Python and link it to Stata
-can be found {browse "https://nppackages.github.io/scpi/":here}..{p_end}
+can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
 {browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":Cattaneo, Feng, Palomba and Titiunik (2022)}{p_end}
@@ -125,7 +125,7 @@ can be found {browse "https://nppackages.github.io/scpi/":here}..{p_end}
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":scpi - Uncertainty Quantification for Synthetic Control Estimators.}.{p_end}
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":scpi - Uncertainty Quantification for Synthetic Control Estimators}.{p_end}
 
 {marker authors}{...}
 {title:Authors}
