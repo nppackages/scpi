@@ -322,25 +322,25 @@ u.des.prep <- function(B, C, u.order, u.lags, coig.data, T0.tot, M, constant,
         B.diff   <- rbind(B.diff, BB - dplyr::lag(BB))
       }
       
-      u.des.0 <- cbind(B.diff, C)[, index, drop=F]    # combine with C
+      u.des.0 <- cbind(B.diff, C)[, index, drop=FALSE]    # combine with C
       
     } else if (coig.data == FALSE) {
       
-      u.des.0 <- cbind(B, C)[, index, drop = F]  # take active covariates
+      u.des.0 <- cbind(B, C)[, index, drop = FALSE]  # take active covariates
       
     }
     
     # Augment H with powers and interactions of B (not of C!!!)
     if (u.order > 1) {
       act.B <- sum(index.w)
-      u.des.0 <- cbind(poly(u.des.0[,(1:act.B), drop = F], degree = u.order, raw = T, simple = T),
-                       u.des.0[,-(1:act.B), drop = F])
+      u.des.0 <- cbind(poly(u.des.0[,(1:act.B), drop = FALSE], degree = u.order, raw = TRUE, simple = TRUE),
+                       u.des.0[,-(1:act.B), drop = FALSE])
     }
     
     # Include the constant if a global constant is not present
     # In case a constant is already specified lm.fit and qfit will automatically remove
     # the collinear covariates!!
-    if (constant == F) {
+    if (constant == FALSE) {
       u.des.0 <- cbind(u.des.0, rep(1, nrow(u.des.0)))
     }
   }
@@ -368,9 +368,9 @@ u.des.prep <- function(B, C, u.order, u.lags, coig.data, T0.tot, M, constant,
       B.l <- NULL
       for (feature in features) {
         if (coig.data == FALSE) {
-          B.l <- rbind(B.l, dplyr::lag(B[feature.id == feature, , drop = F], n = ll)[, index.w, drop = F])
+          B.l <- rbind(B.l, dplyr::lag(B[feature.id == feature, , drop = FALSE], n = ll)[, index.w, drop = FALSE])
         } else {
-          B.l <- rbind(B.l, dplyr::lag(B.diff[feature.id == feature, , drop = F], n = ll)[, index.w, drop = F])
+          B.l <- rbind(B.l, dplyr::lag(B.diff[feature.id == feature, , drop = FALSE], n = ll)[, index.w, drop = FALSE])
         }
       }
       B.lag <- cbind(B.lag, B.l)
@@ -412,11 +412,11 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
       e.des.0 <- apply(Y.donors, 2, function(x) x - dplyr::lag(x))[, index.w]
       
       P.first <- P[1, ] - Y.donors[T0[1], ]
-      P.diff  <- rbind(P.first, apply(P, 2, diff))[, index, drop = F]
+      P.diff  <- rbind(P.first, apply(P, 2, diff))[, index, drop = FALSE]
       e.des.1 <- P.diff
     } else {
       e.des.0  <- Y.donors[, index.w]
-      e.des.1  <- P[, index, drop = F]
+      e.des.1  <- P[, index, drop = FALSE]
     }
     
   } else if (out.feat == TRUE) {    # outcome variable is among features
@@ -439,32 +439,32 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
         # Create first differences of the first feature (outcome) of the matrix B (not of C!!)
         BB       <- B[feature.id == features[1],]
         B.diff   <- rbind(B.diff, BB - dplyr::lag(BB))
-        e.des.0 <- cbind(B.diff, C)[, index, drop=F]
+        e.des.0 <- cbind(B.diff, C)[, index, drop=FALSE]
 
         ## Take first differences of P
         
         # Remove last observation of first feature from first period of P
-        P.first <- c((P[1, (1:J)] - B[feature.id == features[1], , drop = F][T0[1], ]),
-                     P[1 ,-(1:J), drop = F])
+        P.first <- c((P[1, (1:J)] - B[feature.id == features[1], , drop = FALSE][T0[1], ]),
+                     P[1 ,-(1:J), drop = FALSE])
         
         
         # Take differences of other periods
         Pdiff    <- apply(P[, (1:J)], 2, diff)
-        P.diff   <- rbind(P.first, cbind(Pdiff, P[-1,-(1:J)]))[, index, drop = F]
+        P.diff   <- rbind(P.first, cbind(Pdiff, P[-1,-(1:J)]))[, index, drop = FALSE]
         e.des.1  <- P.diff
         
       } else if (coig.data == FALSE) {
-        e.des.0 <- cbind(B, C)[, index, drop = F]
-        e.des.1 <- P[, index, drop = F]
+        e.des.0 <- cbind(B, C)[, index, drop = FALSE]
+        e.des.1 <- P[, index, drop = FALSE]
       }
 
       # Augment H with powers and interactions of B (not of C!!!)
       if (e.order > 1) {
         act.B <- sum(index.w)
-        e.des.0 <- cbind(poly(e.des.0[,(1:act.B), drop = F], degree = e.order, raw = T, simple = T),
-                         e.des.0[,-(1:act.B), drop = F])
-        e.des.1 <- cbind(poly(e.des.1[,(1:act.B), drop = F], degree = e.order, raw = T, simple = T),
-                         e.des.1[,-(1:act.B), drop = F])
+        e.des.0 <- cbind(poly(e.des.0[,(1:act.B), drop = FALSE], degree = e.order, raw = TRUE, simple = TRUE),
+                         e.des.0[,-(1:act.B), drop = FALSE])
+        e.des.1 <- cbind(poly(e.des.1[,(1:act.B), drop = FALSE], degree = e.order, raw = TRUE, simple = TRUE),
+                         e.des.1[,-(1:act.B), drop = FALSE])
       }
       
       # Include the constant if a global constant is not present
@@ -486,32 +486,32 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
       feature.id <- unlist(purrr::map(stringr::str_split(rownames(B), "\\."), 1))
       
       # Create first differences of the first feature (outcome) of the matrix B (not of C!!)
-      BB       <- B[feature.id == features[1], , drop = F]
+      BB       <- B[feature.id == features[1], , drop = FALSE]
       B.diff   <- rbind(B.diff, BB - dplyr::lag(BB))
 
       ## Create first differences of P
       
       # Attach some pre-treatment value in order to avoid having missing values
       if (coig.data == FALSE) {
-        PP <- rbind(B[feature.id == features[1], , drop = F][((T0[1]-e.lags + 1):T0[1]), , drop = F], 
-                    P[ , (1:J), drop = F])
+        PP <- rbind(B[feature.id == features[1], , drop = FALSE][((T0[1]-e.lags + 1):T0[1]), , drop = FALSE], 
+                    P[ , (1:J), drop = FALSE])
       } else {
-        PP <- rbind(B[feature.id == features[1], , drop = F][((T0[1]-e.lags):T0[1]), , drop = F], 
-                    P[ , (1:J), drop = F])
+        PP <- rbind(B[feature.id == features[1], , drop = FALSE][((T0[1]-e.lags):T0[1]), , drop = FALSE], 
+                    P[ , (1:J), drop = FALSE])
       }
       PP.diff <- PP - dplyr::lag(PP)
 
       for (ll in seq_len(e.lags)) {
         if (coig.data == FALSE) {
-          P.l <- dplyr::lag(PP, n = ll)[, index.w, drop = F][((e.lags+1):nrow(PP)), ,drop = F]
+          P.l <- dplyr::lag(PP, n = ll)[, index.w, drop = FALSE][((e.lags+1):nrow(PP)), ,drop = FALSE]
         } else {
-          P.l <- dplyr::lag(PP.diff, n = ll)[, index.w, drop = F][((e.lags+2):nrow(PP)), ,drop = F]
+          P.l <- dplyr::lag(PP.diff, n = ll)[, index.w, drop = FALSE][((e.lags+2):nrow(PP)), ,drop = FALSE]
         }
         
-        if (coig.data == F) {
-          B.l <- dplyr::lag(B[feature.id == features[1], , drop = F], n = ll)[, index.w, drop = F]
+        if (coig.data == FALSE) {
+          B.l <- dplyr::lag(B[feature.id == features[1], , drop = FALSE], n = ll)[, index.w, drop = FALSE]
         } else {
-          B.l <- dplyr::lag(B.diff[ , , drop = F], n = ll)[, index.w, drop = F]
+          B.l <- dplyr::lag(B.diff[ , , drop = FALSE], n = ll)[, index.w, drop = FALSE]
         }
         
         B.lag <- cbind(B.lag, B.l)
@@ -540,8 +540,8 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
 
 DUflexGet <- function(u.des.0.na, C, f.id.na, M) {
   sel <- colnames(u.des.0.na) %in% colnames(C)
-  D.b <- u.des.0.na[, !sel, drop = F]
-  D.c <- u.des.0.na[, sel, drop = F]
+  D.b <- u.des.0.na[, !sel, drop = FALSE]
+  D.c <- u.des.0.na[, sel, drop = FALSE]
   f.df <- data.frame(f.id.na)
   f.D <- fastDummies::dummy_cols(f.df, select_columns = "f.id", remove_selected_columns = TRUE)
   D.b.int <- matrix(NA, nrow = nrow(D.b), ncol=0)
@@ -561,7 +561,7 @@ scpi.in <- function(xt, beta, Q, G, J, KM, p.int, QQ, dire, p, lb, w.lb.est, w.u
   use.CVXR <- useCVXR(list(Q = QQ, p = p, dir = dire, lb = lb))
 
   # define optimization; min
-  if (w.lb.est == T) {
+  if (w.lb.est == TRUE) {
     
     if (use.CVXR == TRUE) { # handle L1 norm + inequality constraint
       a <- -2*G - 2*c(t(beta) %*% Q)
@@ -644,7 +644,7 @@ scpi.in <- function(xt, beta, Q, G, J, KM, p.int, QQ, dire, p, lb, w.lb.est, w.u
   }
 
   # define optimization; max
-  if (w.ub.est == T) {
+  if (w.ub.est == TRUE) {
     if (use.CVXR == TRUE) { # handle L1 norm + inequality constraint
       
       a <- -2*G - 2*c(t(beta) %*% Q)
@@ -674,7 +674,7 @@ scpi.in <- function(xt, beta, Q, G, J, KM, p.int, QQ, dire, p, lb, w.lb.est, w.u
                                               A = prob_data$data[["A"]],
                                               b = prob_data$data[["b"]])
       sol      <- unpack_results(prob, solver_output, prob_data$chain, prob_data$inverse_data)
-      alert       <- sol$status != "optimal"
+      alert    <- sol$status != "optimal"
 
       if (alert == TRUE) {
         ub.est <- NA
@@ -825,19 +825,19 @@ checkConstraints <- function(nloptr.obj, dir, tol_eq, tol_ineq) {
 }
 
 # Prediction interval, for e
-scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est) {
+scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose) {
 
   neval <- nrow(eval)
   e.1 <- e.2 <- lb <- ub <- NA
 
-  if (e.lb.est == T | e.ub.est == T) {
+  if (e.lb.est == TRUE | e.ub.est == TRUE) {
 
     if (e.method == "gaussian") {
       x.more   <- rbind(eval, x)
-      fit      <- predict(y=res, x=x, eval=x.more, type="lm")
+      fit      <- predict(y=res, x=x, eval=x.more, type="lm", verbose = verbose)
       e.mean   <- fit[1:neval]
       res.fit  <- fit[-(1:neval)]
-      var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm")
+      var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm", verbose = verbose)
       e.sig2   <- exp(var.pred[1:neval])
 
       eps <- sqrt(-log(alpha)*2*e.sig2)
@@ -850,11 +850,11 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est) {
 
     } else if (e.method == "ls") {
       x.more  <- rbind(eval, x)
-      fit     <- predict(y=res, x=x, eval=x.more, type="lm")
+      fit     <- predict(y=res, x=x, eval=x.more, type="lm", verbose = verbose)
       e.mean  <- fit[1:neval]
       res.fit <- fit[-(1:neval)]
 
-      var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm")
+      var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm", verbose = verbose)
       e.sig    <- sqrt(exp(var.pred[1:neval]))
       res.st   <- (res-res.fit)/sqrt(exp(var.pred[-(1:neval)]))
 
@@ -866,7 +866,7 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est) {
       e.2 <- e.sig^2
       
     } else if (e.method == "qreg") {
-      e.pred  <- predict(y=res, x=x, eval=eval, type="qreg", tau=c(alpha, 1-alpha))
+      e.pred  <- predict(y=res, x=x, eval=eval, type="qreg", tau=c(alpha, 1-alpha), verbose = verbose)
       lb <- e.pred[,1]
       ub <- e.pred[,2]
 
@@ -887,9 +887,9 @@ sqrtm <- function(A) {
 }
 
 # conditional prediction
-predict <- function(y, x, eval, type="lm", tau=NULL) {
+predict <- function(y, x, eval, type="lm", tau=NULL, verbose) {
   
-  if (nrow(x) <= ncol(x)) {
+  if ((nrow(x) <= ncol(x)) & verbose) {
     warning("Consider specifying a less complicated model for e. The number of observations used
          to parametrically predict moments is smaller than the number of covariates used. Consider reducing either the number
          of lags (e.lags) or the order of the polynomial (e.order)!")
@@ -976,14 +976,14 @@ u.sigma.est <- function(u.mean, u.sigma, res, Z, V, index, TT, M, df) {
 }
 
 
-local.geom <- function(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, w) {
+local.geom <- function(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, w, verbose) {
   
   Q   <- w.constr[["Q"]]
   if (is.character(rho)) rho <- regularize.w(rho, rho.max, res, B, C, coig.data, T0.tot)
   
   if ((w.constr[["name"]] == "simplex") | ((w.constr[["p"]] == "L1") & (w.constr[["dir"]] == "=="))) {
     index.w <- abs(w) > rho
-    index.w <- regularize.check(w, index.w, rho)
+    index.w <- regularize.check(w, index.w, rho, verbose)
     
     w.star  <- w
     w.star[!index.w] <- 0
@@ -999,7 +999,7 @@ local.geom <- function(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, 
       Q.star <- Q
     }
     index.w <- abs(w) > rho
-    index.w <- regularize.check(w, index.w, rho)
+    index.w <- regularize.check(w, index.w, rho, verbose)
     
     w.star  <- w
     w.star[!index.w] <- 0    
@@ -1046,7 +1046,7 @@ regularize.w <- function(rho, rho.max, res, B, C, coig.data, T0.tot) {
   }
   
     
-  if (coig.data == T) { # cointegration
+  if (coig.data == TRUE) { # cointegration
     c <- 1
   } else {        # iid or ar
     c <- 0.5
@@ -1059,11 +1059,13 @@ regularize.w <- function(rho, rho.max, res, B, C, coig.data, T0.tot) {
   return(rho)
 }
 
-regularize.check <- function(w, index.w, rho) {
+regularize.check <- function(w, index.w, rho, verbose) {
   if (sum(index.w) == 0) {
     index.w <- rank(-w) <= 1
-    cat("Warning: regularization paramater was too high (", round(rho, digits = 3), "). ", sep = "")
-    cat("We set it so that at least one component in w is non-zero.")
+    if (verbose){
+      cat("Warning: regularization paramater was too high (", round(rho, digits = 3), "). ", sep = "")
+      cat("We set it so that at least one component in w is non-zero.")
+    }
   }
   return(index.w)
 }
@@ -1106,34 +1108,4 @@ executionTime <- function(T0, J, T1, sims, cores, name){
 }
 
 
-###############################################################################
-###############################################################################
-## Auxiliary functions for testing
 
-test.data <- function(df = NULL,
-                      id.var = "country", 
-                      time.var = "year", 
-                      outcome.var = "gdp", 
-                      period.pre = (1960:1990), 
-                      period.post = (1991:1997),
-                      unit.tr = "West Germany", 
-                      unit.co = NULL, 
-                      features = NULL, 
-                      cov.adj = NULL,
-                      cointegrated.data = FALSE,
-                      anticipation = 0,
-                      constant = TRUE, 
-                      report.missing = FALSE,
-                      mv = F) {
-  
-  
-  if (is.null(df)) df <- scpi_germany
-  if (is.null(unit.co)) unit.co <- unique(df$country)[-7]    
-  
-  out  <-   scdata(df = df, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
-                  period.pre = period.pre, period.post = period.post,
-                  unit.tr = unit.tr, unit.co = unit.co, cov.adj = cov.adj, features = features,
-                  constant = constant,  report.missing = report.missing, cointegrated.data = cointegrated.data)
- 
-  return(out) 
-}

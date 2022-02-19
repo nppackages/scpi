@@ -30,7 +30,8 @@ scpi(
   e.bounds = NULL,
   opt.list.est = NULL,
   opt.list.inf = NULL,
-  save.data = NULL
+  save.data = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -99,27 +100,92 @@ with their own value for \code{rho}. Other options are described in the \strong{
 the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 by filling the other column with \code{NA}s.}
 
-\item{e.bounds}{a \eqn{T_1\times 2} matrix with the user-provided bounds on \eqn{\mathbf{e}}. If \code{e.bounds} is provided, then
+\item{e.bounds}{a \eqn{T_1\times 2} matrix with the user-provided bounds on \eqn{(\widehat{\mathbf{w}},\widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
 the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 by filling the other column with \code{NA}s.}
 
-\item{opt.list.est}{a list specifying the stopping criteria and the algorithm for the underlying optimizer \code{\link{nloptr}} for point estimation.
+\item{opt.list.est}{a list specifying the stopping criteria and the algorithm for the underlying optimizer \code{\link{nloptr}} or \code{\link{CVXR}} for point estimation.
 See the \strong{Details} section for more.}
 
 \item{opt.list.inf}{similar to the previous one but for the optimizer used for inference purposes. See the \strong{Details} section for more.}
 
 \item{save.data}{a character specifying the name and the path of the saved dataframe containing the processed data used to produce the plot.}
+
+\item{verbose}{if \code{TRUE} prints additional information in the console.}
 }
 \value{
-\item{data}{object containing used data as returned by \code{\link{scdata}} and some other values.}
-\item{est.results}{object containing all the results from \code{\link{scest}}.}
-\item{inference.results}{object containing all the inference-related results.}
+The function returns an object of class 'scpi_scpi' containing three lists. The first list is labeled 'data' and contains used data as returned by \code{\link{scdata}} and some other values.
+\item{A}{a matrix containing pre-treatment features of the treated unit.}
+\item{B}{a matrix containing pre-treatment features of the control units.}
+\item{C}{a matrix containing covariates for adjustment.}
+\item{P}{a matrix whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.}
+\item{Y.pre}{a matrix containing the pre-treatment outcome of the treated unit.}
+\item{Y.post}{a matrix containing the post-treatment outcome of the treated unit.}
+\item{Y.donors}{a matrix containing the pre-treatment outcome of the control units.}
+\item{specs}{a list containing some specifics of the data:
+\itemize{
+\item{\code{J}, the number of control units}
+\item{\code{K}, a numeric vector with the number of covariates used for adjustment for each feature}
+\item{\code{KM}, the total number of covariates used for adjustment}
+\item{\code{M}, number of features}
+\item{\code{period.pre}, a numeric vector with the pre-treatment period}
+\item{\code{period.post}, a numeric vector with the post-treatment period}
+\item{\code{T0.features}, a numeric vector with the number of periods used in estimation for each feature}
+\item{\code{T1.outcome}, the number of post-treatment periods}
+\item{\code{glob.cons}, for internal use only}
+\item{\code{out.in.features}, for internal use only}}}
+
+The second list is labeled 'est.results' containing all the results from \code{\link{scest}}.
+\item{w}{a matrix containing the estimated weights of the donors.}
+\item{r}{a matrix containing the values of the covariates used for adjustment.}
+\item{b}{a matrix containing \eqn{\mathbf{w}} and \eqn{\mathbf{r}}.}
+\item{Y.pre.fit}{a matrix containing the estimated pre-treatment outcome of the SC unit.}
+\item{Y.post.fit}{a matrix containing the estimated post-treatment outcome of the SC unit.}
+\item{A.hat}{a matrix containing the predicted values of the features of the treated unit.}
+\item{res}{a matrix containing the residuals \eqn{\mathbf{A}-\widehat{\mathbf{A}}}.}
+\item{V}{a matrix containing the weighting matrix used in estimation.}
+\item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
+
+The third list is labeled 'inference.results' and contains all the inference-related results.
+\item{CI.in.sample}{a matrix containing the prediction intervals taking only in-sample uncertainty in to account.}
+\item{CI.all.gaussian}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with sub-Gaussian bounds.}
+\item{CI.all.ls}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with a location-scale model.}
+\item{CI.all.qreg}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with quantile regressions.}
+\item{Sigma}{a matrix containing the estimated (conditional) variance-covariance \eqn{\boldsymbol{\Sigma}}.}
+\item{u.mean}{a matrix containing the estimated (conditional) mean of the pseudo-residuals \eqn{u}.}
+\item{u.var}{a matrix containing the estimated (conditional) variance-covariance of the pseudo-residuals \eqn{u}.}
+\item{e.mean}{a matrix containing the estimated (conditional) mean of the out-of-sample error \eqn{e}.}
+\item{e.var}{a matrix containing the estimated (conditional) variance of the out-of-sample error \eqn{e}.}
+\item{u.missp}{a logical indicating whether the model has been treated as misspecified or not.}
+\item{u.lags}{an integer containing the number of lags in B used in predicting moments of the pseudo-residuals \eqn{u}.}
+\item{u.order}{an integer containing the order of the polynomial in B used in predicting moments of the pseudo-residuals \eqn{u}.}
+\item{u.sigma}{a string indicating the estimator used for \code{Sigma}.}
+\item{u.user}{a logical indicating whether the design matrix to predict moments of \eqn{u} was user-provided.}
+\item{e.method}{a string indicating the specification used to predict moments of the out-of-sample error \eqn{e}.}
+\item{e.lags}{an integer containing the number of lags in B used in predicting moments of the out-of-sample error \eqn{e}.}
+\item{e.order}{an integer containing the order of the polynomial in B used in predicting moments of the out-of-sample error \eqn{e}.}
+\item{e.user}{a logical indicating whether the design matrix to predict moments of \eqn{e} was user-provided.}
+\item{rho}{an integer specifying the estimated regularizing parameter that imposes sparsity on the estimated vector of weights.}
+\item{u.alpha}{a scalar indicating the confidence level used for in-sample uncertainty.}
+\item{e.alpha}{a scalar indicating the confidence level used for out-of-sample uncertainty.}
+\item{sims}{an integer indicating the number of simulations used in quantifying in-sample uncertainty.}
+\item{failed.sims}{a matrix containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.}
 }
 \description{
-The command constructs a counterfactual synthetic control unit as proposed in Cattaneo, Feng,
-and Titiunik (2021). \code{\link{scpi}} returns the estimated post-treatment series for the synthetic unit through the
-command \code{\link{scest}} and quantifies in-sample and out-of-sample uncertainty to provide confidence intervals
+The command implements estimation and inference procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints according to
+\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}} returns the estimated
+post-treatment series for the synthetic unit through the command \code{\link{scest}} and quantifies in-sample and out-of-sample uncertainty to provide confidence intervals
 for each point estimate.
+
+Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+
+Companion commands are: \link{scdata} for data preparation, \link{scest} for point estimation, and \link{scplot} for plots.
+
+Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
+
+\href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
+
+For an introduction to synthetic control methods, see \href{https://economics.mit.edu/files/17847}{Abadie (2021)} and references therein.
 }
 \details{
 \itemize{
@@ -189,7 +255,7 @@ model; "qreg" uses conditional quantile regression of the residuals \eqn{\mathbf
 (\code{algorithm = 'NLOPTR_LD_SLSQP'}) for all cases not involving the L1 norm.
 For a complete list of algorithms see \href{https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/}{the official \code{nloptr} documentation}.
 The other default values are \code{maxeval = 5000}, \code{ftol_res = 1.0e-8}, \code{ftol_abs = 1.0e-8}, \code{xtol_res = 1.0e-8}, \code{xtol_abs = 1.0e-8},
-\code{tol_constraints_eq = 1.0e-8}, and \code{tol_constraints_ineq = 1.0e-8}. More information on the stopping criteria can be obtained running
+\code{tol_constraints_eq = 1.0e-8}, and, finally, \code{tol_constraints_ineq = 1.0e-8}. More information on the stopping criteria can be obtained running
 \code{nloptr.print.options()} or \code{nloptr.get.default.options()}. If the optimization involves the L1 norm then \code{CVXR} is used for optimization.
 More information on the stopping criteria can be obtained reading \href{https://cvxr.rbind.io/}{the official documentation}. }
 }
@@ -200,32 +266,34 @@ data <- scpi_germany
 
 df <- scdata(df = data, id.var = "country", time.var = "year", 
              outcome.var = "gdp", period.pre = (1960:1990), 
-             period.post = (1991:2013), unit.tr = "West Germany",
-             unit.co = unique(data$country)[-7], constant = T,
-             cointegrated.data = T)
+             period.post = (1991:2003), unit.tr = "West Germany",
+             unit.co = unique(data$country)[-7], constant = TRUE,
+             cointegrated.data = TRUE)
              
-result <- scpi(df, w.constr = list(name = "simplex", Q = 1))
-result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1))
+result <- scpi(df, w.constr = list(name = "simplex", Q = 1), cores = 1, sims = 10)
+result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1),
+               cores = 1, sims = 10)
                            
 }
 \references{
-
-
 \itemize{
 \item{\href{https://economics.mit.edu/files/17847}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 \emph{Journal of Economic Literature}, 59(2), 391-425.}
 \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
-\item{\href{https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}.
-scpi - Uncertainty Quantification for Synthetic Control Estimators.}}
+\item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
+}
 }
 \seealso{
 \code{\link{scdata}}, \code{\link{scest}}, \code{\link{scplot}}
 }
 \author{
-\itemize{
-\item{Matias Cattaneo, }{Princeton University}
-\item{Yingjie Feng, }{Tsinghua University}
-\item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-\item{Rocio Titiunik, Princeton University}}
+Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+
+Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+
+Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+
+Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
 }

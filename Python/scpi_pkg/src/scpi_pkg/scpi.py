@@ -47,6 +47,12 @@ def scpi(data,
          pass_stata=False):
 
     '''
+    The command implements estimation and inference procedures for Synthetic Control methods using least squares,
+    lasso, ridge, or simplex-type constraints according to Cattaneo, Feng, and Titiunik (2021).
+
+    Companion Stata and R packages are described in Cattaneo, Feng, Palomba, and Titiunik (2022).
+
+    For an introduction to synthetic control methods, see Abadie (2021) and references therein.
 
     Parameters
     ----------
@@ -249,28 +255,28 @@ def scpi(data,
     a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.
 
     Sigma
-    an array containing the estimated variance-covariance of the pseudo-residuals u.
+    an array containing the estimated variance-covariance Sigma.
 
     u_mean
-    an array containing the conditional mean of u.
+    an array containing the estimated conditional mean of the the pseudo-residuals u.
 
     u_var
-    an array containing the conditional variance of u.
+    an array containing the estimated conditional variance-covariance of the pseudo-residuals u.
 
     e_mean
-    an array containing the conditional mean of e.
+    an array containing the estimated conditional mean of the out-of-sample error e.
 
     e_var
-    an array containing the conditional variance of e.
+    an array containing the estimated conditional variance of the out-of-sample error e.
 
     u_missp
     a logical indicating whether the model has been treated as misspecified or not.
 
     u_lags
-    an integer containing the number of lags in B used in predicting moments of u.
+    an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.
 
     u_order
-    an integer containing the order of the polynomial in B used in predicting moments of u.
+    an integer containing the order of the polynomial in B used in predicting moments of the pseudo-residuals u.
 
     u_sigma
     a string indicating the estimator used for Sigma.
@@ -282,16 +288,16 @@ def scpi(data,
     a float indicating the confidence level used for in-sample uncertainty.
 
     e_method
-    a string indicating the specification used to predict moments of e.
+    a string indicating the specification used to predict moments of the out-of-sample error e.
 
     e_lags
-    an integer containing the number of lags in B used in predicting moments of u.
+    an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.
 
     e_order
-    an integer containing the number of lags in B used in predicting moments of u.
+    an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.
 
     e_user
-    a logical indicating whether the design matrix to predict moments of u was user-provided.
+    a logical indicating whether the design matrix to predict moments of e was user-provided.
 
     e_alpha
     a float indicating the confidence level used for out-of-sample uncertainty.
@@ -300,31 +306,21 @@ def scpi(data,
     an integer specifying the estimated regularizing parameter that imposes sparsity on the estimated vector of weights.
 
     sims
-    number of simulations.
+    an integer indicating the number of simulations.
 
     failed_sims
-    array  containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.
+    an array containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.
 
      References
     ----------
     Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
     Aspects,” Journal of Economic Literature, 59, 391-425.
 
-    Amjad, M., Shah, D., and Shen, D. (2018), “Robust synthetic control,” The Journal of Machine
-    Learning Research, 19, 802-852.
-
     Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control
     Methods,” Journal of the American Statistical Association, 116, 1865-1880.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in
-    Synthetic Controls with Staggered Treatment Adoption,” working paper.
-
-    Chernozhukov, V., W ̈uthrich, K., and Zhu, Y. (2021), “An Exact and Robust Conformal Inference
-    Method for Counterfactual and Synthetic Controls,” arXiv:1712.09089.
-
-    Hsiao, C., Steve Ching, H., and Ki Wan, S. (2012), “A Panel Data Approach for Program Evaluation:
-    Measuring the Benefits of Political and Economic Integration of Hong Kong with Mainland
-    China,” Journal of Applied Econometrics, 27, 705-740.
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
+    Synthetic Control Estimators”.
 
     See Also
     --------

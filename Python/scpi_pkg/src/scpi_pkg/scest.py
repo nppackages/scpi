@@ -17,6 +17,12 @@ from .scplot import scplot
 def scest(df, w_constr=None, V=None, opt_dict=None, plot=False):
 
     '''
+    The command implements estimation procedures for Synthetic Control methods using least squares, lasso, ridge, or
+    simplex-type constraints according to Cattaneo, Feng, and Titiunik (2021).
+
+    Companion Stata and R packages are described in Cattaneo, Feng, Palomba, and Titiunik (2022).
+
+    For an introduction to synthetic control methods, see Abadie (2021) and references therein.
 
     Parameters
     ----------
@@ -138,21 +144,11 @@ def scest(df, w_constr=None, V=None, opt_dict=None, plot=False):
     Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
     Aspects,” Journal of Economic Literature, 59, 391-425.
 
-    Amjad, M., Shah, D., and Shen, D. (2018), “Robust synthetic control,” The Journal of Machine
-    Learning Research, 19, 802-852.
-
     Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control
     Methods,” Journal of the American Statistical Association, 116, 1865-1880.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in
-    Synthetic Controls with Staggered Treatment Adoption,” working paper.
-
-    Chernozhukov, V., W ̈uthrich, K., and Zhu, Y. (2021), “An Exact and Robust Conformal Inference
-    Method for Counterfactual and Synthetic Controls,” arXiv:1712.09089.
-
-    Hsiao, C., Steve Ching, H., and Ki Wan, S. (2012), “A Panel Data Approach for Program Evaluation:
-    Measuring the Benefits of Political and Economic Integration of Hong Kong with Mainland
-    China,” Journal of Applied Econometrics, 27, 705-740.
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
+    Synthetic Control Estimators”.
 
     See Also
     --------

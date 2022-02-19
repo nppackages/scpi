@@ -11,6 +11,9 @@
 
 \item{...}{Other arguments.}
 }
+\value{
+No return value, called to print \code{\link{scpi}} results.
+}
 \description{
 The print method for synthetic control inference objects.
 }
@@ -20,9 +23,11 @@ The print method for synthetic control inference objects.
 Supported methods: \code{\link{print.scpi}}, \code{\link{summary.scpi}}.
 }
 \author{
-\itemize{
-\item{Matias Cattaneo, }{Princeton University}
-\item{Yingjie Feng, }{Tsinghua University}
-\item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-\item{Rocio Titiunik, Princeton University}}
+Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+
+Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+
+Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+
+Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
 }

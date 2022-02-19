@@ -18,7 +18,8 @@ scdata(
   cointegrated.data = FALSE,
   anticipation = 0,
   constant = FALSE,
-  report.missing = FALSE
+  report.missing = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -54,8 +55,11 @@ default is \code{features = outcome.var}.}
 \item{constant}{a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}.}
 
 \item{report.missing}{a logical which prints the location of missing values if present. The default value is \code{FALSE}.}
+
+\item{verbose}{if \code{TRUE} prints additional information in the console.}
 }
 \value{
+The command returns an object of class 'scpi_data' containing the following
 \item{A}{a matrix containing pre-treatment features of the treated unit.}
 \item{B}{a matrix containing pre-treatment features of the control units.}
 \item{C}{a matrix containing covariates for adjustment.}
@@ -65,22 +69,32 @@ default is \code{features = outcome.var}.}
 \item{Y.donors}{a matrix containing the pre-treatment outcome of the control units.}
 \item{specs}{a list containing some specifics of the data:
 \itemize{
-\item{J, the number of control units}
-\item{K, a numeric vector with the number of covariates used for adjustment for each feature}
-\item{KM, the total number of covariates used for adjustment}
-\item{M, number of features}
-\item{period.pre, a numeric vector with the pre-treatment period}
-\item{period.post, a numeric vector with the post-treatment period}
-\item{T0.features, a numeric vector with the number of periods used in estimation for each feature}
-\item{T1.outcome, the number of post-treatment periods}
-\item{glob.cons, for internal use only}
-\item{out.in.features, for internal use only}}}
+\item{\code{J}, the number of control units}
+\item{\code{K}, a numeric vector with the number of covariates used for adjustment for each feature}
+\item{\code{KM}, the total number of covariates used for adjustment}
+\item{\code{M}, number of features}
+\item{\code{period.pre}, a numeric vector with the pre-treatment period}
+\item{\code{period.post}, a numeric vector with the post-treatment period}
+\item{\code{T0.features}, a numeric vector with the number of periods used in estimation for each feature}
+\item{\code{T1.outcome}, the number of post-treatment periods}
+\item{\code{glob.cons}, for internal use only}
+\item{\code{out.in.features}, for internal use only}}}
 }
 \description{
-The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}}.
+The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}} to implement estimation and inference procedures for Synthetic Control (SC) methods.
 It allows the user to specify the outcome variable, the features of the treated unit to be
 matched, and covariate-adjustment feature by feature. The names of the output matrices
-follow the notation proposed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
+follow the terminology proposed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
+
+Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+
+Companion commands are: \link{scest} for point estimation, \link{scpi} for inference procedures, and \link{scplot} for plots.
+
+Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
+
+\href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
+
+For an introduction to synthetic control methods, see \href{https://economics.mit.edu/files/17847}{Abadie (2021)} and references therein.
 }
 \details{
 \itemize{
@@ -110,9 +124,9 @@ data <- scpi_germany
 
 df <- scdata(df = data, id.var = "country", time.var = "year", 
              outcome.var = "gdp", period.pre = (1960:1990), 
-             period.post = (1991:2013), unit.tr = "West Germany",
-             unit.co = unique(data$country)[-7], constant = T,
-             cointegrated.data = T)
+             period.post = (1991:2003), unit.tr = "West Germany",
+             unit.co = unique(data$country)[-7], constant = TRUE,
+             cointegrated.data = TRUE)
 
 }
 \references{
@@ -121,17 +135,19 @@ df <- scdata(df = data, id.var = "country", time.var = "year",
 \emph{Journal of Economic Literature}, 59(2), 391-425.}
 \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
-\item{\href{https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}.
-scpi - Uncertainty Quantification for Synthetic Control Estimators.}
+\item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
 }
 }
 \seealso{
 \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}
 }
 \author{
-\itemize{
-\item{Matias Cattaneo, }{Princeton University}
-\item{Yingjie Feng, }{Tsinghua University}
-\item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-\item{Rocio Titiunik, Princeton University}}
+Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+
+Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+
+Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+
+Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
 }

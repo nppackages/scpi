@@ -6,13 +6,17 @@
 #' @param x Class "scpi" object, obtained by calling \code{\link{scpi}}.
 #' @param ... Other arguments.
 #'
-#' @author
-#' \itemize{
-#' \item{Matias Cattaneo, }{Princeton University}
-#' \item{Yingjie Feng, }{Tsinghua University}
-#' \item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-#' \item{Rocio Titiunik, Princeton University}}
+#' @return No return value, called to print \code{\link{scpi}} results.
 #'
+#' @author
+#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#' 
+#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' 
+#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' 
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}. 
+#' 
 #' @seealso \code{\link{scpi}} for synthetic control inference
 #'
 #' Supported methods: \code{\link{print.scpi}}, \code{\link{summary.scpi}}.
@@ -25,7 +29,7 @@
 print.scpi <- function(x, ...) {
   
   args <- list(...)
-  if (is.null(args[['already.est']])) {print_est <- T} else {print_est <- F}
+  if (is.null(args[['already.est']])) {print_est <- TRUE} else {print_est <- FALSE}
   
   e.method  <- x$inference.results$e.method
   Y.tr.post <- x$data$Y.post
@@ -34,18 +38,18 @@ print.scpi <- function(x, ...) {
   colnames(Y.sc.post) <- "Synthetic"
   
   if (e.method == "gaussian") {
-    CI <- x$inference.results$CI.all.gaussian[, 1:2, drop = F]
+    CI <- x$inference.results$CI.all.gaussian[, 1:2, drop = FALSE]
     
   } else if (e.method == "ls") {
-    CI <- x$inference.results$CI.all.ls[, 1:2, drop = F]
+    CI <- x$inference.results$CI.all.ls[, 1:2, drop = FALSE]
     
   } else if (e.method == "qreg") {
-    CI <- x$inference.results$CI.all.qreg[, 1:2, drop = F]
+    CI <- x$inference.results$CI.all.qreg[, 1:2, drop = FALSE]
     
   } else if (e.method == "all") {
-    CI <- cbind(x$inference.results$CI.all.gaussian[, 1:2, drop = F], 
-                x$inference.results$CI.all.ls[, 1:2, drop = F], 
-                x$inference.results$CI.all.qreg[, 1:2, drop = F])
+    CI <- cbind(x$inference.results$CI.all.gaussian[, 1:2, drop = FALSE], 
+                x$inference.results$CI.all.ls[, 1:2, drop = FALSE], 
+                x$inference.results$CI.all.qreg[, 1:2, drop = FALSE])
   }
   
   
@@ -75,7 +79,7 @@ print.scpi <- function(x, ...) {
   # Check for eventual missing values in the donor pool that didn't allow
   # inference to be conducted for some periods
   inf.con <- rownames(Y.sc.post)
-  print(cbind(Y.tr.post[inf.con,,drop = F], Y.sc.post, round(CI, digits = 3)), ...)
+  print(cbind(Y.tr.post[inf.con,,drop = FALSE], Y.sc.post, round(CI, digits = 3)), ...)
 }
 
 
@@ -90,12 +94,16 @@ print.scpi <- function(x, ...) {
 #' @param object Class "scpi" object, obtained by calling \code{\link{scpi}}.
 #' @param ... Additional arguments
 #'
+#' @return No return value, called to summarize \code{\link{scpi}} results.
+#' 
 #' @author
-#' \itemize{
-#' \item{Matias Cattaneo, }{Princeton University}
-#' \item{Yingjie Feng, }{Tsinghua University}
-#' \item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-#' \item{Rocio Titiunik, Princeton University}}
+#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#' 
+#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' 
+#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' 
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}. 
 #' 
 #' 
 #' @seealso \code{\link{scpi}} 
@@ -139,7 +147,7 @@ summary.scpi <- function(object, ...) {
   
   cat("\n")
   
-  print(object, already.est = T, ...)
+  print(object, already.est = TRUE, ...)
   
   if (object$est.results$w.constr[["name"]] == "ridge") {
     warning("The current version of the package does not take into account a small probability loss in prediction intervals when using 

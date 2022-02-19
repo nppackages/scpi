@@ -32,7 +32,7 @@ from scpi_pkg.scpi import scpi
 from scpi_pkg.scplot import scplot
 ```
 
-- Replication: [Germany reunification example](https://github.com/rdpackages/rdrobust/blob/master/Python/rdrobust_illustration.py).
+- Replication: [Germany reunification example](https://github.com/nppackages/scpi/blob/main/Python/scpi_illustration.py).
 
 ## Dependencies
 
@@ -52,11 +52,14 @@ For overviews and introductions, see [nppackages website](https://nppackages.git
 
 ### Software and Implementation
 
-- Cattaneo, Feng, Palomba, and Titiunik (forthcoming) [scpi - Uncertainty Quantification for Synthetic Control Estimators](https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf). [UPDATE LINK]
+- Cattaneo, Feng, Palomba, and Titiunik (2022) [scpi: Uncertainty Quantification for Synthetic Control Estimators](https://arxiv.org/abs/2202.05984).
 
 
 ### Technical and Methodological
 
 - Cattaneo, Feng, and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf).<br>
 _Journal of the American Statistical Association_.
+
+- Cattaneo, Feng, Palomba, and Titiunik (2022): Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, working paper.
+
 <br><br>

@@ -11,6 +11,9 @@
 
 \item{...}{Additional arguments}
 }
+\value{
+No return value, called to summarize \code{\link{scest}} results.
+}
 \description{
 The summary method for synthetic control estimation objects.
 }
@@ -20,9 +23,11 @@ The summary method for synthetic control estimation objects.
 Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}.
 }
 \author{
-\itemize{
-\item{Matias Cattaneo, }{Princeton University}
-\item{Yingjie Feng, }{Tsinghua University}
-\item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-\item{Rocio Titiunik, Princeton University}}
+Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+
+Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+
+Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+
+Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
 }

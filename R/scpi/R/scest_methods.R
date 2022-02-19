@@ -6,12 +6,16 @@
 #' @param x Class "scest" object, obtained by calling \code{\link{scest}}.
 #' @param ... Other arguments.
 #'
+#' @return No return value, called to print \code{\link{scest}} results.
+#' 
 #' @author
-#' \itemize{
-#' \item{Matias Cattaneo, }{Princeton University}
-#' \item{Yingjie Feng, }{Tsinghua University}
-#' \item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-#' \item{Rocio Titiunik, Princeton University}}
+#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#' 
+#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' 
+#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' 
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}. 
 #'
 #' @seealso \code{\link{scest}} for synthetic control estimation.
 #'
@@ -36,9 +40,9 @@ print.scest <- function(x, ...) {
   cat(paste("Active donors:", active.w,"\n"))
   cat("\n")
   cat("Coefficients:\n")
-  print(cbind(Weights), col.names = F)
+  print(cbind(Weights), col.names = FALSE)
   if (length(x$est.results$r) > 0) {
-    print(cbind(Covariates), col.names = F)
+    print(cbind(Covariates), col.names = FALSE)
   }
 }
 
@@ -53,13 +57,16 @@ print.scest <- function(x, ...) {
 #' @param object Class "scest" object, obtained by calling \code{\link{scest}}.
 #' @param ... Additional arguments
 #'
+#' @return No return value, called to summarize \code{\link{scest}} results.
+#'
 #' @author
-#' \itemize{
-#' \item{Matias Cattaneo, }{Princeton University}
-#' \item{Yingjie Feng, }{Tsinghua University}
-#' \item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-#' \item{Rocio Titiunik, Princeton University}}
+#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
 #' 
+#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' 
+#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' 
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}. 
 #' 
 #' @seealso \code{\link{scest}} 
 #'

@@ -1,16 +1,26 @@
 #' @title Data preparation to use before calling \code{scest} or \code{scpi} for point estimation and inference procedures using Synthetic Control.
 #'
-#' @description The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}}.
+#' @description The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}} to implement estimation and inference procedures for Synthetic Control (SC) methods.
 #' It allows the user to specify the outcome variable, the features of the treated unit to be
 #' matched, and covariate-adjustment feature by feature. The names of the output matrices
-#' follow the notation proposed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
+#' follow the terminology proposed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 #'
+#' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+#'
+#' Companion commands are: \link{scest} for point estimation, \link{scpi} for inference procedures, and \link{scplot} for plots.
+#' 
+#' Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
+#' 
+#' \href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
+#' 
+#' For an introduction to synthetic control methods, see \href{https://economics.mit.edu/files/17847}{Abadie (2021)} and references therein.
+#' 
 #' @param df a dataframe object.
 #' @param id.var a character or numeric scalar with the name of the variable containing units' IDs. The ID variable can be numeric or character.
 #' @param time.var a character with the name of the time variable. The time variable has to be numeric, integer, or Date. In 
 #' case \code{time.var} is Date it should be the output of \code{\link{as.Date}()} function. An integer or 
 #' numeric time variable is suggested when working with yearly data, whereas for all other formats a Date type
-#' time variable is preferred. 
+#' time variable is preferred.
 #' @param outcome.var a character with the name of the outcome variable. The outcome variable has to be numeric.
 #' @param period.pre a numeric vector that identifies the pre-treatment period in time.var.
 #' @param period.post a numeric vector that identifies the post-treatment period in time.var.
@@ -24,8 +34,10 @@
 #' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}.  See the \strong{Details} section for more.
 #' @param anticipation a scalar that indicates the number of periods of potential anticipation effects. Default is 0.
 #' @param report.missing a logical which prints the location of missing values if present. The default value is \code{FALSE}.
+#' @param verbose if \code{TRUE} prints additional information in the console.
 #'
 #' @return
+#' The command returns an object of class 'scpi_data' containing the following
 #' \item{A}{a matrix containing pre-treatment features of the treated unit.}
 #' \item{B}{a matrix containing pre-treatment features of the control units.}
 #' \item{C}{a matrix containing covariates for adjustment.}
@@ -35,16 +47,16 @@
 #' \item{Y.donors}{a matrix containing the pre-treatment outcome of the control units.}
 #' \item{specs}{a list containing some specifics of the data:
 #' \itemize{
-#' \item{J, the number of control units}
-#' \item{K, a numeric vector with the number of covariates used for adjustment for each feature}
-#' \item{KM, the total number of covariates used for adjustment}
-#' \item{M, number of features}
-#' \item{period.pre, a numeric vector with the pre-treatment period}
-#' \item{period.post, a numeric vector with the post-treatment period}
-#' \item{T0.features, a numeric vector with the number of periods used in estimation for each feature}
-#' \item{T1.outcome, the number of post-treatment periods}
-#' \item{glob.cons, for internal use only}
-#' \item{out.in.features, for internal use only}}}
+#' \item{\code{J}, the number of control units}
+#' \item{\code{K}, a numeric vector with the number of covariates used for adjustment for each feature}
+#' \item{\code{KM}, the total number of covariates used for adjustment}
+#' \item{\code{M}, number of features}
+#' \item{\code{period.pre}, a numeric vector with the pre-treatment period}
+#' \item{\code{period.post}, a numeric vector with the post-treatment period}
+#' \item{\code{T0.features}, a numeric vector with the number of periods used in estimation for each feature}
+#' \item{\code{T1.outcome}, the number of post-treatment periods}
+#' \item{\code{glob.cons}, for internal use only}
+#' \item{\code{out.in.features}, for internal use only}}}
 #'
 #'
 #' @details
@@ -73,11 +85,13 @@
 #' }
 #' 
 #' @author
-#' \itemize{
-#' \item{Matias Cattaneo, }{Princeton University}
-#' \item{Yingjie Feng, }{Tsinghua University}
-#' \item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-#' \item{Rocio Titiunik, Princeton University}}
+#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#' 
+#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' 
+#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' 
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
 #' 
 #'
 #' @references
@@ -86,8 +100,8 @@
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
 #' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
-#' \item{\href{https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}.
-#' scpi - Uncertainty Quantification for Synthetic Control Estimators.}
+#' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+#' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
 #'}
 #'
 #' @seealso \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}
@@ -98,9 +112,9 @@
 #' 
 #' df <- scdata(df = data, id.var = "country", time.var = "year", 
 #'              outcome.var = "gdp", period.pre = (1960:1990), 
-#'              period.post = (1991:2013), unit.tr = "West Germany",
-#'              unit.co = unique(data$country)[-7], constant = T,
-#'              cointegrated.data = T)
+#'              period.post = (1991:2003), unit.tr = "West Germany",
+#'              unit.co = unique(data$country)[-7], constant = TRUE,
+#'              cointegrated.data = TRUE)
 #'
 #' @export
 
@@ -117,7 +131,8 @@ scdata <- function(df,
                    cointegrated.data = FALSE,
                    anticipation = 0,
                    constant = FALSE, 
-                   report.missing = FALSE) {
+                   report.missing = FALSE, 
+                   verbose = TRUE) {
 
   ############################################################################
   ############################################################################
@@ -523,7 +538,7 @@ scdata <- function(df,
     # Check that global constant is required by the user
     if (constant == TRUE) {
       P           <- cbind(P, rep(1, length(rows.tr.post)))
-      colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = F]), "0.constant")
+      colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = FALSE]), "0.constant")
     }
 
     # Add covariates used for adjustment in outcome variable equation (if present)
@@ -535,21 +550,21 @@ scdata <- function(df,
       if ("constant" %in% covs.adj) {
         covs.adj <- covs.adj[covs.adj != "constant"]
         P        <- cbind(P, rep(1, length(rows.tr.post)))
-        colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = F]), "1.constant")
+        colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = FALSE]), "1.constant")
       }
 
       if ("trend" %in% covs.adj) {
         covs.adj    <- covs.adj[covs.adj != "trend"]
         time.trend  <- period.post - period.pre[1] + 1  # It takes into account scattered data
         P           <- cbind(P, time.trend)
-        colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = F]), "1.trend")
+        colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = FALSE]), "1.trend")
       }
 
       rows.P <- which(data.bal[, "ID"] == unit.co[1] & data.bal[, "Time"] %in% period.post)
 
       P <- cbind(P, as.matrix(data.bal[rows.P, covs.adj]))
       if (length(covs.adj > 0)) {
-        colnames(P) <- c(colnames(P[,1 : (dim(P)[2]-length(covs.adj)), drop = F]), paste(1, covs.adj, sep = "."))
+        colnames(P) <- c(colnames(P[,1 : (dim(P)[2]-length(covs.adj)), drop = FALSE]), paste(1, covs.adj, sep = "."))
       }
     }
   }
@@ -571,12 +586,12 @@ scdata <- function(df,
   j3   <- j2
   if (is.null(C) == FALSE) j3   <- j2 + dim(C)[2]        # Columns of C
 
-  A.na           <- X.na[, 1:j1, drop = F]
-  B.na           <- X.na[, (j1+1):j2, drop  = F]
+  A.na           <- X.na[, 1:j1, drop = FALSE]
+  B.na           <- X.na[, (j1+1):j2, drop = FALSE]
   if (is.null(C) == TRUE) {
     C.na <- NULL
   } else {
-    C.na           <- X.na[, (j2+1):j3, drop = F]
+    C.na           <- X.na[, (j2+1):j3, drop = FALSE]
   }
   feature.na.vec <- feature.vec[select]
   time.na.vec    <- time.vec[select]
@@ -586,7 +601,7 @@ scdata <- function(df,
     if (dim(C.na)[2] == 1){
       colnames(C.na) <- c("0.constant")
     } else {
-      colnames(C.na) <- c("0.constant", colnames(C.na[,2:(dim(C.na)[2]), drop = F]))
+      colnames(C.na) <- c("0.constant", colnames(C.na[,2:(dim(C.na)[2]), drop = FALSE]))
     }
   }
   
@@ -600,104 +615,105 @@ scdata <- function(df,
   ############################################################################
   ############################################################################
   # Throw warnings for missing values
-  suggest <- 1 # Logical that controls messages with instructions
-
-  # Report missing values in pre-treatment period
-  if ((report.missing == TRUE) & (length(A.na) != length(A))) {
-
-    warning("Missing values detected in the pre-treatment period!\n", immediate. = T, call. = F)
-
-    # Report missing values in A
-    if (sum(is.na(A)) != 0) {
-      missing.A           <- data.frame("Feature" = feature.vec, "time" = time.vec)[is.na(A), ]
-
-      cat("Missing values detected in the following feature(s) of the treated unit:\n")
-      print(missing.A, quote = F, row.names = F, right = F)
-      cat("\n")
-
-    } else {
-      cat("The feature(s) of the treated unit do not contain missing values.")
-    }
-
-    # Report missing values in B
-
-    if (sum(is.na(B)) != 0) {
-      donor.missing    <- rowSums(is.na(B))
-      row.missing.B    <- donor.missing != 0
-      missing.B        <- data.frame("Feature" = feature.vec,
-                                     "time"    = time.vec,
-                                     "Num missing donors" = donor.missing)[row.missing.B, , drop = F]
-
-      cat("Missing values detected in the following feature(s) of the donor pool:\n")
-      print(missing.B, quote = F, row.names = F, right = F)
-      cat("\n")
-
-    } else {
-      print("The feature(s) of the control units do not contain missing values.")
-    }
-
-    # Report missing values in C
-
-    if (is.null(cov.adj) == FALSE) {
-      if (sum(is.na(C)) != 0) {
-        covs.used        <- all.covs[!all.covs %in% c("constant","trend")]
-        CC.vec           <- data.frame( "Covariate" = rep(covs.used, each = length(period.pre)),
-                                         "time"     = rep(period.pre, length(covs.used)),
-                                         "Aux"      = c(as.matrix(data.bal[rows.C, covs.used])))
-        missing.C        <- CC.vec[is.na(CC.vec[, 3]), (1:2)]
-
-        cat("Missing values detected in the following covariate(s) used for adjustment:\n")
-        print(missing.C, quote = F, row.names = F, right = F)
+  if (verbose) {
+    suggest <- 1 # Logical that controls messages with instructions
+    
+    # Report missing values in pre-treatment period
+    if ((report.missing == TRUE) & (length(A.na) != length(A))) {
+      
+      warning("Missing values detected in the pre-treatment period!\n", immediate. = TRUE, call. = FALSE)
+      
+      # Report missing values in A
+      if (sum(is.na(A)) != 0) {
+        missing.A           <- data.frame("Feature" = feature.vec, "time" = time.vec)[is.na(A), ]
+        
+        cat("Missing values detected in the following feature(s) of the treated unit:\n")
+        print(missing.A, quote = FALSE, row.names = FALSE, right = FALSE)
         cat("\n")
-
+        
       } else {
-        print("The covariate(s) used for adjustment do not contain missing values.")
+        cat("The feature(s) of the treated unit do not contain missing values.")
+      }
+      
+      # Report missing values in B
+      
+      if (sum(is.na(B)) != 0) {
+        donor.missing    <- rowSums(is.na(B))
+        row.missing.B    <- donor.missing != 0
+        missing.B        <- data.frame("Feature" = feature.vec,
+                                       "time"    = time.vec,
+                                       "Num missing donors" = donor.missing)[row.missing.B, , drop = FALSE]
+        
+        cat("Missing values detected in the following feature(s) of the donor pool:\n")
+        print(missing.B, quote = FALSE, row.names = FALSE, right = FALSE)
+        cat("\n")
+        
+      } else {
+        print("The feature(s) of the control units do not contain missing values.")
+      }
+      
+      # Report missing values in C
+      
+      if (is.null(cov.adj) == FALSE) {
+        if (sum(is.na(C)) != 0) {
+          covs.used        <- all.covs[!all.covs %in% c("constant","trend")]
+          CC.vec           <- data.frame( "Covariate" = rep(covs.used, each = length(period.pre)),
+                                          "time"     = rep(period.pre, length(covs.used)),
+                                          "Aux"      = c(as.matrix(data.bal[rows.C, covs.used])))
+          missing.C        <- CC.vec[is.na(CC.vec[, 3]), (1:2)]
+          
+          cat("Missing values detected in the following covariate(s) used for adjustment:\n")
+          print(missing.C, quote = FALSE, row.names = FALSE, right = FALSE)
+          cat("\n")
+          
+        } else {
+          print("The covariate(s) used for adjustment do not contain missing values.")
+        }
+      }
+      
+    } else if ((report.missing == FALSE) & (length(A.na) != length(A))) {
+      
+      warning("Missing values detected in the pre-treatment period!\n", immediate. = TRUE, call. = FALSE)
+      cat("If you want to see where the missing values are located re-run the command \n")
+      cat("with the option report.missing = TRUE.\n")
+      
+      suggest <- 0
+    }
+    
+    
+    # Report missing values in post-treatment period
+    if (sum(is.na(P)) != 0) {
+      warning("Missing values detected in the post-treatment period for some of the donors! Point estimate and prediction interval
+          will not be computed for some of the required periods if the estimated weight is non-zero!\n", immediate. = TRUE, call. = FALSE)
+      
+      if (report.missing == TRUE) {
+        missing.P <- period.post[rowSums(is.na(P)) != 0]
+        
+        cat(paste(c("Missing values detected in the data for post-treatment prediction in the following periods:\n",
+                    missing.P), collapse = " "))
+        
+      } else if (suggest == 1) {
+        cat("If you want to see where the missing values are located re-run the command \n")
+        cat("with the option report.missing = TRUE.\n")
       }
     }
-
-  } else if ((report.missing == FALSE) & (length(A.na) != length(A))) {
-
-    warning("Missing values detected in the pre-treatment period!\n", immediate. = T, call. = F)
-    cat("If you want to see where the missing values are located re-run the command \n")
-    cat("with the option report.missing = TRUE.\n")
-
-    suggest <- 0
-  }
-
-
-  # Report missing values in post-treatment period
-  if (sum(is.na(P)) != 0) {
-    warning("Missing values detected in the post-treatment period for some of the donors! Point estimate and prediction interval
-          will not be computed for some of the required periods if the estimated weight is non-zero!\n", immediate. = T, call. = F)
-
-    if (report.missing == TRUE) {
-      missing.P <- period.post[rowSums(is.na(P)) != 0]
-
-      cat(paste(c("Missing values detected in the data for post-treatment prediction in the following periods:\n",
-                    missing.P), collapse = " "))
-
-    } else if (suggest == 1) {
-      cat("If you want to see where the missing values are located re-run the command \n")
-      cat("with the option report.missing = TRUE.\n")
-    }
-  }
-  
-  if (sum(is.na(Y.post)) != 0) {
-    warning("Missing values detected in the post-treatment period for the treatment unit! Point estimate and prediction interval
-          will not be computed for some of the required periods!\n", immediate. = T, call. = F)
     
-    if (report.missing == TRUE) {
-      missing.Y <- period.post[is.na(Y.post) != 0]
+    if (sum(is.na(Y.post)) != 0) {
+      warning("Missing values detected in the post-treatment period for the treatment unit! Point estimate and prediction interval
+          will not be computed for some of the required periods!\n", immediate. = TRUE, call. = FALSE)
       
-      cat(paste(c("Missing values detected in the data for post-treatment prediction in the following periods:\n",
-                  missing.Y), collapse = " "))
-      
-    } else if (suggest == 1) {
-      cat("If you want to see where the missing values are located re-run the command \n")
-      cat("with the option report.missing = TRUE.\n")
+      if (report.missing == TRUE) {
+        missing.Y <- period.post[is.na(Y.post) != 0]
+        
+        cat(paste(c("Missing values detected in the data for post-treatment prediction in the following periods:\n",
+                    missing.Y), collapse = " "))
+        
+      } else if (suggest == 1) {
+        cat("If you want to see where the missing values are located re-run the command \n")
+        cat("with the option report.missing = TRUE.\n")
+      }
     }
-  }
-  
+  }  
 
   ############################################################################
   ############################################################################
@@ -733,7 +749,7 @@ scdata <- function(df,
     P            <- cbind(P, zeros)
   }
   
-  if (constant == T) {
+  if (constant == TRUE) {
     K <- K + 1
   }
 

@@ -3,9 +3,19 @@
 #' @description The command plots the actual pre-treatment and post-treatment series of the treated
 #' unit and the estimated counterfactual synthetic control unit with corresponding confidence intervals.
 #' Confidence intervals can take into account either in-sample uncertainty only or in-sample and
-#' out-of-sample uncertainty as developed in Cattaneo, Feng, and Titiunik (2021).
+#' out-of-sample uncertainty as developed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}}.
 #' The input object should come from the command \code{\link{scest}} or from the command \code{\link{scpi}}.
+#' 
+#' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 #'
+#' Companion commands are: \link{scdata} for data preparation, \link{scest} for point estimation, and \link{scpi} for inference procedures.
+#' 
+#' Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
+#' 
+#' \href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
+#' 
+#' For an introduction to synthetic control methods, see \href{https://economics.mit.edu/files/17847}{Abadie (2021)} and references therein. 
+#' 
 #' @param result a class `scpi_est' object, obtained by calling \code{\link{scest}}, or a class
 #' `scpi_pi' object, obtained by calling \code{\link{scpi}}
 #' @param fig.path a string indicating the path where the plot(s) should be saved.
@@ -28,19 +38,24 @@
 #' \item{plots}{a list containing standard ggplot object(s) that can be used for further customization.}
 #' 
 #' @author
-#' \itemize{
-#' \item{Matias Cattaneo, }{Princeton University}
-#' \item{Yingjie Feng, }{Tsinghua University}
-#' \item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-#' \item{Rocio Titiunik, Princeton University}}
+#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
 #' 
+#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' 
+#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' 
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+#'  
 #' @references
 #' \itemize{
+#' \item{\href{https://economics.mit.edu/files/17847}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
+#' \emph{Journal of Economic Literature}, 59(2), 391-425.}
 #' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.} 
-#' \item{\href{https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}.
-#' scpi - Uncertainty Quantification for Synthetic Control Estimators.}
+#' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022)},
+#' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
 #' }
+#' 
 #' @seealso \code{\link{scdata}}, \code{\link{scest}}, \code{\link{scpi}}
 #'
 #' @examples
@@ -49,9 +64,9 @@
 #' 
 #' df <- scdata(df = data, id.var = "country", time.var = "year", 
 #'              outcome.var = "gdp", period.pre = (1960:1990), 
-#'              period.post = (1991:2013), unit.tr = "West Germany",
-#'              unit.co = unique(data$country)[-7], constant = T,
-#'              cointegrated.data = T)
+#'              period.post = (1991:2003), unit.tr = "West Germany",
+#'              unit.co = unique(data$country)[-7], constant = TRUE,
+#'              cointegrated.data = TRUE)
 #'              
 #' result <- scest(df, w.constr = list(name = "simplex", Q = 1))
 #' 
@@ -60,7 +75,7 @@
 #' @export
 #'
 #'
-scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png",  e.out = T,  col.treated = "grey46", col.synth ="mediumblue",
+scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png",  e.out = TRUE,  col.treated = "grey46", col.synth ="mediumblue",
                     label.xy = NULL, plot.range = NULL, x.ticks = NULL, event.label = NULL, plot.specs = NULL,
                     save.data = NULL) {
 
@@ -69,17 +84,17 @@ scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png"
   }
   
   if (!is.null(fig.path)) {
-    if (is.character(fig.path) == F) stop("The object 'fig.path' should be a character!")
+    if (is.character(fig.path) == FALSE) stop("The object 'fig.path' should be a character!")
   }  
   
   if (!is.null(fig.name)) {
-    if (is.character(fig.name) == F) stop("The object 'fig.name' should be a character!")
+    if (is.character(fig.name) == FALSE) stop("The object 'fig.name' should be a character!")
   }  
   
-  if (is.character(fig.format) == F) stop("The object 'fig.format' should be a character!")
+  if (is.character(fig.format) == FALSE) stop("The object 'fig.format' should be a character!")
   
   if (!is.null(save.data)) {
-    if (is.character(save.data) == F) stop("The object 'save.data' should be a character!")
+    if (is.character(save.data) == FALSE) stop("The object 'save.data' should be a character!")
   }  
   
   
@@ -258,26 +273,26 @@ scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png"
 
     y.fit <- rbind(result$est.results$Y.pre.fit, result$est.results$Y.post.fit)
 
-    sc.l.0  <- result$inference.results$CI.in.sample[, 1, drop = F]
-    sc.r.0  <- result$inference.results$CI.in.sample[, 2, drop = F]
+    sc.l.0  <- result$inference.results$CI.in.sample[, 1, drop = FALSE]
+    sc.r.0  <- result$inference.results$CI.in.sample[, 2, drop = FALSE]
     
     if (e.method %in% c("all","gaussian")) {
-      sc.l.1  <- result$inference.results$CI.all.gaussian[, 1, drop = F]
-      sc.r.1  <- result$inference.results$CI.all.gaussian[, 2, drop = F]
+      sc.l.1  <- result$inference.results$CI.all.gaussian[, 1, drop = FALSE]
+      sc.r.1  <- result$inference.results$CI.all.gaussian[, 2, drop = FALSE]
     } else {
       sc.l.1 <- sc.r.1 <- rep(NA, length(period.post))
     }
     
     if (e.method %in% c("all","ls")) {
-      sc.l.2  <- result$inference.results$CI.all.ls[, 1, drop = F]
-      sc.r.2  <- result$inference.results$CI.all.ls[, 2, drop = F]
+      sc.l.2  <- result$inference.results$CI.all.ls[, 1, drop = FALSE]
+      sc.r.2  <- result$inference.results$CI.all.ls[, 2, drop = FALSE]
     } else {
       sc.l.2 <- sc.r.2 <- rep(NA, length(period.post))
     }
     
     if (e.method %in% c("all","qreg")) {
-      sc.l.3  <- result$inference.results$CI.all.qreg[, 1, drop = F]
-      sc.r.3  <- result$inference.results$CI.all.qreg[, 2, drop = F]
+      sc.l.3  <- result$inference.results$CI.all.qreg[, 1, drop = FALSE]
+      sc.r.3  <- result$inference.results$CI.all.qreg[, 2, drop = FALSE]
     } else {
       sc.l.3 <- sc.r.3 <- rep(NA, length(period.post))
     }

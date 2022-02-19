@@ -26,6 +26,13 @@ def scplot(result,
            save_data=None):
 
     '''
+    The command implements several Synthetic Control plots. The command is designed to be called after scest or scpi
+    which implement estimation and inference procedures for Synthetic Control methods using least sqares, lasso,
+    ridge, or simplex-type constraints according to Cattaneo, Feng, and Titiunik (2021).
+
+    Companion Stata and R packages are described in Cattaneo, Feng, Palomba, and Titiunik (2022).
+
+    For an introduction to synthetic control methods, see Abadie (2021) and references therein.
 
     Parameters
     ----------
@@ -68,11 +75,14 @@ def scplot(result,
 
     References
     ----------
+    Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
+    Aspects,” Journal of Economic Literature, 59, 391-425.
+
     Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control
     Methods,” Journal of the American Statistical Association, 116, 1865-1880.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in
-    Synthetic Controls with Staggered Treatment Adoption,” working paper.
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
+    Synthetic Control Estimators”.
 
     See Also
     --------

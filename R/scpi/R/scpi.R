@@ -2,10 +2,20 @@
 
 #' @title Prediction Intervals for Synthetic Control Methods
 #'
-#' @description The command constructs a counterfactual synthetic control unit as proposed in Cattaneo, Feng,
-#' and Titiunik (2021). \code{\link{scpi}} returns the estimated post-treatment series for the synthetic unit through the
-#' command \code{\link{scest}} and quantifies in-sample and out-of-sample uncertainty to provide confidence intervals
+#' @description The command implements estimation and inference procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints according to
+#'  \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}} returns the estimated 
+#' post-treatment series for the synthetic unit through the command \code{\link{scest}} and quantifies in-sample and out-of-sample uncertainty to provide confidence intervals
 #' for each point estimate.
+#' 
+#' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+#'
+#' Companion commands are: \link{scdata} for data preparation, \link{scest} for point estimation, and \link{scplot} for plots.
+#' 
+#' Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
+#' 
+#' \href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
+#' 
+#' For an introduction to synthetic control methods, see \href{https://economics.mit.edu/files/17847}{Abadie (2021)} and references therein. 
 #'
 #' @param data a class `scpi_data' object, obtained by calling \code{\link{scdata}}.
 #'
@@ -50,20 +60,76 @@
 #' @param w.bounds a \eqn{T_1\times 2} matrix with the user-provided bounds on \eqn{\beta}. If \code{w.bounds} is provided, then
 #' the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 #' by filling the other column with \code{NA}s.
-#' @param e.bounds a \eqn{T_1\times 2} matrix with the user-provided bounds on \eqn{\mathbf{e}}. If \code{e.bounds} is provided, then
+#' @param e.bounds a \eqn{T_1\times 2} matrix with the user-provided bounds on \eqn{(\widehat{\mathbf{w}},\widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
 #' the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 #' by filling the other column with \code{NA}s.
-#' @param opt.list.est a list specifying the stopping criteria and the algorithm for the underlying optimizer \code{\link{nloptr}} for point estimation.  
+#' @param opt.list.est a list specifying the stopping criteria and the algorithm for the underlying optimizer \code{\link{nloptr}} or \code{\link{CVXR}} for point estimation.  
 #' See the \strong{Details} section for more. 
 #' @param opt.list.inf similar to the previous one but for the optimizer used for inference purposes. See the \strong{Details} section for more. 
 #'  
 #' @param save.data a character specifying the name and the path of the saved dataframe containing the processed data used to produce the plot. 
-
+#' 
+#' @param verbose if \code{TRUE} prints additional information in the console.
+#' 
 #' @return
-#' \item{data}{object containing used data as returned by \code{\link{scdata}} and some other values.}
-#' \item{est.results}{object containing all the results from \code{\link{scest}}.}
-#' \item{inference.results}{object containing all the inference-related results.}
-#'
+#' The function returns an object of class 'scpi_scpi' containing three lists. The first list is labeled 'data' and contains used data as returned by \code{\link{scdata}} and some other values.
+#' \item{A}{a matrix containing pre-treatment features of the treated unit.}
+#' \item{B}{a matrix containing pre-treatment features of the control units.}
+#' \item{C}{a matrix containing covariates for adjustment.}
+#' \item{P}{a matrix whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.}
+#' \item{Y.pre}{a matrix containing the pre-treatment outcome of the treated unit.}
+#' \item{Y.post}{a matrix containing the post-treatment outcome of the treated unit.}
+#' \item{Y.donors}{a matrix containing the pre-treatment outcome of the control units.}
+#' \item{specs}{a list containing some specifics of the data:
+#' \itemize{
+#' \item{\code{J}, the number of control units}
+#' \item{\code{K}, a numeric vector with the number of covariates used for adjustment for each feature}
+#' \item{\code{KM}, the total number of covariates used for adjustment}
+#' \item{\code{M}, number of features}
+#' \item{\code{period.pre}, a numeric vector with the pre-treatment period}
+#' \item{\code{period.post}, a numeric vector with the post-treatment period}
+#' \item{\code{T0.features}, a numeric vector with the number of periods used in estimation for each feature}
+#' \item{\code{T1.outcome}, the number of post-treatment periods}
+#' \item{\code{glob.cons}, for internal use only}
+#' \item{\code{out.in.features}, for internal use only}}}
+#' 
+#' The second list is labeled 'est.results' containing all the results from \code{\link{scest}}.
+#' \item{w}{a matrix containing the estimated weights of the donors.}
+#' \item{r}{a matrix containing the values of the covariates used for adjustment.}
+#' \item{b}{a matrix containing \eqn{\mathbf{w}} and \eqn{\mathbf{r}}.}
+#' \item{Y.pre.fit}{a matrix containing the estimated pre-treatment outcome of the SC unit.}
+#' \item{Y.post.fit}{a matrix containing the estimated post-treatment outcome of the SC unit.}
+#' \item{A.hat}{a matrix containing the predicted values of the features of the treated unit.}
+#' \item{res}{a matrix containing the residuals \eqn{\mathbf{A}-\widehat{\mathbf{A}}}.}
+#' \item{V}{a matrix containing the weighting matrix used in estimation.}
+#' \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
+#' 
+#' The third list is labeled 'inference.results' and contains all the inference-related results.
+#' \item{CI.in.sample}{a matrix containing the prediction intervals taking only in-sample uncertainty in to account.}
+#' \item{CI.all.gaussian}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with sub-Gaussian bounds.}
+#' \item{CI.all.ls}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with a location-scale model.}
+#' \item{CI.all.qreg}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with quantile regressions.}
+#' \item{Sigma}{a matrix containing the estimated (conditional) variance-covariance \eqn{\boldsymbol{\Sigma}}.}
+#' \item{u.mean}{a matrix containing the estimated (conditional) mean of the pseudo-residuals \eqn{u}.}
+#' \item{u.var}{a matrix containing the estimated (conditional) variance-covariance of the pseudo-residuals \eqn{u}.}
+#' \item{e.mean}{a matrix containing the estimated (conditional) mean of the out-of-sample error \eqn{e}.}
+#' \item{e.var}{a matrix containing the estimated (conditional) variance of the out-of-sample error \eqn{e}.}
+#' \item{u.missp}{a logical indicating whether the model has been treated as misspecified or not.}
+#' \item{u.lags}{an integer containing the number of lags in B used in predicting moments of the pseudo-residuals \eqn{u}.}
+#' \item{u.order}{an integer containing the order of the polynomial in B used in predicting moments of the pseudo-residuals \eqn{u}.}
+#' \item{u.sigma}{a string indicating the estimator used for \code{Sigma}.}
+#' \item{u.user}{a logical indicating whether the design matrix to predict moments of \eqn{u} was user-provided.}
+#' \item{e.method}{a string indicating the specification used to predict moments of the out-of-sample error \eqn{e}.}
+#' \item{e.lags}{an integer containing the number of lags in B used in predicting moments of the out-of-sample error \eqn{e}.}
+#' \item{e.order}{an integer containing the order of the polynomial in B used in predicting moments of the out-of-sample error \eqn{e}.}
+#' \item{e.user}{a logical indicating whether the design matrix to predict moments of \eqn{e} was user-provided.}
+#' \item{rho}{an integer specifying the estimated regularizing parameter that imposes sparsity on the estimated vector of weights.}
+#' \item{u.alpha}{a scalar indicating the confidence level used for in-sample uncertainty.}
+#' \item{e.alpha}{a scalar indicating the confidence level used for out-of-sample uncertainty.}
+#' \item{sims}{an integer indicating the number of simulations used in quantifying in-sample uncertainty.}
+#' \item{failed.sims}{a matrix containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.}
+#' 
+#'  
 #' @details
 #' \itemize{
 #' \item{\strong{Estimation of Weights.} \code{w.constr} specifies the constraint set on the weights. First, the element
@@ -132,29 +198,29 @@
 #' (\code{algorithm = 'NLOPTR_LD_SLSQP'}) for all cases not involving the L1 norm. 
 #' For a complete list of algorithms see \href{https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/}{the official \code{nloptr} documentation}.
 #' The other default values are \code{maxeval = 5000}, \code{ftol_res = 1.0e-8}, \code{ftol_abs = 1.0e-8}, \code{xtol_res = 1.0e-8}, \code{xtol_abs = 1.0e-8},
-#' \code{tol_constraints_eq = 1.0e-8}, and \code{tol_constraints_ineq = 1.0e-8}. More information on the stopping criteria can be obtained running
+#' \code{tol_constraints_eq = 1.0e-8}, and, finally, \code{tol_constraints_ineq = 1.0e-8}. More information on the stopping criteria can be obtained running
 #' \code{nloptr.print.options()} or \code{nloptr.get.default.options()}. If the optimization involves the L1 norm then \code{CVXR} is used for optimization.  
 #' More information on the stopping criteria can be obtained reading \href{https://cvxr.rbind.io/}{the official documentation}. }
 #' }
 #' 
 #' @author
-#' \itemize{
-#' \item{Matias Cattaneo, }{Princeton University}
-#' \item{Yingjie Feng, }{Tsinghua University}
-#' \item{Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.}
-#' \item{Rocio Titiunik, Princeton University}}
+#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
 #' 
+#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' 
+#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' 
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
 #'
-#'
-#' @references
 #' @references
 #' \itemize{
 #' \item{\href{https://economics.mit.edu/files/17847}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
 #' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
-#' \item{\href{https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}.
-#' scpi - Uncertainty Quantification for Synthetic Control Estimators.}}
+#' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+#' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
+#' }
 #'
 #' @seealso \code{\link{scdata}}, \code{\link{scest}}, \code{\link{scplot}}
 #'
@@ -164,41 +230,43 @@
 #' 
 #' df <- scdata(df = data, id.var = "country", time.var = "year", 
 #'              outcome.var = "gdp", period.pre = (1960:1990), 
-#'              period.post = (1991:2013), unit.tr = "West Germany",
-#'              unit.co = unique(data$country)[-7], constant = T,
-#'              cointegrated.data = T)
+#'              period.post = (1991:2003), unit.tr = "West Germany",
+#'              unit.co = unique(data$country)[-7], constant = TRUE,
+#'              cointegrated.data = TRUE)
 #'              
-#' result <- scpi(df, w.constr = list(name = "simplex", Q = 1))
-#' result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1))
+#' result <- scpi(df, w.constr = list(name = "simplex", Q = 1), cores = 1, sims = 10)
+#' result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1),
+#'                cores = 1, sims = 10)
 #'                            
 #' @export
 
 scpi  <- function(data,
-                  w.constr  = NULL,
-                  V         = NULL,
-                  P         = NULL,
-                  u.missp   = TRUE,
-                  u.sigma   = "HC1",
-                  u.order   = 1,
-                  u.lags    = 0,
-                  u.design  = NULL,
-                  u.alpha   = 0.05,
-                  e.method  = "all",
-                  e.order   = 1,
-                  e.lags    = 0,
-                  e.design  = NULL,
-                  e.alpha   = 0.05,
-                  sims      = 200,
-                  rho       = NULL,
-                  rho.max   = NULL,
-                  cores     = NULL,
-                  plot      = FALSE,
-                  plot.name = NULL,
-                  w.bounds  = NULL,
-                  e.bounds  = NULL,
+                  w.constr     = NULL,
+                  V            = NULL,
+                  P            = NULL,
+                  u.missp      = TRUE,
+                  u.sigma      = "HC1",
+                  u.order      = 1,
+                  u.lags       = 0,
+                  u.design     = NULL,
+                  u.alpha      = 0.05,
+                  e.method     = "all",
+                  e.order      = 1,
+                  e.lags       = 0,
+                  e.design     = NULL,
+                  e.alpha      = 0.05,
+                  sims         = 200,
+                  rho          = NULL,
+                  rho.max      = NULL,
+                  cores        = NULL,
+                  plot         = FALSE,
+                  plot.name    = NULL,
+                  w.bounds     = NULL,
+                  e.bounds     = NULL,
                   opt.list.est = NULL,
                   opt.list.inf = NULL,
-                  save.data = NULL) {
+                  save.data    = NULL,
+                  verbose      = TRUE) {
 
 
   if (class(data)[1] != "scpi_data") {
@@ -208,8 +276,10 @@ scpi  <- function(data,
   #############################################################################
   #############################################################################
   ## Estimation of synthetic weights
-  cat("---------------------------------------------------------------\n")
-  cat("Estimating Weights...\n")
+  if (verbose) {
+    cat("---------------------------------------------------------------\n")
+    cat("Estimating Weights...\n")
+  }
   sc.pred <- scest(data = data, w.constr = w.constr, V = V, opt.list = opt.list.est)
 
 
@@ -346,12 +416,13 @@ scpi  <- function(data,
     }
   } else {
     cores <- detectCores(logical = TRUE) - 1
-    warning(paste("scpi is using",cores,"cores for estimation! You can adjust the number of cores with the 'cores' option."), immediate. = T, call. = F)
+    warning(paste("scpi is using",cores,"cores for estimation! You can adjust the number of cores with the 'cores' option."), immediate. = TRUE, call. = FALSE)
   }
   
-  cat("Quantifying Uncertainty\n")
-  executionTime(T0, J, T1, sims, cores, w.constr[['name']])
-  
+  if (verbose) {
+    cat("Quantifying Uncertainty\n")
+    executionTime(T0, J, T1, sims, cores, w.constr[['name']])
+  }
   
   #############################################################################
   #############################################################################
@@ -360,7 +431,7 @@ scpi  <- function(data,
   #############################################################################
   
   ## Regularize W and local geometry
-  loc.geom <- local.geom(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, w)
+  loc.geom <- local.geom(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, w, verbose)
   
   w.star       <- loc.geom$w.star
   index.w      <- loc.geom$index.w
@@ -402,11 +473,11 @@ scpi  <- function(data,
   j5 <- j4 + 1
   j6 <- ncol(XX) - 1
   
-  A.na       <- XX[, j1, drop = F]
-  res.na     <- XX[, j2, drop = F]
-  u.des.0.na <- XX[, j3:j4, drop = F]
-  Z.na       <- XX[, j5:j6, drop = F]
-  f.id.na    <- XX[, ncol(XX), drop = F]
+  A.na       <- XX[, j1, drop = FALSE]
+  res.na     <- XX[, j2, drop = FALSE]
+  u.des.0.na <- XX[, j3:j4, drop = FALSE]
+  Z.na       <- XX[, j5:j6, drop = FALSE]
+  f.id.na    <- XX[, ncol(XX), drop = FALSE]
   
   active.features <- rowSums(is.na(X)) == 0
   V.na <- V[active.features, active.features]
@@ -417,8 +488,8 @@ scpi  <- function(data,
   # Remove NA - Out of Sample Uncertainty
   X  <- cbind(e.res, e.des.0)
   XX <- na.omit(X)
-  e.res.na   <- XX[, 1, drop = F]
-  e.des.0.na <- XX[, -1, drop = F]
+  e.res.na   <- XX[, 1, drop = FALSE]
+  e.des.0.na <- XX[, -1, drop = FALSE]
 
   
   ############################################################################
@@ -434,7 +505,7 @@ scpi  <- function(data,
     
     u.des.0.na <- DUflexGet(u.des.0.na, C, f.id.na, M)
     
-    if (nrow(u.des.0.na) <= ncol(u.des.0.na) ) {
+    if ((nrow(u.des.0.na) <= ncol(u.des.0.na)) & verbose) {
       warning("Consider specifying a less complicated model for u. The number of observations used
          to parametrically predict moments is smaller than the number of covariates used. Consider reducing either the number
          of lags (u.lags) or the order of the polynomial (u.order)!")
@@ -485,7 +556,7 @@ scpi  <- function(data,
       
       for (sim in seq_len(sims)) {
         rem <- sim %% iters
-        if (rem == 0) {
+        if ((rem == 0) & verbose) {
           perc <- perc + 10
           cat(paste(sim,"/",sims," iterations completed (",perc,"%)"," \r", sep = ""))
           utils::flush.console()
@@ -512,7 +583,7 @@ scpi  <- function(data,
       
       progress <- function(n) {
         rem <- n %% iters
-        if (rem == 0) {
+        if ((rem == 0) & verbose) {
           perc <- n/sims*100
           cat(paste(n,"/",sims," iterations completed (",perc,"%)"," \r", sep = ""))
           utils::flush.console()
@@ -557,30 +628,30 @@ scpi  <- function(data,
   }
   
   if (w.lb.est == TRUE) {
-    w.lb    <- apply(vsig[, 1:jj, drop = F], 2, quantile, probs = u.alpha/2, na.rm = TRUE)
-    fail.lb <- apply(vsig[, 1:jj, drop = F], 2, function(x) sum(is.na(x))/sims*100)
+    w.lb    <- apply(vsig[, 1:jj, drop = FALSE], 2, quantile, probs = u.alpha/2, na.rm = TRUE)
+    fail.lb <- apply(vsig[, 1:jj, drop = FALSE], 2, function(x) sum(is.na(x))/sims*100)
   } else {
     w.lb     <- w.bounds[,1]
     fail.lb  <- rep(0, length(w.bounds[,1]))
   }
     
   if (w.ub.est == TRUE) {
-    w.ub    <- apply(vsig[, (jj+1):(2*jj), drop = F], 2, quantile, probs = (1-u.alpha/2), na.rm = TRUE)
-    fail.ub <- apply(vsig[, (jj+1):(2*jj), drop = F], 2, function(x) sum(is.na(x))/sims*100)
+    w.ub    <- apply(vsig[, (jj+1):(2*jj), drop = FALSE], 2, quantile, probs = (1-u.alpha/2), na.rm = TRUE)
+    fail.ub <- apply(vsig[, (jj+1):(2*jj), drop = FALSE], 2, function(x) sum(is.na(x))/sims*100)
   } else {
     w.ub     <- w.bounds[,2]
     fail.ub  <- rep(0, length(w.bounds[,2]))
   }
-  failed_sims <- rbind(fail.lb, fail.ub)
-  rownames(failed_sims) <- c("lb","ub")
+  failed.sims <- rbind(fail.lb, fail.ub)
+  rownames(failed.sims) <- c("lb","ub")
   cat("\n")
   
-  if (sum(failed_sims) > 0.1*sims*ncol(vsig)) {
+  if ((sum(failed.sims) > 0.1*sims*ncol(vsig)) & verbose) {
     warning("For some of the simulations used to quantify in-sample uncertainty the solution of the optimization problem 
             was not found! We suggest inspecting the magnitude of this issue by consulting the percentage of simulations
-            that failed contained in YOUR_SCPI_OBJECT_NAME$inference.results$failed_sims. In case the number of 
+            that failed contained in YOUR_SCPI_OBJECT_NAME$inference.results$failed.sims. In case the number of 
             unsuccessful simulations is high, you might want to consider switching the solver or changing the 
-            stopping criteria of the algorithm through the option 'opt.list.inf'.", call. = F)
+            stopping criteria of the algorithm through the option 'opt.list.inf'.", call. = FALSE)
   }
 
   ## Adjust for missing values
@@ -622,11 +693,11 @@ scpi  <- function(data,
 
   if (e.method == "gaussian" | e.method == "all") {
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1, e.method = "gaussian", alpha = e.alpha/2,
-                       e.lb.est = e.lb.est, e.ub.est =  e.ub.est)
+                       e.lb.est = e.lb.est, e.ub.est =  e.ub.est, verbose = verbose)
     
     # Overwrite with user's input
-    if (e.lb.est == F) pi.e$lb <- e.bounds[, 1]
-    if (e.ub.est == F) pi.e$ub <- e.bounds[, 2]
+    if (e.lb.est == FALSE) pi.e$lb <- e.bounds[, 1]
+    if (e.ub.est == FALSE) pi.e$ub <- e.bounds[, 2]
     
     sc.l.1 <- sc.l.0 + pi.e$lb
     sc.r.1 <- sc.r.0 + pi.e$ub
@@ -637,11 +708,11 @@ scpi  <- function(data,
 
   if (e.method == "ls" | e.method == "all") {
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1, e.method = "ls", alpha = e.alpha/2,
-                       e.lb.est = e.lb.est, e.ub.est =  e.ub.est)
+                       e.lb.est = e.lb.est, e.ub.est =  e.ub.est, verbose = verbose)
     
     # Overwrite with user's input
-    if (e.lb.est == F) pi.e$lb <- e.bounds[, 1]
-    if (e.ub.est == F) pi.e$ub <- e.bounds[, 2]
+    if (e.lb.est == FALSE) pi.e$lb <- e.bounds[, 1]
+    if (e.ub.est == FALSE) pi.e$ub <- e.bounds[, 2]
 
     sc.l.2 <- sc.l.0 + pi.e$lb
     sc.r.2 <- sc.r.0 + pi.e$ub
@@ -657,8 +728,8 @@ scpi  <- function(data,
       ub <- quantile(e.res.na, 1-e.alpha/2)
       
       # Overwrite with user's input
-      if (e.lb.est == F) lb <- e.bounds[, 1]
-      if (e.ub.est == F) ub <- e.bounds[, 2]
+      if (e.lb.est == FALSE) lb <- e.bounds[, 1]
+      if (e.ub.est == FALSE) ub <- e.bounds[, 2]
       
       sc.l.3 <- sc.l.0 + lb
       sc.r.3 <- sc.r.0 + ub
@@ -666,11 +737,11 @@ scpi  <- function(data,
       
     } else {
       pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1, e.method = "qreg", alpha = e.alpha/2,
-                         e.lb.est = e.lb.est, e.ub.est =  e.ub.est)
+                         e.lb.est = e.lb.est, e.ub.est =  e.ub.est, verbose = verbose)
 
       # Overwrite with user's input
-      if (e.lb.est == F) pi.e$lb <- e.bounds[, 1]
-      if (e.ub.est == F) pi.e$ub <- e.bounds[, 2]
+      if (e.lb.est == FALSE) pi.e$lb <- e.bounds[, 1]
+      if (e.ub.est == FALSE) pi.e$ub <- e.bounds[, 2]
       
       sc.l.3 <- sc.l.0 + pi.e$lb
       sc.r.3 <- sc.r.0 + pi.e$ub
@@ -733,7 +804,7 @@ scpi  <- function(data,
                               u.alpha         = u.alpha,
                               e.alpha         = e.alpha,
                               sims            = sims,
-                              failed_sims     = failed_sims)
+                              failed.sims     = failed.sims)
 
 
   result <- list( data               = sc.pred$data,
