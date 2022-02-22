@@ -21,10 +21,17 @@ pip install scpi_pkg
 
 ## R Implementation
 
-To install/update in R type:
+To install/update in R from Github type:
+```
+library(devtools)
+devtools::install_github("nppackages/scpi/R/scpi")
+```
+
+To install/update in R from CRAN type:
 ```
 install.packages('scpi')
-```
+````
+
 
 - Help: [R Manual](R/scpi.pdf), [CRAN repository](https://cran.r-project.org/package=scpi).
 
