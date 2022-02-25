@@ -495,11 +495,6 @@ def u_sigma_est(u_mean, u_sigma, res, Z, V, index, TT, M, df):
 
 def cond_pred(y, x, xpreds, method, tau=None):
 
-    if len(x) <= len(x.columns):
-        warnings.warn("Consider specifying a less complicated model for e. The number of observations used " +
-                      "to parametrically predict moments is smaller than the number of covariates used. Consider " +
-                      "reducing either the number of lags (e_lags) or the order of the polynomial (e_order)!")
-
     if method == 'lm':
         pred = xpreds.dot(sm.OLS(y, x, missing='drop').fit().params)
 

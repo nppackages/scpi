@@ -162,12 +162,14 @@ def scplot(result,
         return plot
 
     elif class_input == 'scpi_output':
+
         if e_method is None:
             e_method = result.e_method
-        elif e_method == 'all':
+
+        if e_method == 'all':
             e_method = 'qreg'
         else:
-            if not e_method == result.e_method:
+            if not e_method == result.e_method and not result.e_method == 'all':
                 raise Exception("Make sure that e_method is the same as the one in scpi!")
 
         sc_l_0 = result.CI_in_sample.iloc[:, [0]].to_numpy()

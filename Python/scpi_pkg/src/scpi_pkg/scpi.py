@@ -633,6 +633,12 @@ def scpi(data,
         if sum(numpy.isnan(e_bounds[1])) == len(Y_post_fit):
             e_ub_est = False
 
+    if e_lb_est is True or e_ub_est is True:
+        if len(e_des_0_na) <= len(e_des_0_na.columns):
+            warnings.warn("Consider specifying a less complicated model for e. The number of observations used " +
+                          "to parametrically predict moments is smaller than the number of covariates used. Consider " +
+                          "reducing either the number of lags (e_lags) or the order of the polynomial (e_order)!")
+
     if e_method == 'gaussian' or e_method == 'all':
         e_lb, e_ub, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                         e_method="gaussian", alpha=e_alpha / 2,
