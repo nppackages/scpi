@@ -59,125 +59,115 @@ def scdata(df,
            constant=False,
            report_missing=False):
 
-    '''
-
-    The command prepares the data to be used by scest or scpi for point estimation and inference procedures using
-    Synthetic Control.
-    It allows the user to specify the outcome variable, the features of the treated unit to be
-    matched, and covariate-adjustment feature by feature. The names of the output matrices
-    follow the notation proposed in Cattaneo, Feng, and Titiunik (2021).
-
-    Companion Stata and R packages are described in Cattaneo, Feng, Palomba, and Titiunik (2022).
-
-    For an introduction to synthetic control methods, see Abadie (2021) and references therein.
-
+    """
     Parameters
     ----------
-     df
-     a pandas.dataframe object.
+     df : pandas.DataFrame
+        a dataframe object containing the data to be processed
 
-     id_var
-     a character with the name of the variable containing units' IDs. The ID variable can be numeric or string.
+     id_var : str
+        a character with the name of the variable containing units' IDs
 
-     time_var
-     a character with the name of the time variable. The time variable has to be numpy.int64, or one of
-     pandas.Timestamp and numpy.datetime64. Input a numeric time variable is suggested when working with yearly
-     data, whereas for all other frequencies either pandas.Timestamp or numpy.datetime64 types are preferred.
+     time_var : str
+        a character with the name of the time variable. The time variable has to be numpy.int64, or one of
+        pandas.Timestamp and numpy.datetime64. Input a numeric time variable is suggested when working with
+        yearly data, whereas for all other frequencies either pandas.Timestamp or numpy.datetime64 types are preferred.
 
-     outcome_var
-     a character with the name of the outcome variable. The outcome variable has to be numeric.
+     outcome_var : str
+        a character with the name of the outcome variable. The outcome variable has to be numeric.
 
-     period_pre
-     a numeric vector that identifies the pre-treatment period in time_var.
+     period_pre : array
+        a numeric vector that identifies the pre-treatment period in time_var.
 
-     period_post
-     a numeric vector that identifies the post-treatment period in time_var.
+     period_post : array
+         a numeric vector that identifies the post-treatment period in time_var.
 
-     unit_tr
-     a scalar that identifies the treated unit in id_var.
+     unit_tr : int
+         a scalar that identifies the treated unit in id_var.
 
-     unit_co
-     a numeric vector that identifies the donor pool in id_var.
+     unit_co : array
+         a numeric vector that identifies the donor pool in id_var.
 
-     features
-     a character lsit containing the name of the feature variables used for estimation.
-     If this option is not specified the default is features = outcome_var.
+     features : list
+         a character list containing the name of the feature variables used for estimation.
+        If this option is not specified the default is features = outcome_var.
 
-     cov_adj
-     a list specifying the names of the covariates to be used for adjustment for each feature. If the user wants
-     to specify the same set of covariates for all features, a single list should be provided. If instead a
-     different set of covariates per feature has to be specified, then a list of lists should be provided. Note that
-     in this latter case the number of sub-lists must be equal to the number of features. Moreover, the order of the
-     sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates for the first
-     feature, and so on. Finally, the user can specify 'constant' and 'trend' as covariates even if they are not
-     present in the loaded dataframe.
+     cov_adj : list
+        a list specifying the names of the covariates to be used for adjustment for each feature. If the user wants
+        to specify the same set of covariates for all features, a single list should be provided. If instead a
+        different set of covariates per feature has to be specified, then a list of lists should be provided. Note that
+        in this latter case the number of sub-lists must be equal to the number of features. Moreover, the order of the
+        sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates for the first
+        feature, and so on. Finally, the user can specify 'constant' and 'trend' as covariates even if they are not
+        present in the loaded dataframe.
 
-     constant
-     a logical which controls the inclusion of a constant term across features. The default value is False.
+     constant : bool, default False
+         a logical which controls the inclusion of a constant term across features. The default value is False.
 
-     cointegrated_data
-     a logical that indicates if there is a belief that the data is cointegrated or not. The default value is False.
-     See the Details section for more.
+     cointegrated_data : bool, default False
+        a logical that indicates if there is a belief that the data is cointegrated or not. The default value is False.
+        See the Details section for more.
 
-     anticipation
-     a scalar that indicates the number of periods of potential anticipation effects. Default is 0.
+     anticipation : int
+        a scalar that indicates the number of periods of potential anticipation effects. Default is 0.
 
-     report_missing
-     a logical which prints the location of missing values if present. The default value is False.
+     report_missing : bool, default False
+        a logical which prints the location of missing values if present. The default value is False.
 
     Returns
     -------
+    The function returns an object of class `scdata_output' containing the following objects
 
-    A
-    a dataframe containing pre-treatment features of the treated unit.
+    A : pandas.DataFrame
+        a dataframe containing pre-treatment features of the treated unit.
 
-    B
-    a dataframe containing pre-treatment features of the control units.
+    B : pandas.DataFrame
+        a dataframe containing pre-treatment features of the control units.
 
-    C
-    a dataframe containing covariates for adjustment.
+    C : pandas.DataFrame
+        a dataframe containing covariates for adjustment.
 
-    P
-    a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.
+    P : pandas.DataFrame
+        a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.
 
-    Y_pre
-    a dataframe containing the pre-treatment outcome of the treated unit.
+    Y_pre : pandas.DataFrame
+        a dataframe containing the pre-treatment outcome of the treated unit.
 
-    Y_post
-    a dataframe containing the post-treatment outcome of the treated unit.
+    Y_post : pandas.DataFrame
+        a dataframe containing the post-treatment outcome of the treated unit.
 
-    Y_donors
-    a dataframe containing the pre-treatment outcome of the control units.
+    Y_donors : pandas.DataFrame
+        a dataframe containing the pre-treatment outcome of the control units.
 
-    J
-    the number of control units
+    J : int
+        the number of control units
 
-    K
-    a numeric array with the number of covariates used for adjustment for each feature
+    K : array
+        a numeric array with the number of covariates used for adjustment for each feature
 
-    KM
-    the total number of covariates used for adjustment
+    KM : int
+        the total number of covariates used for adjustment
 
-    M
-    number of features
+    M : int
+        number of features
 
-    period_pre
-    a numeric array with the pre-treatment period
+    period_pre : array
+        a numeric array with the pre-treatment period
 
-    period_post
-    a numeric array with the post-treatment period
+    period_post : array
+        a numeric array with the post-treatment period
 
-    T0_features
-    a numeric array with the number of periods used in estimation for each feature
+    T0_features : array
+        a numeric array with the number of periods used in estimation for each feature
 
-    T1_outcome
-    the number of post-treatment periods
+    T1_outcome : int
+        the number of post-treatment periods
 
-    glob_cons
-    for internal use only
+    glob_cons : bool
+        for internal use only
 
-    out_in_features
-    for internal use only
+    out_in_features : bool
+        for internal use only
 
     References
     ----------
@@ -194,7 +184,7 @@ def scdata(df,
     --------
     scest, scpi, scplot
 
-    '''
+    """
     # Check main input is a dataframe
     if not isinstance(df, pandas.DataFrame):
         raise Exception('Data input should be a dataframe object!')

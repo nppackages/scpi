@@ -32,7 +32,7 @@ print.scpi <- function(x, ...) {
   if (is.null(args[['already.est']])) {print_est <- TRUE} else {print_est <- FALSE}
   
   e.method  <- x$inference.results$e.method
-  Y.tr.post <- x$data$Y.post
+  Y.tr.post <- round(x$data$Y.post, 3)
   Y.sc.post <- round(x$est.results$Y.post.fit, 3)
   colnames(Y.tr.post) <- "Treated"
   colnames(Y.sc.post) <- "Synthetic"

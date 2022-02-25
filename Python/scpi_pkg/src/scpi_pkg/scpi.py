@@ -47,271 +47,269 @@ def scpi(data,
          pass_stata=False):
 
     '''
-    The command implements estimation and inference procedures for Synthetic Control methods using least squares,
-    lasso, ridge, or simplex-type constraints according to Cattaneo, Feng, and Titiunik (2021).
-
-    Companion Stata and R packages are described in Cattaneo, Feng, Palomba, and Titiunik (2022).
-
-    For an introduction to synthetic control methods, see Abadie (2021) and references therein.
-
     Parameters
     ----------
+    data : scdata_output
+        a class scdata_output object, obtained by calling scdata
 
-    data
-    a class scdata_output object, obtained by calling scdata
+    w_constr : dictionary
+        a dictionary specifying the constraint set the estimated weights of the donors must belong to.
+        w_constr can contain up to five objects:
+        1. p, a scalar indicating the norm to be used (p should be one of "no norm", "L1", and "L2")
+        2. dir, a string indicating whether the constraint on the norm is an equality ("==") or inequality ("<=")
+        3. Q, a scalar defining the value of the constraint on the norm
+        4. lb, a scalar defining the lower bound on the weights. It can be either 0 or -numpy.inf.
+        5. name, a character selecting one of the default proposals.
 
-    w_constr
-    a dictionary specifying the constraint set the estimated weights of the donors must belong to.
-    w_constr can contain up to five objects:
-    - p, a scalar indicating the norm to be used (p should be one of "no norm", "L1", and "L2")
-    - dir, a string indicating whether the constraint on the norm is an equality ("==") or inequality ("<=")
-    - Q, a scalar defining the value of the constraint on the norm
-    - lb, a scalar defining the lower bound on the weights. It can be either 0 or -numpy.inf.
-    - name, a character selecting one of the default proposals.
+    V : numpy.array, default numpy.identity
+        an array specifying the weighting matrix to be used when minimizing the sum of squared residuals.
+        The default is the identity matrix, so equal weight is given to all observations.
 
-    V
-    an array specifying the weighting matrix to be used when minimizing the sum of squared residuals.
-    The default is the identity matrix, so equal weight is given to all observations.
+    P : numpy.array, default None
+        a T_1 x (J+K_1) array containing the design matrix to be used to obtain the predicted.
+        post-intervention outcome of the synthetic control unit. T_1 is the number of post-treatment periods,
+        J is the size of the donor pool, and K_1 is the number of covariates used for adjustment in
+        the outcome equation.
 
-    P
-    a T_1 x (J+K_1) array containing the design matrix to be used to obtain the predicted.
-    post-intervention outcome of the synthetic control unit. T_1 is the number of post-treatment periods,
-    J is the size of the donor pool, and K_1 is the number of covariates used for adjustment in the outcome equation.
+    u_missp : bool, default True
+        a logical indicating if misspecification should be taken into account when dealing with u.
 
-    u_missp
-    a logical indicating if misspecification should be taken into account when dealing with u.
+    u_sigma : str, default "HC1"
+        a string specifying the type of variance-covariance estimator to be used when estimating
+        the conditional variance of u. Available choices are HC0, HC1, HC2, and HC3.
 
-    u_sigma
-    a string specifying the type of variance-covariance estimator to be used when estimating
-    the conditional variance of u. Available choices are HC0, HC1, HC2, and HC3.
+    u_order : int, default 1
+        an integer that sets the order of the polynomial in B when predicting moments of u.
 
-    u_order
-    an integer that sets the order of the polynomial in B when predicting moments of u.
+    u_lags : int, default 0
+        an integer that sets the number of lags of B when predicting moments of u.
 
-    u_lags
-    an integer that sets the number of lags of B when predicting moments of u.
+    u_design : numpy.array, default None
+        an array with the same number of rows of A and B and whose columns specify the design matrix
+        to be used when modeling the estimated pseudo-true residuals u.
 
-    u_design
-    an array with the same number of rows of A and B and whose columns specify the design matrix
-    to be used when modeling the estimated pseudo-true residuals u.
+    u_alpha : float, default 0.05
+        the confidence level for in-sample uncertainty.
 
-    u_alpha
-    an integer specifying the confidence level for in-sample uncertainty.
+    e_method : str, default "all"
+        a string selecting the method to be used in quantifying out-of-sample uncertainty among:
+        "gaussian" which uses conditional subgaussian bounds; "ls" which specifies a location-scale model for u; "qreg"
+        which employs a quantile regressions to get the conditional bounds; "all" uses each one of the previous methods.
 
-    e_method
-    a string selecting the method to be used in quantifying out-of-sample uncertainty among:
-    "gaussian" which uses conditional subgaussian bounds; "ls" which specifies a location-scale model for u; "qreg"
-    which employs a quantile regressions to get the conditional bounds; "all" uses each one of the previous methods.
+    e_order : int, default 1
+        an integer that sets the order of the polynomial in B when predicting moments of e.
 
-    e_order
-    an integer that sets the order of the polynomial in B when predicting moments of e.
+    e_lags: int, default 0
+        a scalar that sets the number of lags of B when predicting moments of e.
 
-    e_lags
-    a scalar that sets the number of lags of B when predicting moments of e.
+    e_design : numpy.array, default None
+        an array with the same number of rows of A and B and whose columns specify the design matrix
+        to be used when modeling the estimated out-of-sample residuals e.
 
-    e_design
-    an array with the same number of rows of A and B and whose columns specify the design matrix
-    to be used when modeling the estimated out-of-sample residuals e.
+    e_alpha : float, default 0.05
+        an integer specifying the confidence level for out-of-sample uncertainty.
 
-    e_alpha
-    an integer specifying the confidence level for out-of-sample uncertainty.
+    sims : int, default 200
+        an integer providing the number of simulations to be used in quantifying in-sample uncertainty.
 
-    sims
-    an integer providing the number of simulations to be used in quantifying in-sample uncertainty.
+    rho : float/str, default 'type-1'
+        a float specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
+        rho = 'type-1', then the tuning parameter is computed based on optimization inequalities. Other options are
+        'type-2', and 'type-3'. See the software article for more information.
 
-    rho
-    an integer specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
-    rho = 'type-1', then the tuning parameter is computed based on optimization inequalities. Other options are
-    'type-2', and 'type-3'. See the software article for more information.
+    rho_max : float, default 1
+        a float indicating the maximum value attainable by the tuning parameter rho.
 
-    rho_max
-    an integer indicating the maximum value attainable by the tuning parameter rho.
+    cores : integer, default multiprocessing.cpu_count() - 1
+        number of cores to be used by the command. The default is half the cores available.
 
-    cores
-    number of cores to be used by the command. The default is half the cores available.
+    plot : bool, default False
+        a logical specifying whether scplot should be called and a plot saved in the current working directory.
+        For more options see scplot.
 
-    plot
-    a logical specifying whether scplot should be called and a plot saved in the current working directory.
-    For more options see scplot.
+    w_bounds : numpy.array
+        a T1 x 2 array with the user-provided bounds on beta. If w_bounds is provided, then
+        the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the
+        upper bound by filling the other column with NAs.
 
-    w_bounds
-    a T1 x 2 array with the user-provided bounds on beta. If w_bounds is provided, then
-    the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the
-    upper bound by filling the other column with NAs.
+    e_bounds : numpy.array
+        a T1 x 2 array with the user-provided bounds on e. If e_bounds is provided, then
+        the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or
+        the upper bound by filling the other column with NAs.
 
-    e_bounds
-    a T1 x 2 array with the user-provided bounds on e. If e_bounds is provided, then
-    the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or the
-    upper bound by filling the other column with NAs.
+    opt_dict_est : dictionary
+        a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
+        The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based
+        optimization ('SLSQP'). In case a lasso-type constraint is implemented, cvxpy is used for optimization.
+        More information on the stopping criteria can be obtained reading the official documentation at
+        https://www.cvxpy.org/. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8', 'xtol_abs = 1e-8',
+        'ftol_rel = 1e-4', 'ftol_abs = 1e-4', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
 
-    opt_dict_est
-    a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
-    The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based
-    optimization ('SLSQP'). In case a lasso-type constraint is implemented, cvxpy is used for optimization.
-    More information on the stopping criteria can be obtained reading the official documentation at
-    https://www.cvxpy.org/. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8', 'xtol_abs = 1e-8',
-    'ftol_rel = 1e-4', 'ftol_abs = 1e-4', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
+    opt_dict_inf : dictionary
+        same as above but for inference purposes. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8',
+        'xtol_abs = 1e-8', 'ftol_rel = 1e-4', 'ftol_abs = 1e-4', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
 
-    opt_dict_inf
-    same as above but for inference purposes. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8',
-    'xtol_abs = 1e-8', 'ftol_rel = 1e-4', 'ftol_abs = 1e-4', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
+    pass_stat : bool
+        for internal use only.
 
-    pass_stat
-    for internal use only.
     Returns
     -------
+    The function returns an object of class `scpi_output' containing the following objects
 
-    w
-    a dataframe containing the weights of the donors.
+    w : pandas.DataFrame
+        a dataframe containing the weights of the donors.
 
-    r
-    a dataframe containing the values of the covariates used for adjustment.
+    r : pandas.DataFrame
+        a dataframe containing the values of the covariates used for adjustment.
 
-    b
-    a dataframe containing w and r.
+    b : pandas.DataFrame
+        a dataframe containing w and r.
 
-    Y_pre_fit
-    a dataframe containing the estimated pre-treatment outcome for the SC unit.
+    Y_pre_fit : pandas.DataFrame
+        a dataframe containing the estimated pre-treatment outcome for the SC unit.
 
-    Y_post_fit
-    a dataframe containing the estimated post-treatment outcome for the SC unit.
+    Y_post_fit : pandas.DataFrame
+        a dataframe containing the estimated post-treatment outcome for the SC unit.
 
-    A_hat
-    a dataframe containing the predicted values of the features of the treated unit.
+    A_hat : pandas.DataFrame
+        a dataframe containing the predicted values of the features of the treated unit.
 
-    res
-    a dataframe containing the residuals A - A_hat.
+    res : pandas.DataFrame
+        a dataframe containing the residuals A - A_hat.
 
-    V
-    an array containing the weighting matrix used in estimation.
+    V : numpy.array
+        an array containing the weighting matrix used in estimation.
 
-    w_constr
-    a dictionary containing the specifics of the constraint set used on the weights.
+    w_constr : dictionary
+        a dictionary containing the specifics of the constraint set used on the weights.
 
-    A
-    a dataframe containing pre-treatment features of the treated unit.
+    A : pandas.DataFrame
+        a dataframe containing pre-treatment features of the treated unit.
 
-    B
-    a dataframe containing pre-treatment features of the control units.
+    B : pandas.DataFrame
+        a dataframe containing pre-treatment features of the control units.
 
-    C
-    a dataframe containing covariates for adjustment.
+    C : pandas.DataFrame
+        a dataframe containing covariates for adjustment.
 
-    P
-    a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.
+    P : pandas.DataFrame
+        a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.
 
-    Y_pre
-    a dataframe containing the pre-treatment outcome of the treated unit.
+    Y_pre : pandas.DataFrame
+        a dataframe containing the pre-treatment outcome of the treated unit.
 
-    Y_post
-    a dataframe containing the post-treatment outcome of the treated unit.
+    Y_post : pandas.DataFrame
+        a dataframe containing the post-treatment outcome of the treated unit.
 
-    Y_donors
-    a dataframe containing the pre-treatment outcome of the control units.
+    Y_donors : pandas.DataFrame
+        a dataframe containing the pre-treatment outcome of the control units.
 
-    J
-    the number of control units
+    J : int
+        the number of control units
 
-    K
-    a numeric array with the number of covariates used for adjustment for each feature
+    K : array
+        a numeric array with the number of covariates used for adjustment for each feature
 
-    KM
-    the total number of covariates used for adjustment
+    KM : int
+        the total number of covariates used for adjustment
 
-    M
-    number of features
+    M : int
+        number of features
 
-    period_pre
-    a numeric array with the pre-treatment period
+    period_pre : array
+        a numeric array with the pre-treatment period
 
-    period_post
-    a numeric array with the post-treatment period
+    period_post : array
+        a numeric array with the post-treatment period
 
-    T0_features
-    a numeric array with the number of periods used in estimation for each feature
+    T0_features : array
+        a numeric array with the number of periods used in estimation for each feature
 
-    T1_outcome
-    the number of post-treatment periods
+    T1_outcome : int
+        the number of post-treatment periods
 
-    glob_cons
-    for internal use only
+    glob_cons : bool
+        for internal use only
 
-    out_in_features
-    for internal use only
+    out_in_features : bool
+        for internal use only
 
-    cointegrated_data
-    logical indicating whether the data has been treated as cointegrated.
+    cointegrated_data: bool
+        logical indicating whether the data has been treated as cointegrated.
 
-    CI_in_sample
-    a dataframe containing the prediction intervals taking only in-sample uncertainty in to account.
+    CI_in_sample : pandas.DataFrame
+        a dataframe containing the prediction intervals taking only in-sample uncertainty in to account.
 
-    CI_all_gaussian
-    a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.
+    CI_all_gaussian : pandas.DataFrame
+        a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.
 
-    CI_all_ls
-    a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.
+    CI_all_ls : pandas.DataFrame
+        a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.
 
-    CI_all_qreg
-    a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.
+    CI_all_qreg : pandas.DataFrame
+        a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.
 
-    Sigma
-    an array containing the estimated variance-covariance Sigma.
+    Sigma : numpy.array
+        an array containing the estimated variance-covariance Sigma.
 
-    u_mean
-    an array containing the estimated conditional mean of the the pseudo-residuals u.
+    u_mean : numpy.array
+        an array containing the estimated conditional mean of the the pseudo-residuals u.
 
-    u_var
-    an array containing the estimated conditional variance-covariance of the pseudo-residuals u.
+    u_var : numpy.array
+        an array containing the estimated conditional variance-covariance of the pseudo-residuals u.
 
-    e_mean
-    an array containing the estimated conditional mean of the out-of-sample error e.
+    e_mean : numpy.array
+        an array containing the estimated conditional mean of the out-of-sample error e.
 
-    e_var
-    an array containing the estimated conditional variance of the out-of-sample error e.
+    e_var : numpy.array
+        an array containing the estimated conditional variance of the out-of-sample error e.
 
-    u_missp
-    a logical indicating whether the model has been treated as misspecified or not.
+    u_missp : bool
+        a logical indicating whether the model has been treated as misspecified or not.
 
-    u_lags
-    an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.
+    u_lags : int
+        an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.
 
-    u_order
-    an integer containing the order of the polynomial in B used in predicting moments of the pseudo-residuals u.
+    u_order : int
+        an integer containing the order of the polynomial in B used in predicting moments of the pseudo-residuals u.
 
-    u_sigma
-    a string indicating the estimator used for Sigma.
+    u_sigma : str
+        a string indicating the estimator used for Sigma.
 
-    u_user
-    a logical indicating whether the design matrix to predict moments of u was user-provided.
+    u_user : bool
+        a logical indicating whether the design matrix to predict moments of u was user-provided.
 
-    u_alpha
-    a float indicating the confidence level used for in-sample uncertainty.
+    u_alpha : float
+        a float indicating the confidence level used for in-sample uncertainty.
 
-    e_method
-    a string indicating the specification used to predict moments of the out-of-sample error e.
+    e_method : str
+        a string indicating the specification used to predict moments of the out-of-sample error e.
 
-    e_lags
-    an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.
+    e_lags : int
+        an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.
 
-    e_order
-    an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.
+    e_order : int
+        an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.
 
-    e_user
-    a logical indicating whether the design matrix to predict moments of e was user-provided.
+    e_user : bool
+        a logical indicating whether the design matrix to predict moments of e was user-provided.
 
-    e_alpha
-    a float indicating the confidence level used for out-of-sample uncertainty.
+    e_alpha : float
+        a float indicating the confidence level used for out-of-sample uncertainty.
 
-    rho
-    an integer specifying the estimated regularizing parameter that imposes sparsity on the estimated vector of weights.
+    rho : str/float
+        an integer specifying the estimated regularizing parameter that imposes sparsity on
+        the estimated vector of weights.
 
-    sims
-    an integer indicating the number of simulations.
+    sims : int
+        an integer indicating the number of simulations.
 
-    failed_sims
-    an array containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.
+    failed_sims : numpy.array
+        an array containing the number of failed simulations per post-treatment period to estimate
+        lower and upper bounds.
 
-     References
+
+    References
     ----------
     Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
     Aspects,” Journal of Economic Literature, 59, 391-425.
@@ -546,7 +544,7 @@ def scpi(data,
                                res=res_na, Z=Z_na, V=V_na,
                                index=index, TT=TT, M=M, df=df)
 
-    Sigma_root = sqrtm(Sigma)
+    Sigma_root = sqrtm(Sigma).real
 
     # Auxiliary logical values to estimate bounds for w
     w_lb_est = True
@@ -981,6 +979,7 @@ class scpi_output:
         # Prepare objects to print (inference)
         e_method = self.e_method
         Y_tr_post = round(self.Y_post, 2)
+        Y_tr_post = self.Y_post.astype(float).round(2)
         Y_sc_post = round(self.Y_post_fit, 2)
         Y_tr_post.columns = pandas.Index(['Treated'])
         Y_sc_post.columns = pandas.Index(['Synthetic'])

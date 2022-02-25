@@ -1,0 +1,488 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scpi_pkg.scest &#8212; scpi-pkg 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">scpi_pkg.scest</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scpi_pkg.scest</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Mon Aug 16 11:08:57 2021</span>
+
+<span class="sd">@author: Filippo Palomba</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># Temporary code to suppress pandas FutureWarning</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">.funs</span> <span class="kn">import</span> <span class="n">w_constr_prep</span><span class="p">,</span> <span class="n">b_est</span>
+<span class="kn">from</span> <span class="nn">.scplot</span> <span class="kn">import</span> <span class="n">scplot</span>
+
+
+<div class="viewcode-block" id="scest"><a class="viewcode-back" href="../../scest.html#scpi_pkg.scest.scest">[docs]</a><span class="k">def</span> <span class="nf">scest</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">opt_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : scdata_output</span>
+<span class="sd">        a class scdata_output object, obtained by calling scdata</span>
+
+<span class="sd">    w_constr : dictionary</span>
+<span class="sd">        a dictionary specifying the constraint set the estimated weights of the donors must belong to.</span>
+<span class="sd">        w_constr can contain up to four objects:</span>
+<span class="sd">        - p, a string indicating the norm to be used (p should be one of &quot;no norm&quot;, &quot;L1&quot;, and &quot;L2&quot;)</span>
+<span class="sd">        - dir, a string indicating whether the constraint on the norm is an equality (&quot;==&quot;) or inequality (&quot;&lt;=&quot;)</span>
+<span class="sd">        - Q, a scalar defining the value of the constraint on the norm</span>
+<span class="sd">        - lb, a scalar defining the lower bound on the weights. It can be either 0 or -numpy.inf.</span>
+<span class="sd">        - name, a character selecting one of the default proposals.</span>
+
+<span class="sd">    V : numpy.array, default numpy.identity</span>
+<span class="sd">        a weighting matrix to be used when minimizing the sum of squared residuals.</span>
+<span class="sd">        The default is the identity matrix, so equal weight is given to all observations.</span>
+
+<span class="sd">    opt_dict : dictionary</span>
+<span class="sd">        a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.</span>
+<span class="sd">        The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based</span>
+<span class="sd">        optimization (&#39;SLSQP&#39;). In case a lasso-type constraint is implemented, cvxpy is used for optimization.</span>
+<span class="sd">        More information on the stopping criteria can be obtained reading the official documentation at</span>
+<span class="sd">        https://www.cvxpy.org/. The default values are &#39;maxeval = 5000&#39;, &#39;xtol_rel = 1e-8&#39;, &#39;xtol_abs = 1e-8&#39;,</span>
+<span class="sd">        &#39;ftol_rel = 1e-8&#39;, &#39;ftol_abs = 1e-8&#39;, &#39;tol_eq = 1e-8&#39;, and &#39;tol_ineq = 1e-8&#39;.</span>
+
+<span class="sd">    plot : bool, default False</span>
+<span class="sd">        a logical specifying whether scplot should be called and a plot saved in the current working directory. For more</span>
+<span class="sd">        options see scplot.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    The function returns an object of class `scest_output&#39; containing the following objects</span>
+
+<span class="sd">    w : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the weights of the donors.</span>
+
+<span class="sd">    r : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the values of the covariates used for adjustment.</span>
+
+<span class="sd">    b : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing w and r.</span>
+
+<span class="sd">    Y_pre_fit : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the estimated pre-treatment outcome for the SC unit.</span>
+
+<span class="sd">    Y_post_fit : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the estimated post-treatment outcome for the SC unit.</span>
+
+<span class="sd">    A_hat : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the predicted values of the features of the treated unit.</span>
+
+<span class="sd">    res : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the residuals A - A_hat.</span>
+
+<span class="sd">    V : numpy.array</span>
+<span class="sd">        an array containing the weighting matrix used in estimation.</span>
+
+<span class="sd">    w_constr : dictionary</span>
+<span class="sd">        a dictionary containing the specifics of the constraint set used on the weights.</span>
+
+<span class="sd">    A : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing pre-treatment features of the treated unit.</span>
+
+<span class="sd">    B : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing pre-treatment features of the control units.</span>
+
+<span class="sd">    C : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing covariates for adjustment.</span>
+
+<span class="sd">    P : pandas.DataFrame</span>
+<span class="sd">        a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.</span>
+
+<span class="sd">    Y_pre : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the pre-treatment outcome of the treated unit.</span>
+
+<span class="sd">    Y_post : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the post-treatment outcome of the treated unit.</span>
+
+<span class="sd">    Y_donors : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the pre-treatment outcome of the control units.</span>
+
+<span class="sd">    J : int</span>
+<span class="sd">        the number of control units</span>
+
+<span class="sd">    K : array</span>
+<span class="sd">        a numeric array with the number of covariates used for adjustment for each feature</span>
+
+<span class="sd">    KM : int</span>
+<span class="sd">        the total number of covariates used for adjustment</span>
+
+<span class="sd">    M : int</span>
+<span class="sd">        number of features</span>
+
+<span class="sd">    period_pre : array</span>
+<span class="sd">        a numeric array with the pre-treatment period</span>
+
+<span class="sd">    period_post : array</span>
+<span class="sd">        a numeric array with the post-treatment period</span>
+
+<span class="sd">    T0_features : array</span>
+<span class="sd">        a numeric array with the number of periods used in estimation for each feature</span>
+
+<span class="sd">    T1_outcome : int</span>
+<span class="sd">        the number of post-treatment periods</span>
+
+<span class="sd">    glob_cons : bool</span>
+<span class="sd">        for internal use only</span>
+
+<span class="sd">    out_in_features : bool</span>
+<span class="sd">        for internal use only</span>
+
+<span class="sd">    cointegrated_data: bool</span>
+<span class="sd">        logical indicating whether the data has been treated as cointegrated.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological</span>
+<span class="sd">    Aspects,” Journal of Economic Literature, 59, 391-425.</span>
+
+<span class="sd">    Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control</span>
+<span class="sd">    Methods,” Journal of the American Statistical Association, 116, 1865-1880.</span>
+
+<span class="sd">    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for</span>
+<span class="sd">    Synthetic Control Estimators”.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scdata, scpi, scplot</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s1">&#39;scdata_output&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;df should be the object returned by running scdata!&quot;</span><span class="p">)</span>
+
+    <span class="n">w_names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">w_values</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">w_constr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">w_constr</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;w_constr should be an object of type dict!&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">w_constr</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">w_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">w_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;name&#39;</span> <span class="ow">in</span> <span class="n">w_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">w_constr</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;simplex&quot;</span><span class="p">,</span> <span class="s2">&quot;lasso&quot;</span><span class="p">,</span> <span class="s2">&quot;ridge&quot;</span><span class="p">,</span> <span class="s2">&quot;ols&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If &#39;name&#39; is specified in w_constr, then it should be chosen&quot;</span> <span class="o">+</span>
+                                <span class="s2">&quot; among &#39;simplex&#39;, &#39;lasso&#39;, &#39;ridge&#39;, &#39;ols&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">w_constr</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">opt_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">opt_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;opt_dict should be an object of type dict!&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Data matrices and specs</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">A</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">B</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">C</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">P</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">Y_donors</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">Y_donors</span>
+
+    <span class="n">J</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">J</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">K</span>
+    <span class="n">KM</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">KM</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">M</span>
+    <span class="n">T0_features</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">T0_features</span>
+    <span class="n">out_in_features</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">out_in_features</span>
+    <span class="n">outcome_var</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">outcome_var</span>
+
+    <span class="c1">##########################</span>
+    <span class="c1"># Set up the estimation problem</span>
+
+    <span class="c1"># Create weighting matrix</span>
+    <span class="k">if</span> <span class="n">V</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="p">(</span><span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object V should be a dataframe or a matrix!&quot;</span><span class="p">)</span>
+
+        <span class="n">V_shape</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">V_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="ow">or</span> <span class="n">V_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object V should be of shape (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">))</span> <span class="o">+</span>
+                            <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;)!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">V</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="p">))</span>
+
+    <span class="c1"># Set constraint on weights</span>
+    <span class="n">w_constr</span> <span class="o">=</span> <span class="n">w_constr_prep</span><span class="p">(</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">w_names</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">KM</span><span class="p">)</span>
+
+    <span class="c1"># if not isinstance(w_constr[&#39;lb&#39;], (int, float)):</span>
+    <span class="c1">#    if not len(w_constr[&#39;lb&#39;]) != J:</span>
+    <span class="c1">#            raise Exception(&quot;The length of &#39;lb&#39; should be either one or the number of donors.&quot;)</span>
+
+    <span class="c1"># Estimate SC</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">b_est</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">Z</span><span class="o">=</span><span class="n">Z</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="p">,</span> <span class="n">KM</span><span class="o">=</span><span class="n">KM</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="n">V</span><span class="p">,</span> <span class="n">opt_dict</span><span class="o">=</span><span class="n">opt_dict</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">Z</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="c1">##########################</span>
+    <span class="c1"># Create useful objects</span>
+
+    <span class="c1"># Store point estimates</span>
+    <span class="k">if</span> <span class="n">KM</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">b</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">columns</span><span class="p">)]</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">columns</span><span class="p">):]</span>
+
+    <span class="c1"># Fitted values and residuals</span>
+    <span class="n">A_hat</span> <span class="o">=</span> <span class="n">Z</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="n">A_hat</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">A</span> <span class="o">-</span> <span class="n">A_hat</span>
+
+    <span class="c1"># Pre-treatment fit of outcome of interest</span>
+    <span class="k">if</span> <span class="n">out_in_features</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>   <span class="c1"># outcome is among features</span>
+        <span class="n">fit_pre</span> <span class="o">=</span> <span class="n">A_hat</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">T0_features</span><span class="p">[</span><span class="n">outcome_var</span><span class="p">],</span> <span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s1">&#39;feature&#39;</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># outcome is not among features</span>
+        <span class="n">fit_pre</span> <span class="o">=</span> <span class="n">Y_donors</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+
+    <span class="n">fit_post</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+    <span class="n">fit_pre</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">fit_post</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">A_hat</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">columns</span>
+
+    <span class="c1">##################################################</span>
+    <span class="c1"># Plot</span>
+
+    <span class="k">if</span> <span class="n">plot</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">to_plot</span> <span class="o">=</span> <span class="n">scest_output</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">Y_pre_fit</span><span class="o">=</span><span class="n">fit_pre</span><span class="p">,</span>
+                               <span class="n">Y_post_fit</span><span class="o">=</span><span class="n">fit_post</span><span class="p">,</span> <span class="n">A_hat</span><span class="o">=</span><span class="n">A_hat</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+                               <span class="n">V</span><span class="o">=</span><span class="n">V</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="n">C</span><span class="p">,</span>
+                               <span class="n">P</span><span class="o">=</span><span class="n">P</span><span class="p">,</span> <span class="n">Y_pre</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">Y_pre</span><span class="p">,</span> <span class="n">Y_post</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">Y_post</span><span class="p">,</span>
+                               <span class="n">Y_donors</span><span class="o">=</span><span class="n">Y_donors</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="n">K</span><span class="p">,</span> <span class="n">KM</span><span class="o">=</span><span class="n">KM</span><span class="p">,</span>
+                               <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span>
+                               <span class="n">cointegrated_data</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">cointegrated_data</span><span class="p">,</span>
+                               <span class="n">period_pre</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">period_pre</span><span class="p">,</span>
+                               <span class="n">period_post</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">period_post</span><span class="p">,</span>
+                               <span class="n">T0_features</span><span class="o">=</span><span class="n">T0_features</span><span class="p">,</span>
+                               <span class="n">T1_outcome</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">T1_outcome</span><span class="p">,</span>
+                               <span class="n">outcome_var</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">outcome_var</span><span class="p">,</span>
+                               <span class="n">features</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">features</span><span class="p">,</span>
+                               <span class="n">glob_cons</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">glob_cons</span><span class="p">,</span>
+                               <span class="n">out_in_features</span><span class="o">=</span><span class="n">out_in_features</span><span class="p">,</span>
+                               <span class="n">plotres</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">plotres</span> <span class="o">=</span> <span class="n">scplot</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">to_plot</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plotres</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">scest_output</span><span class="p">(</span><span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">,</span>
+                        <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span>
+                        <span class="n">r</span><span class="o">=</span><span class="n">r</span><span class="p">,</span>
+                        <span class="n">Y_pre_fit</span><span class="o">=</span><span class="n">fit_pre</span><span class="p">,</span>
+                        <span class="n">Y_post_fit</span><span class="o">=</span><span class="n">fit_post</span><span class="p">,</span>
+                        <span class="n">A_hat</span><span class="o">=</span><span class="n">A_hat</span><span class="p">,</span>
+                        <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span>
+                        <span class="n">V</span><span class="o">=</span><span class="n">V</span><span class="p">,</span>
+                        <span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr</span><span class="p">,</span>
+                        <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span>
+                        <span class="n">B</span><span class="o">=</span><span class="n">B</span><span class="p">,</span>
+                        <span class="n">C</span><span class="o">=</span><span class="n">C</span><span class="p">,</span>
+                        <span class="n">P</span><span class="o">=</span><span class="n">P</span><span class="p">,</span>
+                        <span class="n">Y_pre</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">Y_pre</span><span class="p">,</span>
+                        <span class="n">Y_post</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">Y_post</span><span class="p">,</span>
+                        <span class="n">Y_donors</span><span class="o">=</span><span class="n">Y_donors</span><span class="p">,</span>
+                        <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="p">,</span>
+                        <span class="n">K</span><span class="o">=</span><span class="n">K</span><span class="p">,</span>
+                        <span class="n">KM</span><span class="o">=</span><span class="n">KM</span><span class="p">,</span>
+                        <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span>
+                        <span class="n">cointegrated_data</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">cointegrated_data</span><span class="p">,</span>
+                        <span class="n">period_pre</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">period_pre</span><span class="p">,</span>
+                        <span class="n">period_post</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">period_post</span><span class="p">,</span>
+                        <span class="n">T0_features</span><span class="o">=</span><span class="n">T0_features</span><span class="p">,</span>
+                        <span class="n">T1_outcome</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">T1_outcome</span><span class="p">,</span>
+                        <span class="n">outcome_var</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">outcome_var</span><span class="p">,</span>
+                        <span class="n">features</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">features</span><span class="p">,</span>
+                        <span class="n">glob_cons</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">glob_cons</span><span class="p">,</span>
+                        <span class="n">out_in_features</span><span class="o">=</span><span class="n">out_in_features</span><span class="p">,</span>
+                        <span class="n">plotres</span><span class="o">=</span><span class="n">plotres</span><span class="p">)</span></div>
+
+<span class="k">class</span> <span class="nc">scest_output</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">Y_pre_fit</span><span class="p">,</span> <span class="n">Y_post_fit</span><span class="p">,</span> <span class="n">A_hat</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">w_constr</span><span class="p">,</span>
+                 <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Y_pre</span><span class="p">,</span> <span class="n">Y_post</span><span class="p">,</span> <span class="n">Y_donors</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">KM</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span>
+                 <span class="n">cointegrated_data</span><span class="p">,</span> <span class="n">period_pre</span><span class="p">,</span> <span class="n">period_post</span><span class="p">,</span> <span class="n">T0_features</span><span class="p">,</span>
+                 <span class="n">T1_outcome</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">outcome_var</span><span class="p">,</span> <span class="n">glob_cons</span><span class="p">,</span> <span class="n">out_in_features</span><span class="p">,</span> <span class="n">plotres</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">w</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">r</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_pre_fit</span> <span class="o">=</span> <span class="n">Y_pre_fit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_post_fit</span> <span class="o">=</span> <span class="n">Y_post_fit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A_hat</span> <span class="o">=</span> <span class="n">A_hat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">res</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="n">V</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w_constr</span> <span class="o">=</span> <span class="n">w_constr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">A</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">=</span> <span class="n">B</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">=</span> <span class="n">C</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">P</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_pre</span> <span class="o">=</span> <span class="n">Y_pre</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_post</span> <span class="o">=</span> <span class="n">Y_post</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_donors</span> <span class="o">=</span> <span class="n">Y_donors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">J</span> <span class="o">=</span> <span class="n">J</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">KM</span> <span class="o">=</span> <span class="n">KM</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M</span> <span class="o">=</span> <span class="n">M</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cointegrated_data</span> <span class="o">=</span> <span class="n">cointegrated_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period_pre</span> <span class="o">=</span> <span class="n">period_pre</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period_post</span> <span class="o">=</span> <span class="n">period_post</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T0_features</span> <span class="o">=</span> <span class="n">T0_features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T1_outcome</span> <span class="o">=</span> <span class="n">T1_outcome</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outcome_var</span> <span class="o">=</span> <span class="n">outcome_var</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">glob_cons</span> <span class="o">=</span> <span class="n">glob_cons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_in_features</span> <span class="o">=</span> <span class="n">out_in_features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plotres</span> <span class="o">=</span> <span class="n">plotres</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="c1"># Prepare objects to print</span>
+        <span class="n">fw</span> <span class="o">=</span> <span class="mi">30</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">M</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">fw_r</span> <span class="o">=</span> <span class="mi">35</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">M</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">fw_r</span> <span class="o">=</span> <span class="mi">40</span>
+
+        <span class="n">constr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_constr</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_constr</span><span class="p">[</span><span class="s1">&#39;Q&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">Qsize</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w_constr</span><span class="p">[</span><span class="s1">&#39;Q&#39;</span><span class="p">],</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Qsize</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
+        <span class="n">tr_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">pt_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">period_pre</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pt_fi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">period_pre</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">period_pre</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">ppre</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pt_in</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">pt_fi</span><span class="p">)</span>
+
+        <span class="n">Weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;Weights&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">Weights</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">Weights</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">activew</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">Weights</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">Weights</span><span class="p">[</span><span class="s1">&#39;Weights&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">KM</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">Covariates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s1">&#39;Covariates&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">Covariates</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">Covariates</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">constr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">constr</span> <span class="o">=</span> <span class="s2">&quot;User Provided&quot;</span>
+
+        <span class="c1"># Print stuff</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-----------------------------------------------------------------------&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Call: scest&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Synthetic Control Estimation - Setup&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Constraint Type:&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">constr</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">fw_r</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Constraint Size (Q):&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">Qsize</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">fw_r</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Treated Unit:&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">tr_unit</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">fw_r</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Size of the donor pool:&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">J</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">fw_r</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Features&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">fw_r</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Pre-treatment period&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">ppre</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">fw_r</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">M</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">T0</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T0_features</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Pre-treatment periods used in estimation:&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">),</span>
+                  <span class="nb">str</span><span class="p">(</span><span class="n">T0</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">fw_r</span> <span class="o">-</span> <span class="mi">11</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Covariates used for adjustment:&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">),</span>
+                  <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">KM</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="n">fw_r</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">toprint</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T0_features</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+            <span class="n">toprint</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Feature&#39;</span><span class="p">,</span> <span class="s1">&#39;Observations&#39;</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Pre-treatment periods used in estimation per feature:&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">toprint</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+            <span class="n">toprint</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Covariates used for adjustment per feature:&#39;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">fw</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">toprint</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Synthetic Control Estimation - Results&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Active donors:&#39;</span><span class="p">,</span> <span class="n">activew</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Coefficients:&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">Weights</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">KM</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">Covariates</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">scpi_pkg.scest</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

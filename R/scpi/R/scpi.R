@@ -526,9 +526,8 @@ scpi  <- function(data,
   Sigma <- result$Sigma
   Omega <- result$Omega
 
-
   Sigma.root <- sqrtm(Sigma)
-
+  
   # Auxiliary logical values to estimate bounds for w
   w.lb.est <- TRUE
   w.ub.est <- TRUE
@@ -666,7 +665,7 @@ scpi  <- function(data,
   ## PIs for w
   sc.l.0 <- Y.post.fit + Wlb        # Left bound
   sc.r.0 <- Y.post.fit + Wub        # Right bound
-  len.0  <- sc.r.0 - sc.l.0          # Length
+  len.0  <- sc.r.0 - sc.l.0         # Length
 
   
   
@@ -690,7 +689,7 @@ scpi  <- function(data,
     if (all(is.na(e.bounds[, 1]) == FALSE)) e.lb.est <- FALSE
     if (all(is.na(e.bounds[, 2]) == FALSE)) e.ub.est <- FALSE
   }
-
+  
   if (e.method == "gaussian" | e.method == "all") {
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1, e.method = "gaussian", alpha = e.alpha/2,
                        e.lb.est = e.lb.est, e.ub.est =  e.ub.est, verbose = verbose)

@@ -26,16 +26,16 @@ unit.co     <- unique(data$country)[-7]              # Donors pool
 outcome.var <- "gdp"                                 # Outcome variable
 cov.adj     <- NULL                                  # Covariates for adjustment
 features    <- NULL                                  # No features other than outcome
-constant    <- F                                     # No constant term
-report.missing <- F                                  # To check where missing values are
-cointegrated.data <- T                               # Belief that the data are cointegrated
+constant    <- FALSE                                 # No constant term
+report.missing <- FALSE                              # To check where missing values are
+cointegrated.data <- TRUE                            # Belief that the data are cointegrated
 
 
 ####################################
 ### Data preparation
 df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
                 period.pre = period.pre, period.post = period.post,
-                unit.tr = unit.tr, unit.co = unit.co, cov.adj = cov.adj, features = c("gdp","trade"),
+                unit.tr = unit.tr, unit.co = unit.co, cov.adj = cov.adj, features = features,
                 constant = constant,  report.missing = report.missing, cointegrated.data = cointegrated.data)
 
 ####################################
@@ -95,7 +95,7 @@ u.sigma  <- "HC1"                        # Estimator for the variance-covariance
 u.missp  <- T                            # If TRUE then the model is treated as misspecified
 e.lags   <- 0                            # Degree of polynomial in B and C when modelling e
 e.order  <- 1                            # Lags of B to be used when modelling e
-e.method <- "all"                        # Estimation method for out-of-sample uncertainty
+e.method <- "qreg"                       # Estimation method for out-of-sample uncertainty
 cores    <- 1                            # Number of cores to be used by scpi
 w.constr <- list(name = "simplex")       # Simplex-type constraint set
 

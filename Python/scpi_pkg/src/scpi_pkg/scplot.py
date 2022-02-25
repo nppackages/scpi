@@ -26,52 +26,44 @@ def scplot(result,
            save_data=None):
 
     '''
-    The command implements several Synthetic Control plots. The command is designed to be called after scest or scpi
-    which implement estimation and inference procedures for Synthetic Control methods using least sqares, lasso,
-    ridge, or simplex-type constraints according to Cattaneo, Feng, and Titiunik (2021).
-
-    Companion Stata and R packages are described in Cattaneo, Feng, Palomba, and Titiunik (2022).
-
-    For an introduction to synthetic control methods, see Abadie (2021) and references therein.
-
     Parameters
     ----------
+    result : scest_output/scpi_output
+        a class `scest_output' object, obtained by calling scest, or a class
+        `scpi_output' object, obtained by calling scpi
 
-    result
-    a class `scpi_est' object, obtained by calling scest, or a class
-   `scpi_pi' object, obtained by calling scpi
+    col_dots_t : str
+        string indicating the color of the time series marker for treated unit
 
-    col_dots_t
-    string indicating the color of the time series marker for treated unit
+    col_line_t : str
+        string indicating the color of the time series line for treated unit
 
-    col_line_t
-    string indicating the color of the time series line for treated unit
+    col_dots_s : str
+        string indicating the color of the time series marker for synthetic control unit
 
-    col_dots_s
-    string indicating the color of the time series marker for synthetic control unit
+    col_line_s : str
+        string indicating the color of the time series line for synthetic control unit
 
-    col_line_s
-    string indicating the color of the time series line for synthetic control unit
+    x_lab : str
+        string indicating x axis title
 
-    x_lab
-    string indicating x axis title
+    y_lab : str
+        string indicating y axis title
 
-    y_lab
-    string indicating y axis title
+    e_out : bool, default True
+        a logical specifying whether out-of-sample uncertainty should be included in the plot(s).
 
-    e_out
-    a logical specifying whether out-of-sample uncertainty should be included in the plot(s).
+    e_method : str, default "gaussian"
+        a string specifying the type of uncertainty estimation used for out-of-sample uncertainty quantification.
 
-    e_method
-    a string specifying the type of uncertainty estimation used for out-of-sample uncertainty quantification.
-
-    save_data
-    a character specifying the name (and the folder) of the saved dataframe containing the processed data used to
-    produce the plot. The data is saved in .csv format and the folder specified.
+    save_data : str
+        a string specifying the name (and the folder) of the saved dataframe containing the processed data used to
+        produce the plot. The data is saved in .csv format and the folder specified.
 
     Returns
     ----------
-    plot plotnine object that can be further modified.
+    plot : plotnine
+        plotnine object that can be further modified.
 
     References
     ----------
@@ -167,13 +159,16 @@ def scplot(result,
                                    labels=["Treated", "Synthetic Control"],
                                    guide=guide_legend(override_aes={'linetype': ['solid', 'dashed'],
                                                                     'shape': ['o', 'o']})))
-        print(plot)
-
         return plot
 
     elif class_input == 'scpi_output':
         if e_method is None:
             e_method = result.e_method
+        elif e_method == 'all':
+            e_method = 'qreg'
+        else:
+            if not e_method == result.e_method:
+                raise Exception("Make sure that e_method is the same as the one in scpi!")
 
         sc_l_0 = result.CI_in_sample.iloc[:, [0]].to_numpy()
         sc_r_0 = result.CI_in_sample.iloc[:, [1]].to_numpy()
@@ -243,26 +238,22 @@ def scplot(result,
         if e_out is False:
             plot = plot_lines + geom_errorbar(mapping=aes(x='time', ymin='lb0', ymax='ub0', color='sc'),
                                               size=0.5, linetype='solid') + ggtitle('In-sample Uncertainty')
-            print(plot)
 
         if e_out is True:
             if e_method == 'gaussian':
                 title_str = 'In and Out of Sample Uncertainty - Subgaussian Bounds'
                 plot = plot_lines + geom_errorbar(mapping=aes(x='time', ymin='lb1', ymax='ub1', color='sc'),
                                                   size=0.5, linetype='solid') + ggtitle(title_str)
-                print(plot)
 
             if e_method == 'ls':
                 title_str = 'In and Out of Sample Uncertainty - Location-scale Model'
                 plot = plot_lines + geom_errorbar(mapping=aes(x='time', ymin='lb1', ymax='ub1', color='sc'),
                                                   size=0.5, linetype='solid') + ggtitle(title_str)
-                print(plot)
 
             if e_method == 'qreg':
                 title_str = 'In and Out of Sample Uncertainty - Quantile Regression'
                 plot = plot_lines + geom_errorbar(mapping=aes(x='time', ymin='lb1', ymax='ub1', color='sc'),
                                                   size=0.5, linetype='solid') + ggtitle(title_str)
-                print(plot)
 
         # Save data to reproduce plot
         if save_data is not None:

@@ -17,127 +17,121 @@ from .scplot import scplot
 def scest(df, w_constr=None, V=None, opt_dict=None, plot=False):
 
     '''
-    The command implements estimation procedures for Synthetic Control methods using least squares, lasso, ridge, or
-    simplex-type constraints according to Cattaneo, Feng, and Titiunik (2021).
-
-    Companion Stata and R packages are described in Cattaneo, Feng, Palomba, and Titiunik (2022).
-
-    For an introduction to synthetic control methods, see Abadie (2021) and references therein.
 
     Parameters
     ----------
-    df
-    a class scdata_output object, obtained by calling scdata
+    df : scdata_output
+        a class scdata_output object, obtained by calling scdata
 
-    w_constr
-    a dictionary specifying the constraint set the estimated weights of the donors must belong to.
-    w_constr can contain up to four objects:
-    - p, a string indicating the norm to be used (p should be one of "no norm", "L1", and "L2")
-    - dir, a string indicating whether the constraint on the norm is an equality ("==") or inequality ("<=")
-    - Q, a scalar defining the value of the constraint on the norm
-    - lb, a scalar defining the lower bound on the weights. It can be either 0 or -numpy.inf.
+    w_constr : dictionary
+        a dictionary specifying the constraint set the estimated weights of the donors must belong to.
+        w_constr can contain up to four objects:
+        - p, a string indicating the norm to be used (p should be one of "no norm", "L1", and "L2")
+        - dir, a string indicating whether the constraint on the norm is an equality ("==") or inequality ("<=")
+        - Q, a scalar defining the value of the constraint on the norm
+        - lb, a scalar defining the lower bound on the weights. It can be either 0 or -numpy.inf.
+        - name, a character selecting one of the default proposals.
 
-    - name, a character selecting one of the default proposals.
+    V : numpy.array, default numpy.identity
+        a weighting matrix to be used when minimizing the sum of squared residuals.
+        The default is the identity matrix, so equal weight is given to all observations.
 
-    V
-    a weighting matrix to be used when minimizing the sum of squared residuals.
-    The default is the identity matrix, so equal weight is given to all observations.
+    opt_dict : dictionary
+        a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
+        The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based
+        optimization ('SLSQP'). In case a lasso-type constraint is implemented, cvxpy is used for optimization.
+        More information on the stopping criteria can be obtained reading the official documentation at
+        https://www.cvxpy.org/. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8', 'xtol_abs = 1e-8',
+        'ftol_rel = 1e-8', 'ftol_abs = 1e-8', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
 
-    opt_dict
-    a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
-    The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based
-    optimization ('SLSQP'). In case a lasso-type constraint is implemented, cvxpy is used for optimization.
-    More information on the stopping criteria can be obtained reading the official documentation at
-    https://www.cvxpy.org/. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8', 'xtol_abs = 1e-8',
-    'ftol_rel = 1e-8', 'ftol_abs = 1e-8', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
-
-    plot
-    a logical specifying whether scplot should be called and a plot saved in the current working directory. For more
-    options see scplot.
+    plot : bool, default False
+        a logical specifying whether scplot should be called and a plot saved in the current working directory. For more
+        options see scplot.
 
     Returns
     -------
+    The function returns an object of class `scest_output' containing the following objects
 
-    w
-    a dataframe containing the weights of the donors.
+    w : pandas.DataFrame
+        a dataframe containing the weights of the donors.
 
-    r
-    a dataframe containing the values of the covariates used for adjustment.
+    r : pandas.DataFrame
+        a dataframe containing the values of the covariates used for adjustment.
 
-    b
-    a dataframe containing w and r.
+    b : pandas.DataFrame
+        a dataframe containing w and r.
 
-    Y_pre_fit
-    a dataframe containing the estimated pre-treatment outcome for the SC unit.
+    Y_pre_fit : pandas.DataFrame
+        a dataframe containing the estimated pre-treatment outcome for the SC unit.
 
-    Y_post_fit
-    a dataframe containing the estimated post-treatment outcome for the SC unit.
+    Y_post_fit : pandas.DataFrame
+        a dataframe containing the estimated post-treatment outcome for the SC unit.
 
-    A_hat
-    a dataframe containing the predicted values of the features of the treated unit.
+    A_hat : pandas.DataFrame
+        a dataframe containing the predicted values of the features of the treated unit.
 
-    res
-    a dataframe containing the residuals A - A_hat.
+    res : pandas.DataFrame
+        a dataframe containing the residuals A - A_hat.
 
-    V
-    an array containing the weighting matrix used in estimation.
+    V : numpy.array
+        an array containing the weighting matrix used in estimation.
 
-    w_constr
-    a dictionary containing the specifics of the constraint set used on the weights.
+    w_constr : dictionary
+        a dictionary containing the specifics of the constraint set used on the weights.
 
-    A
-    a dataframe containing pre-treatment features of the treated unit.
+    A : pandas.DataFrame
+        a dataframe containing pre-treatment features of the treated unit.
 
-    B
-    a dataframe containing pre-treatment features of the control units.
+    B : pandas.DataFrame
+        a dataframe containing pre-treatment features of the control units.
 
-    C
-    a dataframe containing covariates for adjustment.
+    C : pandas.DataFrame
+        a dataframe containing covariates for adjustment.
 
-    P
-    a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.
+    P : pandas.DataFrame
+        a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.
 
-    Y_pre
-    a dataframe containing the pre-treatment outcome of the treated unit.
+    Y_pre : pandas.DataFrame
+        a dataframe containing the pre-treatment outcome of the treated unit.
 
-    Y_post
-    a dataframe containing the post-treatment outcome of the treated unit.
+    Y_post : pandas.DataFrame
+        a dataframe containing the post-treatment outcome of the treated unit.
 
-    Y_donors
-    a dataframe containing the pre-treatment outcome of the control units.
+    Y_donors : pandas.DataFrame
+        a dataframe containing the pre-treatment outcome of the control units.
 
-    J
-    the number of control units
+    J : int
+        the number of control units
 
-    K
-    a numeric array with the number of covariates used for adjustment for each feature
+    K : array
+        a numeric array with the number of covariates used for adjustment for each feature
 
-    KM
-    the total number of covariates used for adjustment
+    KM : int
+        the total number of covariates used for adjustment
 
-    M
-    number of features
+    M : int
+        number of features
 
-    period_pre
-    a numeric array with the pre-treatment period
+    period_pre : array
+        a numeric array with the pre-treatment period
 
-    period_post
-    a numeric array with the post-treatment period
+    period_post : array
+        a numeric array with the post-treatment period
 
-    T0_features
-    a numeric array with the number of periods used in estimation for each feature
+    T0_features : array
+        a numeric array with the number of periods used in estimation for each feature
 
-    T1_outcome
-    the number of post-treatment periods
+    T1_outcome : int
+        the number of post-treatment periods
 
-    glob_cons
-    for internal use only
+    glob_cons : bool
+        for internal use only
 
-    out_in_features
-    for internal use only
+    out_in_features : bool
+        for internal use only
 
-    cointegrated_data
-    logical indicating whether the data has been treated as cointegrated.
+    cointegrated_data: bool
+        logical indicating whether the data has been treated as cointegrated.
 
     References
     ----------

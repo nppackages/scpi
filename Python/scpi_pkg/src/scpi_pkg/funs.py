@@ -227,7 +227,7 @@ def b_est(A, Z, J, KM, w_constr, V, opt_dict):
                                           grad, pp, J, KM, w_constr['Q'],
                                           dire), opt_dict['tol_ineq'])
 
-        opt.set_lower_bounds([lb] * J + [0] * KM)
+        opt.set_lower_bounds([lb] * J + [-numpy.inf] * KM)
         opt.set_xtol_rel(1e-16)
         opt.set_xtol_abs(1e-16)
         opt.set_ftol_rel(1e-16)
@@ -328,7 +328,6 @@ def e_des_prep(B, C, Z, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J,
             e_des_1 = pandas.DataFrame(numpy.ones(T1), index=P.index)
 
         elif e_order > 0:  # Include covariates when predicting u_mean
-
             # Create first differences feature-by-feature of the matrix B (not of C!!)
             if coig_data is True:
                 B_diff = B - B.groupby('feature').shift(1)
@@ -350,55 +349,55 @@ def e_des_prep(B, C, Z, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J,
                 e_des_1.insert(loc=len(e_des_1.columns), column='0_constant',
                                value=numpy.ones(len(e_des_1)))
 
-    # Construct lags of B
-    if e_lags > 0:
-        B_lags = pandas.DataFrame(None, index=B.index)
-        P_lags = pandas.DataFrame(None, index=P.index)
-
-        B_diff = B - B.groupby('feature').shift(1)
-        aux = B.iloc[B.index.get_level_values('feature') == outcome_var]
-        if coig_data is False:
-            df1 = aux.iloc[(len(aux) - e_lags):len(aux)]
-            df2 = P.iloc[:, 0:J]
-            P_aug = pandas.concat([df1, df2], axis=0)
-        else:
-            df1 = aux.iloc[(len(aux) - e_lags - 1):len(aux)]
-            df2 = P.iloc[:, 0:J]
-            P_aug = pandas.concat([df1, df2], axis=0)
-
-        P_aug_diff = P_aug - P_aug.shift(1)
-
-        for ll in range(1, e_lags + 1):
+        # Construct lags of B
+        if e_lags > 0:
+            B_lags = pandas.DataFrame(None, index=B.index)
+            P_lags = pandas.DataFrame(None, index=P.index)
+    
+            B_diff = B - B.groupby('feature').shift(1)
+            aux = B.iloc[B.index.get_level_values('feature') == outcome_var]
             if coig_data is False:
-                B_lags = pandas.concat([B_lags,
-                                       B.loc[:, index_w].groupby('feature').shift(ll)], axis=1)
-                P_lags = pandas.concat([P_lags,
-                                       P_aug.iloc[e_lags:, ].loc[:, index_w].shift(ll)], axis=1)
+                df1 = aux.iloc[(len(aux) - e_lags):len(aux)]
+                df2 = P.iloc[:, 0:J]
+                P_aug = pandas.concat([df1, df2], axis=0)
             else:
-                B_lags = pandas.concat([B_lags,
-                                       B_diff.loc[:, index_w].groupby('feature').shift(ll)], axis=1)
-                P_lags = pandas.concat([P_lags,
-                                       P_aug_diff.shift(ll).iloc[(e_lags + 1):, ].loc[:, index_w]], axis=1)
-
-        e_des_0 = pandas.concat([e_des_0, B_lags], axis=1)
-        e_des_1 = pandas.concat([e_des_1, P_lags], axis=1)
-
-    e_des_0 = e_des_0.loc[(outcome_var,), ]
-
-    if e_design is not None:
-        if not isinstance(e_design, (pandas.DataFrame, numpy.ndarray)):
-            raise Exception("The object e_design should be a dataframe or a matrix!")
-
-        if isinstance(e_design, numpy.ndarray):
-            e_design = pandas.DataFrame(e_design,
-                                        index=res.index,
-                                        columns=res.columns)
-
-        if len(e_design) != len(e_res):
-            raise Exception("The object e_design has " + len(e_design) + " rows when " +
-                            len(e_res) + " where expected!")
-
-        e_des_0 = e_design
+                df1 = aux.iloc[(len(aux) - e_lags - 1):len(aux)]
+                df2 = P.iloc[:, 0:J]
+                P_aug = pandas.concat([df1, df2], axis=0)
+    
+            P_aug_diff = P_aug - P_aug.shift(1)
+    
+            for ll in range(1, e_lags + 1):
+                if coig_data is False:
+                    B_lags = pandas.concat([B_lags,
+                                           B.loc[:, index_w].groupby('feature').shift(ll)], axis=1)
+                    P_lags = pandas.concat([P_lags,
+                                           P_aug.iloc[e_lags:, ].loc[:, index_w].shift(ll)], axis=1)
+                else:
+                    B_lags = pandas.concat([B_lags,
+                                           B_diff.loc[:, index_w].groupby('feature').shift(ll)], axis=1)
+                    P_lags = pandas.concat([P_lags,
+                                           P_aug_diff.shift(ll).iloc[(e_lags + 1):, ].loc[:, index_w]], axis=1)
+    
+            e_des_0 = pandas.concat([e_des_0, B_lags], axis=1)
+            e_des_1 = pandas.concat([e_des_1, P_lags], axis=1)
+    
+        e_des_0 = e_des_0.loc[(outcome_var,), ]
+    
+        if e_design is not None:
+            if not isinstance(e_design, (pandas.DataFrame, numpy.ndarray)):
+                raise Exception("The object e_design should be a dataframe or a matrix!")
+    
+            if isinstance(e_design, numpy.ndarray):
+                e_design = pandas.DataFrame(e_design,
+                                            index=res.index,
+                                            columns=res.columns)
+    
+            if len(e_design) != len(e_res):
+                raise Exception("The object e_design has " + len(e_design) + " rows when " +
+                                len(e_res) + " where expected!")
+    
+            e_des_0 = e_design
 
     return e_res, e_des_0, e_des_1
 
@@ -453,10 +452,10 @@ def df_EST(w_constr, w, A, B, J, KM):
         df = J
 
     elif (w_constr['name'] == "lasso") or ((w_constr['p'] == "L1") and (w_constr['dir'] == "<=")):
-        df = sum(w != 0)
+        df = sum(abs(w.iloc[:,0].values) >= 1e-6)
 
     elif (w_constr['name'] == "simplex") or ((w_constr['p'] == "L1") and (w_constr['dir'] == "==")):
-        df = sum(w != 0) - 1
+        df = sum(abs(w.iloc[:,0].values) >= 1e-6) - 1
 
     elif (w_constr['name'] == "ridge") or (w_constr["p"] == "L2"):
         d = numpy.linalg.svd(B)[1]
@@ -575,11 +574,12 @@ def scpi_in_simul(i, beta, Sigma_root, Q, P, J, KM, w_lb_est,
                     opt.add_inequality_constraint(lambda x, grad: norm_equal(x, grad, J, KM, QQ, p_int, dire),
                                                   opt_dict['tol_ineq'])
 
-                opt.set_lower_bounds([lb] * J + [0] * KM)
+                opt.set_lower_bounds([lb] * J + [-numpy.inf] * KM)
                 opt.set_xtol_rel(opt_dict['xtol_rel'])
                 opt.set_xtol_abs(opt_dict['xtol_abs'])
                 opt.set_ftol_abs(opt_dict['ftol_abs'])
                 opt.set_maxeval(opt_dict['maxeval'])
+
                 x = opt.optimize(x0)
 
                 alert = opt.last_optimize_result() < 0 or opt.last_optimize_result() >= 5
@@ -636,7 +636,7 @@ def scpi_in_simul(i, beta, Sigma_root, Q, P, J, KM, w_lb_est,
                     opt.add_inequality_constraint(lambda x, grad: norm_equal(x, grad, J, KM, QQ, p_int, dire),
                                                   opt_dict['tol_ineq'])
 
-                opt.set_lower_bounds([lb] * J + [0] * KM)
+                opt.set_lower_bounds([lb] * J + [-numpy.inf] * KM)
                 opt.set_xtol_rel(opt_dict['xtol_rel'])
                 opt.set_xtol_abs(opt_dict['xtol_abs'])
                 opt.set_ftol_abs(opt_dict['ftol_abs'])

@@ -302,6 +302,9 @@ b.est <- function(A, Z, J, KM, w.constr, V, QQ, opt.list) {
 u.des.prep <- function(B, C, u.order, u.lags, coig.data, T0.tot, M, constant,
                        index, index.w, features, u.design, res) {
   
+  # Extract feature id from rownames of B
+  feature.id <- unlist(purrr::map(stringr::str_split(rownames(B), "\\."), 1))
+  
   ## Construct the polynomial terms in B
   if (u.order == 0) {                # Simple mean
     
@@ -313,15 +316,11 @@ u.des.prep <- function(B, C, u.order, u.lags, coig.data, T0.tot, M, constant,
       
       B.diff   <- NULL
       
-      # Extract feature id from rownames of B
-      feature.id <- unlist(purrr::map(stringr::str_split(rownames(B), "\\."), 1))
-      
       # Create first differences feature-by-feature of the matrix B (not of C!!)
       for (feature in features) {
         BB       <- B[feature.id == feature,]
         B.diff   <- rbind(B.diff, BB - dplyr::lag(BB))
       }
-      
       u.des.0 <- cbind(B.diff, C)[, index, drop=FALSE]    # combine with C
       
     } else if (coig.data == FALSE) {
@@ -353,9 +352,6 @@ u.des.prep <- function(B, C, u.order, u.lags, coig.data, T0.tot, M, constant,
     if (coig.data == TRUE) {
       # Take first differences of B
       B.diff   <- NULL
-      
-      # Extract feature id from rownames of B
-      feature.id <- unlist(purrr::map(stringr::str_split(rownames(B), "\\."), 1))
       
       # Create first differences feature-by-feature of the matrix B (not of C!!)
       for (feature in features) {
@@ -439,7 +435,7 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
         # Create first differences of the first feature (outcome) of the matrix B (not of C!!)
         BB       <- B[feature.id == features[1],]
         B.diff   <- rbind(B.diff, BB - dplyr::lag(BB))
-        e.des.0 <- cbind(B.diff, C)[, index, drop=FALSE]
+        e.des.0 <- cbind(B.diff, C[feature.id == features[1],])[, index, drop=FALSE]
 
         ## Take first differences of P
         
@@ -454,7 +450,7 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
         e.des.1  <- P.diff
         
       } else if (coig.data == FALSE) {
-        e.des.0 <- cbind(B, C)[, index, drop = FALSE]
+        e.des.0 <- cbind(B, C)[feature.id == features[1], index, drop = FALSE]
         e.des.1 <- P[, index, drop = FALSE]
       }
 
@@ -899,11 +895,8 @@ predict <- function(y, x, eval, type="lm", tau=NULL, verbose) {
     betahat <- .lm.fit(x, y)$coeff
 
   } else if (type == "qreg") {
-    if (is.null(tau)) {
-      tau <- c(0.05, 0.95)
-    }
-
-    betahat <- rrq(y~x-1, tau=tau)$coeff
+    betahat <- cbind(Qtools::rrq(y~x-1, tau=tau[1])$coeff,
+                     Qtools::rrq(y~x-1, tau=tau[2])$coeff)
   }
   pred <- eval %*% betahat
   return(pred)
@@ -917,11 +910,11 @@ df.EST <- function(w.constr, w, A, B, J, KM){
     df <- J 
     
   } else if ((w.constr[["name"]] == "lasso") | ((w.constr[["p"]] == "L1") & (w.constr[["dir"]] == "<="))) {
-    df <- sum(w != 0) 
+    df <- sum(abs(w) >= 1e-6) 
     
   } else if ((w.constr[["name"]] == "simplex") | ((w.constr[["p"]] == "L1") & (w.constr[["dir"]] == "=="))) {
-    df <- sum(w != 0) - 1 
-  
+    df <- sum(abs(w) >= 1e-6) - 1
+    
   } else if ((w.constr[["name"]] == "ridge") | (w.constr[["p"]] == "L2")) {
     d <- svd(B)$d
     d[d < 0] <- 0
@@ -934,9 +927,6 @@ df.EST <- function(w.constr, w, A, B, J, KM){
   
   return(df)
 }
-
-
-
 
 
 u.sigma.est <- function(u.mean, u.sigma, res, Z, V, index, TT, M, df) {
@@ -1064,7 +1054,7 @@ regularize.check <- function(w, index.w, rho, verbose) {
     index.w <- rank(-w) <= 1
     if (verbose){
       cat("Warning: regularization paramater was too high (", round(rho, digits = 3), "). ", sep = "")
-      cat("We set it so that at least one component in w is non-zero.")
+      cat("We set it so that at least one component in w is non-zero.\n")
     }
   }
   return(index.w)
