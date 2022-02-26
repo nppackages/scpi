@@ -655,7 +655,7 @@ def scpi_in_simul(i, beta, Sigma_root, Q, P, J, KM, w_lb_est,
 
 
 def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, w_lb_est,
-            w_ub_est, p, p_int, QQ, dire, lb, cores, opt_dict, pass_stata):
+            w_ub_est, p, p_int, QQ, dire, lb, cores, opt_dict, pass_stata, verbose):
 
     # Progress bar
     iters = round(sims / 10)
@@ -668,7 +668,7 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, w_lb_est,
             rem = (i + 1) % iters
             if rem == 0:
                 perc = perc + 10
-                if pass_stata is False:
+                if pass_stata is False and verbose:
                     if any('SPYDER' in name for name in os.environ) and pass_stata is False:
                         print(str(i + 1) + "/" + str(sims) +
                               " iterations completed (" + str(perc) + "%)", end="\n")
@@ -851,24 +851,25 @@ def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
     return rho
 
 
-def regularize_check(w, index_w, rho):
+def regularize_check(w, index_w, rho, verbose):
     # If regularization is ill-behaved just select the first weight
     if len(index_w) == 0:
         sel = w.rank(ascending=False) <= 1
         index_w = w.loc[sel[0], ].index.get_level_values(0).tolist()
-        print("Warning: regularization paramater was too high (" + str(round(rho, 3)) + "). "
-              + "We set it so that at least one component in w is non-zero.")
+        if verbose:
+            warnings.warn("Regularization paramater was too high (" + str(round(rho, 3)) + "). "
+                  + "We set it so that at least one component in w is non-zero.")
     return(index_w)
 
 
-def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w):
+def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbose):
     Q = w_constr['Q']
     if isinstance(rho, str):
         rho = regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot)
 
     if (w_constr['name'] == "simplex") | ((w_constr['p'] == "L1") & (w_constr['dir'] == "==")):
         index_w = w.loc[w[0] > rho, ].index.get_level_values(0).tolist()
-        index_w = regularize_check(w, index_w, rho)
+        index_w = regularize_check(w, index_w, rho, verbose)
         w_star = deepcopy(w)
         to_regularize = [col for col in B.columns if col not in index_w]
         w_star.loc[to_regularize, ] = 0
@@ -883,7 +884,7 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w):
             Q_star = Q
 
         index_w = w.loc[abs(w[0]) > rho, ].index.get_level_values(0).tolist()
-        index_w = regularize_check(w, index_w, rho)
+        index_w = regularize_check(w, index_w, rho, verbose)
         w_star = deepcopy(w)
         to_regularize = [col for col in B.columns if col not in index_w]
         w_star.loc[to_regularize, ] = 0

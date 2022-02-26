@@ -99,9 +99,13 @@ some popular constraints can be selected through the option {opt name}. A detail
 {p 4 8}{cmd:u_missp} if specified indicates that model misspecification should be taken into account.{p_end}
 {p 4 8}{cmd:u_sigma(}{it:string}{cmd:)} specifies the type of variance-covariance estimator to be used when estimating the conditional variance of the pseudo-residuals. 
 Options are: {opt HC0}, {opt HC1} (default), {opt HC2}, and {opt HC3}.{p_end}
-{p 4 8}{cmd:u_order(}{it:#}{cmd:)} specifies the order of the polynomial in the predictors used to estimate conditional moments of the pseudo-residuals. Default is {cmd:u_order(1)}.{p_end}
-{p 4 8}{cmd:u_lags(}{it:#}{cmd:)} specifies the lags of the predictors used to estimate conditional moments of the pseudo-residuals. Default is {cmd:u_lags(0)}.{p_end}
-{p 4 8}{cmd:u_alpha(}{it:#}{cmd:)} specifies the confidence level for in-sample uncertainty. Default is {cmd:u_alpha(0.05)}.{p_end}
+{p 4 8}{cmd:u_order(}{it:#}{cmd:)} specifies the order of the polynomial in the predictors used to estimate conditional moments of the pseudo-residuals. Default is {cmd:u_order(1)}. 
+If there is risk of over-fitting the option is automatically set to 0. Our rule of thumb to predict over-fitting checks that the
+difference between the effective number of observations and the number of parameters used to predict the conditional moments of the
+pseudo-residuals is at least 20.{p_end}
+{p 4 8}{cmd:u_lags(}{it:#}{cmd:)} specifies the lags of the predictors used to estimate conditional moments of the pseudo-residuals. Default is {cmd:u_lags(0)}.
+If there is risk of over-fitting the option is automatically set to 0 (see u_order for more information).{p_end}
+{p 4 8}{cmd:u_alpha(}{it:#}{cmd:)} specifies the confidence level for in-sample uncertainty, that is the confidence level is 1 - u_alpha. Default is {cmd:u_alpha(0.05)}.{p_end}
 {p 4 8}{cmd:sims(}{it:#}{cmd:)} specifies the number of simulations to be used in quantifying in-sample uncertainty. Default is {cmd:sims(200)}.{p_end}
 
 {dlgtab:Out-of-sample Uncertainty}
@@ -114,9 +118,11 @@ Options are: {opt HC0}, {opt HC1} (default), {opt HC2}, and {opt HC3}.{p_end}
 {p 8 12} {opt qreg} quantile regression. {p_end}
 {p 8 12} {opt all} all of the above (the default). {p_end}
 
-{p 4 8}{cmd:e_order(}{it:#}{cmd:)} specifies the order of the polynomial in the predictors used to estimate conditional moments of the out-of-sample error. Default is {cmd:e_order(1)}.{p_end}
-{p 4 8}{cmd:e_lags(}{it:#}{cmd:)} specifies the lags of the predictors used to estimate conditional moments of the out-of-sample error. Default is {cmd:e_lags(0)}.{p_end}
-{p 4 8}{cmd:e_alpha(}{it:#}{cmd:)} specifies the confidence level for out-fo-sample uncertainty. Default is {cmd:e_alpha(0.05)}.{p_end}
+{p 4 8}{cmd:e_order(}{it:#}{cmd:)} specifies the order of the polynomial in the predictors used to estimate conditional moments of the out-of-sample error. Default is {cmd:e_order(1)}.
+If there is risk of over-fitting the option is automatically set to 0 (see u_order for more information).{p_end}
+{p 4 8}{cmd:e_lags(}{it:#}{cmd:)} specifies the lags of the predictors used to estimate conditional moments of the out-of-sample error. Default is {cmd:e_lags(0)}.
+If there is risk of over-fitting the option is automatically set to 0 (see u_order for more information).{p_end}
+{p 4 8}{cmd:e_alpha(}{it:#}{cmd:)} specifies the confidence level for out-of-sample uncertainty, i.e. the confidence level is 1 -e_alpha. Default is {cmd:e_alpha(0.05)}.{p_end}
 
 {dlgtab:Regularization}
 

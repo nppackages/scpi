@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: scpi-pkg
-Version: 0.1.2
+Version: 0.2
 Summary: The package computes point estimates and prediction intervals for Synthetic Control methods as proposed in Cattaneo, Feng, and Titiunik (2021).
 Home-page: https://nppackages.github.io/scpi/
 Author: Filippo Palomba

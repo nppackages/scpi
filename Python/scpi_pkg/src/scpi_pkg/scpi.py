@@ -10,7 +10,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import pandas
 import numpy
-import warnings
 from copy import deepcopy
 import multiprocessing as mp
 from sklearn.linear_model import LinearRegression
@@ -44,6 +43,7 @@ def scpi(data,
          e_bounds=None,
          opt_dict_est=None,
          opt_dict_inf=None,
+         verbose=True,
          pass_stata=False):
 
     '''
@@ -79,17 +79,19 @@ def scpi(data,
         the conditional variance of u. Available choices are HC0, HC1, HC2, and HC3.
 
     u_order : int, default 1
-        an integer that sets the order of the polynomial in B when predicting moments of u.
+        an integer that sets the order of the polynomial in B when predicting moments of u. If there is risk of over-fitting
+        the command automatically sets u_order = 0.
 
     u_lags : int, default 0
-        an integer that sets the number of lags of B when predicting moments of u.
+        an integer that sets the number of lags of B when predicting moments of u. If there is risk of over-fitting the
+        command automatically sets u_lags=0.
 
     u_design : numpy.array, default None
         an array with the same number of rows of A and B and whose columns specify the design matrix
         to be used when modeling the estimated pseudo-true residuals u.
 
     u_alpha : float, default 0.05
-        the confidence level for in-sample uncertainty.
+        a float specifying the confidence level for in-sample uncertainty, i.e. 1 - u_alpha is the confidence level.
 
     e_method : str, default "all"
         a string selecting the method to be used in quantifying out-of-sample uncertainty among:
@@ -97,17 +99,19 @@ def scpi(data,
         which employs a quantile regressions to get the conditional bounds; "all" uses each one of the previous methods.
 
     e_order : int, default 1
-        an integer that sets the order of the polynomial in B when predicting moments of e.
+        an integer that sets the order of the polynomial in B when predicting moments of e. If there is risk of over-fitting the
+        command automatically sets e_order=0.
 
     e_lags: int, default 0
-        a scalar that sets the number of lags of B when predicting moments of e.
+        a scalar that sets the number of lags of B when predicting moments of e. If there is risk of over-fitting the
+        command automatically sets e_lags=0.
 
     e_design : numpy.array, default None
         an array with the same number of rows of A and B and whose columns specify the design matrix
         to be used when modeling the estimated out-of-sample residuals e.
 
     e_alpha : float, default 0.05
-        an integer specifying the confidence level for out-of-sample uncertainty.
+        an float specifying the confidence level for out-of-sample uncertainty, i.e. 1- e_alpha is the confidence level.
 
     sims : int, default 200
         an integer providing the number of simulations to be used in quantifying in-sample uncertainty.
@@ -148,6 +152,9 @@ def scpi(data,
     opt_dict_inf : dictionary
         same as above but for inference purposes. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8',
         'xtol_abs = 1e-8', 'ftol_rel = 1e-4', 'ftol_abs = 1e-4', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
+
+    verbose : bool
+        if True prints additional information in the console.
 
     pass_stat : bool
         for internal use only.
@@ -280,7 +287,16 @@ def scpi(data,
         a logical indicating whether the design matrix to predict moments of u was user-provided.
 
     u_alpha : float
-        a float indicating the confidence level used for in-sample uncertainty.
+        a float specifying the confidence level used for in-sample uncertainty, i.e. 1-u_alpha is the confidence level.
+
+    u_T : int
+        an integer indicating the number of observations used to estimate (conditional) moments of the pseudo-residuals.
+
+    u_params : int
+        an integer indicating the number of parameters used to estimate (conditional) moments of the pseudo-residuals.
+
+    u_D : array
+        the design matrix used to predict moments of the pseudo-residuals.
 
     e_method : str
         a string indicating the specification used to predict moments of the out-of-sample error e.
@@ -294,8 +310,17 @@ def scpi(data,
     e_user : bool
         a logical indicating whether the design matrix to predict moments of e was user-provided.
 
+    e_T : int
+        an integer indicating the number of observations used to estimate (conditional) moments of the out-of-sample error.
+
+    e_params : int
+        an integer indicating the number of parameters used to estimate (conditional) moments of the out-of-sample error.
+
+    e_D : array
+        the design matrix used to predict moments of the out-of-sample error.
+
     e_alpha : float
-        a float indicating the confidence level used for out-of-sample uncertainty.
+        a float indicating the confidence level used for out-of-sample uncertainty, i.e. 1-e_alpha is the confidence level.
 
     rho : str/float
         an integer specifying the estimated regularizing parameter that imposes sparsity on
@@ -331,7 +356,7 @@ def scpi(data,
 
     ######################################
     # Estimation of synthetic weights
-    if pass_stata is False:
+    if pass_stata is False and verbose:
         print("-----------------------------------------------")
         print("Estimating Weights...")
     sc_pred = scest(df=data, w_constr=w_constr, V=V, opt_dict=opt_dict_est)
@@ -452,7 +477,7 @@ def scpi(data,
     else:
         cores = mp.cpu_count() - 1
 
-    if pass_stata is False:
+    if pass_stata is False and verbose:
         print("Quantifying Uncertainty")
         executionTime(T0, T1, J, cores, sims, w_constr['name'])
         print(" ")
@@ -465,7 +490,7 @@ def scpi(data,
 
     # Regularize w
     w_constr_inf, w_star, index_w, rho, Q_star = local_geom(w_constr, rho,
-                                                            rho_max, res, B, C, coig_data, T0_tot, J, w)
+                                                            rho_max, res, B, C, coig_data, T0_tot, J, w, verbose)
 
     # Create an index that selects all non-zero weights and additional covariates
     if isinstance(index_w, pandas.core.indexes.base.Index):
@@ -526,18 +551,28 @@ def scpi(data,
 
     # If the model is thought to be misspecified then E[u|H] is estimated
     if u_missp is True:
-        u_des_0_na = DUflexGet(u_des_0_na, C)
-        if len(u_des_0_na) <= len(u_des_0_na.columns):
-            warnings.warn("Consider specifying a less complicated model for u. The number of observations used " +
-                          "to parametrically predict moments is smaller than the number of covariates used." +
-                          " Consider reducing either the number " +
-                          "of lags (u_lags) or the order of the polynomial (u_order)!")
+        T_u = len(u_des_0_na)
+        params_u = len(u_des_0_na.columns)
+        if (T_u - 20) <= params_u:
+            u_des_0_na = pandas.DataFrame(numpy.ones(len(u_des_0_na)), index=u_des_0_na.index)
+            if verbose and (u_order > 0 or u_lags > 0):
+                warnings.warn("One of u_order > 0 and  u_lags > 0 was specified, however the current number of observations (" +
+                              str(T_u) + ") used to estimate conditional moments of the pseudo-residuals is not larger than the " +
+                              "number of parameters used in estimation (" + str(params_u) + ") plus 20. To avoid over-fitting issues" +
+                              " u_order and u_lags were set to 0.")
+            u_order = 0
+            u_lags = 0
+        else:
+            u_des_0_na = DUflexGet(u_des_0_na, C)
+
         u_mean = LinearRegression().fit(u_des_0_na, res_na).predict(u_des_0_na)
 
     elif u_missp is False:
         u_mean = 0
+        params_u = 0
+        T_u = 0
 
-    # Use HC inference to estimate V[u|H]
+    # Use HC inference to estimate V[u|H] (note that w is pre-regularization)
     df = df_EST(w_constr=w_constr, w=w, A=A, B=B, J=J, KM=KM)
 
     Sigma, Omega = u_sigma_est(u_mean=u_mean, u_sigma=u_sigma,
@@ -574,7 +609,7 @@ def scpi(data,
             p_int = 2
 
         vsig = scpi_in(sims, b_arr, Sigma_root, Q, P_na, J, KM, w_lb_est,
-                       w_ub_est, p, p_int, QQ, dire, lb, cores, opt_dict_inf, pass_stata)
+                       w_ub_est, p, p_int, QQ, dire, lb, cores, opt_dict_inf, pass_stata, verbose)
 
     if w_lb_est is True:
         w_lb = numpy.nanquantile(vsig[:, :len(P_na)], q=u_alpha / 2, axis=0)
@@ -602,7 +637,7 @@ def scpi(data,
     failed_sims = pandas.DataFrame(fail,
                                    index=['lb', 'ub'])
 
-    if fail.sum() > 0.1 * sims * vsig.shape[1]:
+    if verbose and (fail.sum() > 0.1 * sims * vsig.shape[1]):
         warnings.warn("For some of the simulations used to quantify in-sample uncertainty the solution of " +
                       "the optimization problem was not found! We suggest inspecting the magnitude of this issue " +
                       "by consulting the percentage of simulations that failed contained in " +
@@ -633,11 +668,17 @@ def scpi(data,
         if sum(numpy.isnan(e_bounds[1])) == len(Y_post_fit):
             e_ub_est = False
 
-    if e_lb_est is True or e_ub_est is True:
-        if len(e_des_0_na) <= len(e_des_0_na.columns):
-            warnings.warn("Consider specifying a less complicated model for e. The number of observations used " +
-                          "to parametrically predict moments is smaller than the number of covariates used. Consider " +
-                          "reducing either the number of lags (e_lags) or the order of the polynomial (e_order)!")
+    T_e = len(e_des_0_na)
+    params_e = len(e_des_0_na.columns)
+
+    if (T_e - params_e) <= 20:
+        e_des_0_na = pandas.DataFrame(numpy.ones(len(e_des_0_na)), index=e_des_0_na.index)
+        e_des_1 = pandas.DataFrame(numpy.ones(len(e_des_1)), index=e_des_1.index)
+        if verbose and (e_order > 0 or e_lags > 0):
+                warnings.warn("One of e_order > 0 and e_lags > 0 was specified, however the current number of observations (" +
+                              str(T_e) + ") used to estimate conditional moments of the out-of-sample error is not larger than the " +
+                              "number of parameters used in estimation (" + str(params_e) + ") plus 20. To avoid over-fitting issues " +
+                              "e_order and e_lags were set to 0.")
 
     if e_method == 'gaussian' or e_method == 'all':
         e_lb, e_ub, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
@@ -827,10 +868,16 @@ def scpi(data,
                        u_order=u_order,
                        u_sigma=u_sigma,
                        u_user=u_user,
+                       u_T=T_u,
+                       u_params=params_u,
+                       u_D=u_des_0_na,
                        e_method=e_method,
                        e_lags=e_lags,
                        e_order=e_order,
                        e_user=e_user,
+                       e_T=T_e,
+                       e_params=params_e,
+                       e_D=e_des_0_na,
                        rho=rho,
                        u_alpha=u_alpha,
                        e_alpha=e_alpha,
@@ -848,8 +895,8 @@ class scpi_output:
                  T1_outcome, features, outcome_var, glob_cons, out_in_features,
                  CI_in_sample, CI_all_gaussian, CI_all_ls, CI_all_qreg, Sigma,
                  u_mean, u_var, e_mean, e_var, u_missp, u_lags, u_order,
-                 u_sigma, u_user, e_method, e_lags, e_order, e_user,
-                 rho, u_alpha, e_alpha, sims, failed_sims, plotres):
+                 u_sigma, u_user, u_T, u_params, u_D, e_method, e_lags, e_order, e_user, e_T,
+                 e_params, e_D, rho, u_alpha, e_alpha, sims, failed_sims, plotres):
 
         self.b = b
         self.w = w
@@ -895,10 +942,16 @@ class scpi_output:
         self.u_order = u_order
         self.u_sigma = u_sigma
         self.u_user = u_user
+        self.u_T = u_T
+        self.u_params = u_params
+        self.u_D = u_D
         self.e_method = e_method
         self.e_lags = e_lags
         self.e_order = e_order
         self.e_user = e_user
+        self.e_T = e_T
+        self.e_params = e_params
+        self.e_D = e_D
         self.rho = rho
         self.u_alpha = u_alpha
         self.e_alpha = e_alpha
@@ -1012,6 +1065,7 @@ class scpi_output:
             print("     Order of polynomial (B)                  " + str(self.u_order))
             print("     Lags (B)                                 " + str(self.u_lags))
             print("     Variance-Covariance Estimator            " + self.u_sigma)
+            print("     Parameters used to estimate moments      " + str(self.u_params))
         else:
             print("In-sample Inference:")
             print("     User provided")
@@ -1021,6 +1075,7 @@ class scpi_output:
             print("     Method                                   " + self.e_method)
             print("     Order of polynomial (B)                  " + str(self.e_order))
             print("     Lags (B)                                 " + str(self.e_lags))
+            print("     Parameters used to estimate moments      " + str(self.e_params))
         else:
             print("Out-of-sample Inference:")
             print("     User provided")

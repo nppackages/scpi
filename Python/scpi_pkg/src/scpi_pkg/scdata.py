@@ -11,7 +11,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas
 import numpy
 import scipy.linalg
-import warnings
 from copy import deepcopy
 from collections import Counter
 from .funs import complete_cases

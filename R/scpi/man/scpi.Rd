@@ -60,27 +60,35 @@ post-intervention outcome of the synthetic control unit. \eqn{T_1} is the number
 \item{u.sigma}{a string specifying the type of variance-covariance estimator to be used when estimating
 the conditional variance of \eqn{\mathbf{u}}.}
 
-\item{u.order}{a scalar that sets the order of the polynomial in \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{u}}.}
+\item{u.order}{a scalar that sets the order of the polynomial in \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{u}}.
+The default is \code{u.order = 1}, however if there is risk of over-fitting, the command automatically sets it
+to \code{u.order = 0}. See the \strong{Details} section for more information.}
 
-\item{u.lags}{a scalar that sets the number of lags of \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{u}}.}
+\item{u.lags}{a scalar that sets the number of lags of \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{u}}.
+The default is \code{u.lags = 0}, however if there is risk of over-fitting, the command automatically sets it
+to \code{u.lags = 0}. See the \strong{Details} section for more information.}
 
 \item{u.design}{a matrix with the same number of rows of \eqn{\mathbf{A}} and \eqn{\mathbf{B}} and whose columns specify the design matrix
 to be used when modeling the estimated pseudo-true residuals \eqn{\mathbf{u}}.}
 
-\item{u.alpha}{a scalar specifying the confidence level for in-sample uncertainty.}
+\item{u.alpha}{a scalar specifying the confidence level for in-sample uncertainty, i.e. 1 - \code{u.alpha} is the confidence level.}
 
 \item{e.method}{a string selecting the method to be used in quantifying out-of-sample uncertainty among:
 "gaussian" which uses conditional subgaussian bounds; "ls" which specifies a location-scale model for \eqn{\mathbf{u}}; "qreg" which employs a
 quantile regressions to get the conditional bounds; "all" uses each one of the previous methods.}
 
-\item{e.order}{a scalar that sets the order of the polynomial in \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{e}}.}
+\item{e.order}{a scalar that sets the order of the polynomial in \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{e}}.
+The default is \code{e.order = 1}, however if there is risk of over-fitting, the command automatically sets it
+to \code{e.order = 0}. See the \strong{Details} section for more information.}
 
-\item{e.lags}{a scalar that sets the number of lags of \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{e}}.}
+\item{e.lags}{a scalar that sets the number of lags of \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{e}}.
+The default is \code{e.order = 1}, however if there is risk of over-fitting, the command automatically sets it
+to \code{e.order = 0}. See the \strong{Details} section for more information.}
 
 \item{e.design}{a matrix with the same number of rows of \eqn{\mathbf{A}} and \eqn{\mathbf{B}} and whose columns specify the design matrix
 to be used when modeling the estimated out-of-sample residuals \eqn{\mathbf{e}}.}
 
-\item{e.alpha}{a scalar specifying the confidence level for out-of-sample uncertainty.}
+\item{e.alpha}{a scalar specifying the confidence level for out-of-sample uncertainty, i.e. 1 - \code{e.alpha} is the confidence level.}
 
 \item{sims}{a scalar providing the number of simulations to be used in quantifying in-sample uncertainty.}
 
@@ -152,22 +160,28 @@ The third list is labeled 'inference.results' and contains all the inference-rel
 \item{CI.all.ls}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with a location-scale model.}
 \item{CI.all.qreg}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with quantile regressions.}
 \item{Sigma}{a matrix containing the estimated (conditional) variance-covariance \eqn{\boldsymbol{\Sigma}}.}
-\item{u.mean}{a matrix containing the estimated (conditional) mean of the pseudo-residuals \eqn{u}.}
-\item{u.var}{a matrix containing the estimated (conditional) variance-covariance of the pseudo-residuals \eqn{u}.}
+\item{u.mean}{a matrix containing the estimated (conditional) mean of the pseudo-residuals \eqn{\mathbf{u}}.}
+\item{u.var}{a matrix containing the estimated (conditional) variance-covariance of the pseudo-residuals \eqn{\mathbf{u}}.}
 \item{e.mean}{a matrix containing the estimated (conditional) mean of the out-of-sample error \eqn{e}.}
 \item{e.var}{a matrix containing the estimated (conditional) variance of the out-of-sample error \eqn{e}.}
 \item{u.missp}{a logical indicating whether the model has been treated as misspecified or not.}
-\item{u.lags}{an integer containing the number of lags in B used in predicting moments of the pseudo-residuals \eqn{u}.}
-\item{u.order}{an integer containing the order of the polynomial in B used in predicting moments of the pseudo-residuals \eqn{u}.}
+\item{u.lags}{an integer containing the number of lags in B used in predicting moments of the pseudo-residuals \eqn{\mathbf{u}}.}
+\item{u.order}{an integer containing the order of the polynomial in B used in predicting moments of the pseudo-residuals \eqn{\mathbf{u}}.}
 \item{u.sigma}{a string indicating the estimator used for \code{Sigma}.}
-\item{u.user}{a logical indicating whether the design matrix to predict moments of \eqn{u} was user-provided.}
+\item{u.user}{a logical indicating whether the design matrix to predict moments of \eqn{\mathbf{u}} was user-provided.}
+\item{u.T}{a scalar indicating the number of observations used to predict moments of \eqn{\mathbf{u}}.}
+\item{u.params}{a scalar indicating the number of parameters used to predict moments of \eqn{\mathbf{u}}.}
+\item{u.D}{the design matrix used to predict moments of \eqn{\mathbf{u}},}
+\item{u.alpha}{a scalar determining the confidence level used for in-sample uncertainty, i.e. 1-\code{u.alpha} is the confidence level.}
 \item{e.method}{a string indicating the specification used to predict moments of the out-of-sample error \eqn{e}.}
 \item{e.lags}{an integer containing the number of lags in B used in predicting moments of the out-of-sample error \eqn{e}.}
 \item{e.order}{an integer containing the order of the polynomial in B used in predicting moments of the out-of-sample error \eqn{e}.}
 \item{e.user}{a logical indicating whether the design matrix to predict moments of \eqn{e} was user-provided.}
+\item{e.T}{a scalar indicating the number of observations used to predict moments of \eqn{\mathbf{u}}.}
+\item{e.params}{a scalar indicating the number of parameters used to predict moments of \eqn{\mathbf{u}}.}
+\item{e.alpha}{a scalar determining the confidence level used for out-of-sample uncertainty, i.e. 1-\code{e.alpha} is the confidence level.}
+\item{e.D}{the design matrix used to predict moments of \eqn{\mathbf{u}},}
 \item{rho}{an integer specifying the estimated regularizing parameter that imposes sparsity on the estimated vector of weights.}
-\item{u.alpha}{a scalar indicating the confidence level used for in-sample uncertainty.}
-\item{e.alpha}{a scalar indicating the confidence level used for out-of-sample uncertainty.}
 \item{sims}{an integer indicating the number of simulations used in quantifying in-sample uncertainty.}
 \item{failed.sims}{a matrix containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.}
 }
@@ -237,19 +251,29 @@ where \eqn{\mathcal{C} = \widehat{\sigma}_u / \min_j \widehat{\sigma}_{b_j}} if 
 
 \item{\strong{In-sample uncertainty.} To quantify in-sample uncertainty it is necessary to model the pseudo-residuals \eqn{\mathbf{u}}.
 First of all, estimation of the first moment of \eqn{\mathbf{u}} can be controlled through
-the option \code{u.missp}. When \code{u.missp = FALSE}, then \eqn{\mathbf{E}[u\: |\: H]=0}. If instead \code{u.missp = TRUE},
-then \eqn{\mathbf{E}[u\: |\: H]} is estimated using a linear regression of
-\eqn{\widehat{\mathbf{u}}} on \eqn{H}. The default set of variables in \eqn{H} is composed of \eqn{\mathbf{B}} and \eqn{\mathbf{C}} and, if required,
-with lags (\code{u.lags}) and polynomials (\code{u.order}) of \eqn{\mathbf{B}}. The option \code{u.design} allows the user to provide an
-ad-hoc set of variables to form \eqn{H}. Regarding the second moment of \eqn{\mathbf{u}}, different estimators can be chosen:
+the option \code{u.missp}. When \code{u.missp = FALSE}, then \eqn{\mathbf{E}[u\: |\: \mathbf{D}_u]=0}. If instead \code{u.missp = TRUE},
+then \eqn{\mathbf{E}[u\: |\: \mathbf{D}_u]} is estimated using a linear regression of
+\eqn{\widehat{\mathbf{u}}} on \eqn{\mathbf{D}_u}. The default set of variables in \eqn{\mathbf{D}_u} is composed of \eqn{\mathbf{B}},
+\eqn{\mathbf{C}} and, if required, it is augmented with lags (\code{u.lags}) and polynomials (\code{u.order}) of \eqn{\mathbf{B}}.
+The option \code{u.design} allows the user to provide an ad-hoc set of variables to form \eqn{\mathbf{D}_u}.
+Regarding the second moment of \eqn{\mathbf{u}}, different estimators can be chosen:
 HC0, HC1, HC2, HC3, and HC4 using the option \code{u.sigma}.}
 
 \item{\strong{Out-of-sample uncertainty.} To quantify out-of-sample uncertainty it is necessary to model the out-of-sample residuals
-\eqn{\mathbf{e}} and estimate relevant moments. By default, the design matrix used during estimation \eqn{H} is composed of \eqn{\mathbf{B}} and \eqn{\mathbf{C}} and, if required,
-with lags (\code{e.lags}) and polynomials (\code{e.order}) of \eqn{\mathbf{B}}. The option \code{e.design} allows the user to provide an
+\eqn{\mathbf{e}} and estimate relevant moments. By default, the design matrix used during estimation \eqn{\mathbf{D}_e} is composed of the blocks in
+\eqn{\mathbf{B}} and \eqn{\mathbf{C}} corresponding to the outcome variable. Moreover, if required by the user, \eqn{\mathbf{D}_e}
+is augmented with lags (\code{e.lags}) and polynomials (\code{e.order}) of \eqn{\mathbf{B}}. The option \code{e.design} allows the user to provide an
 ad-hoc set of variables to form \eqn{H}. Finally, the option \code{e.method} allows the user to select one of three
-estimation methods: "gaussian" relies on conditional subgaussian bounds; "ls" estimates conditional bounds using a location-scale
-model; "qreg" uses conditional quantile regression of the residuals \eqn{\mathbf{e}} on \eqn{H}.}
+estimation methods: "gaussian" relies on conditional sub-Gaussian bounds; "ls" estimates conditional bounds using a location-scale
+model; "qreg" uses conditional quantile regression of the residuals \eqn{\mathbf{e}} on \eqn{\mathbf{D}_e}.}
+
+\item{\strong{Residual Estimation Over-fitting.} To estimate conditional moments of \eqn{\mathbf{u}} and \eqn{e_t}
+we rely on two design matrices, \eqn{\mathbf{D}_u} and \eqn{\mathbf{D}_e} (see above). Let \eqn{d_u} and \eqn{d_e} be the number of
+columns in \eqn{\mathbf{D}_u} and \eqn{\mathbf{D}_e}, respectively. Assuming no missing values and balanced features, the
+number of observation used to estimate moments of \eqn{\mathbf{u}} is \eqn{T_0\cdot M}, whilst for moments of \eqn{e_t} is \eqn{T_0}.
+Our rule of thumb to avoid over-fitting is to check if \eqn{T_0\cdot M \geq d_u + 20} or \eqn{T_0 \geq d_e + 20}. If the
+former condition is not satisfied we automatically set \code{u.order = u.lags = 0}, if instead the latter is not met
+we automatically set \code{e.order = e.lags = 0}.}
 
 \item{\strong{Algorithm Options.} The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization
 (\code{algorithm = 'NLOPTR_LD_SLSQP'}) for all cases not involving the L1 norm.

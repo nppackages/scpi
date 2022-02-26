@@ -48,6 +48,7 @@
 #' @importFrom tibble is_tibble
 #' @importFrom utils flush.console
 #' 
+#' @import abind
 #' @import CVXR
 #' @import doSNOW
 #' @import doRNG
@@ -58,6 +59,7 @@
 #' @import tidyr
 #' 
 #' @rawNamespace import(stats, except = c(lag,filter,power))
+#' @rawNamespace import(rlang, except = c(is_vector,is_complex))
 #' 
 #' @aliases scpi-package
 "_PACKAGE"

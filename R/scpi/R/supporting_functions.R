@@ -578,14 +578,14 @@ scpi.in <- function(xt, beta, Q, G, J, KM, p.int, QQ, dire, p, lb, w.lb.est, w.u
       
       prob      <- CVXR::Problem(objective, constraints)
       prob_data <- CVXR::get_problem_data(prob, solver = "ECOS")
-      ECOS_dims <- ECOS.dims_to_solver_dict(prob_data$data[["dims"]])
+      ECOS_dims <- CVXR::ECOS.dims_to_solver_dict(prob_data$data[["dims"]])
       solver_output <- ECOSolveR::ECOS_csolve(c = prob_data$data[["c"]],
                                               G = prob_data$data[["G"]],
                                               h = prob_data$data[["h"]],
                                               dims = ECOS_dims,
                                               A = prob_data$data[["A"]],
                                               b = prob_data$data[["b"]])
-      sol      <- unpack_results(prob, solver_output, prob_data$chain, prob_data$inverse_data)
+      sol      <- CVXR::unpack_results(prob, solver_output, prob_data$chain, prob_data$inverse_data)
       alert    <- sol$status != "optimal"
       
       if (alert == TRUE) {
@@ -662,14 +662,14 @@ scpi.in <- function(xt, beta, Q, G, J, KM, p.int, QQ, dire, p, lb, w.lb.est, w.u
       prob        <- CVXR::Problem(objective, constraints)
       prob        <- CVXR::Problem(objective, constraints)
       prob_data <- CVXR::get_problem_data(prob, solver = "ECOS")
-      ECOS_dims <- ECOS.dims_to_solver_dict(prob_data$data[["dims"]])
+      ECOS_dims <- CVXR::ECOS.dims_to_solver_dict(prob_data$data[["dims"]])
       solver_output <- ECOSolveR::ECOS_csolve(c = prob_data$data[["c"]],
                                               G = prob_data$data[["G"]],
                                               h = prob_data$data[["h"]],
                                               dims = ECOS_dims,
                                               A = prob_data$data[["A"]],
                                               b = prob_data$data[["b"]])
-      sol      <- unpack_results(prob, solver_output, prob_data$chain, prob_data$inverse_data)
+      sol      <- CVXR::unpack_results(prob, solver_output, prob_data$chain, prob_data$inverse_data)
       alert    <- sol$status != "optimal"
 
       if (alert == TRUE) {
@@ -821,7 +821,7 @@ checkConstraints <- function(nloptr.obj, dir, tol_eq, tol_ineq) {
 }
 
 # Prediction interval, for e
-scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose) {
+scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est) {
 
   neval <- nrow(eval)
   e.1 <- e.2 <- lb <- ub <- NA
@@ -830,10 +830,10 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose)
 
     if (e.method == "gaussian") {
       x.more   <- rbind(eval, x)
-      fit      <- predict(y=res, x=x, eval=x.more, type="lm", verbose = verbose)
+      fit      <- predict(y=res, x=x, eval=x.more, type="lm")
       e.mean   <- fit[1:neval]
       res.fit  <- fit[-(1:neval)]
-      var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm", verbose = verbose)
+      var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm")
       e.sig2   <- exp(var.pred[1:neval])
 
       eps <- sqrt(-log(alpha)*2*e.sig2)
@@ -846,11 +846,11 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose)
 
     } else if (e.method == "ls") {
       x.more  <- rbind(eval, x)
-      fit     <- predict(y=res, x=x, eval=x.more, type="lm", verbose = verbose)
+      fit     <- predict(y=res, x=x, eval=x.more, type="lm")
       e.mean  <- fit[1:neval]
       res.fit <- fit[-(1:neval)]
 
-      var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm", verbose = verbose)
+      var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm")
       e.sig    <- sqrt(exp(var.pred[1:neval]))
       res.st   <- (res-res.fit)/sqrt(exp(var.pred[-(1:neval)]))
 
@@ -862,7 +862,7 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose)
       e.2 <- e.sig^2
       
     } else if (e.method == "qreg") {
-      e.pred  <- predict(y=res, x=x, eval=eval, type="qreg", tau=c(alpha, 1-alpha), verbose = verbose)
+      e.pred  <- predict(y=res, x=x, eval=eval, type="qreg", tau=c(alpha, 1-alpha))
       lb <- e.pred[,1]
       ub <- e.pred[,2]
 
@@ -883,13 +883,7 @@ sqrtm <- function(A) {
 }
 
 # conditional prediction
-predict <- function(y, x, eval, type="lm", tau=NULL, verbose) {
-  
-  if ((nrow(x) <= ncol(x)) & verbose) {
-    warning("Consider specifying a less complicated model for e. The number of observations used
-         to parametrically predict moments is smaller than the number of covariates used. Consider reducing either the number
-         of lags (e.lags) or the order of the polynomial (e.order)!")
-  }
+predict <- function(y, x, eval, type="lm", tau=NULL) {
   
   if (type == "lm") {
     betahat <- .lm.fit(x, y)$coeff
@@ -1053,8 +1047,8 @@ regularize.check <- function(w, index.w, rho, verbose) {
   if (sum(index.w) == 0) {
     index.w <- rank(-w) <= 1
     if (verbose){
-      cat("Warning: regularization paramater was too high (", round(rho, digits = 3), "). ", sep = "")
-      cat("We set it so that at least one component in w is non-zero.\n")
+      warning(paste0("Regularization paramater was too high (", round(rho, digits = 3), "). ",
+                     "We set it so that at least one component in w is non-zero.", immediate. = TRUE, call. = FALSE))
     }
   }
   return(index.w)
