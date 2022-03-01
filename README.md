@@ -43,7 +43,7 @@ There are at least two ways to install Python:
 After Python is installed, please install the `scpi` package in Python using the instructions above.
 
 ### How to link Stata and Python
-Stata (16.0 or newer) and Python (>=2.7) can be linked following the [official tutorial](https://blog.stata.com/2020/08/18/stata-python-integration-part-1-setting-up-stata-to-use-python/) on the Stata blog.
+Stata (16.0 or newer) and Python (>=3.10) can be linked following the [official tutorial](https://blog.stata.com/2020/08/18/stata-python-integration-part-1-setting-up-stata-to-use-python/) on the Stata blog.
 
 ### To install/update in Stata type:
 ```
