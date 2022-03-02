@@ -45,7 +45,6 @@
 
 <span class="kn">import</span> <span class="nn">pandas</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
 <span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
@@ -79,6 +78,7 @@
          <span class="n">e_bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
          <span class="n">opt_dict_est</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
          <span class="n">opt_dict_inf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+         <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
          <span class="n">pass_stata</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
     <span class="sd">&#39;&#39;&#39;</span>
@@ -114,17 +114,19 @@
 <span class="sd">        the conditional variance of u. Available choices are HC0, HC1, HC2, and HC3.</span>
 
 <span class="sd">    u_order : int, default 1</span>
-<span class="sd">        an integer that sets the order of the polynomial in B when predicting moments of u.</span>
+<span class="sd">        an integer that sets the order of the polynomial in B when predicting moments of u. If there is risk of over-fitting</span>
+<span class="sd">        the command automatically sets u_order = 0.</span>
 
 <span class="sd">    u_lags : int, default 0</span>
-<span class="sd">        an integer that sets the number of lags of B when predicting moments of u.</span>
+<span class="sd">        an integer that sets the number of lags of B when predicting moments of u. If there is risk of over-fitting the</span>
+<span class="sd">        command automatically sets u_lags=0.</span>
 
 <span class="sd">    u_design : numpy.array, default None</span>
 <span class="sd">        an array with the same number of rows of A and B and whose columns specify the design matrix</span>
 <span class="sd">        to be used when modeling the estimated pseudo-true residuals u.</span>
 
 <span class="sd">    u_alpha : float, default 0.05</span>
-<span class="sd">        the confidence level for in-sample uncertainty.</span>
+<span class="sd">        a float specifying the confidence level for in-sample uncertainty, i.e. 1 - u_alpha is the confidence level.</span>
 
 <span class="sd">    e_method : str, default &quot;all&quot;</span>
 <span class="sd">        a string selecting the method to be used in quantifying out-of-sample uncertainty among:</span>
@@ -132,17 +134,19 @@
 <span class="sd">        which employs a quantile regressions to get the conditional bounds; &quot;all&quot; uses each one of the previous methods.</span>
 
 <span class="sd">    e_order : int, default 1</span>
-<span class="sd">        an integer that sets the order of the polynomial in B when predicting moments of e.</span>
+<span class="sd">        an integer that sets the order of the polynomial in B when predicting moments of e. If there is risk of over-fitting the</span>
+<span class="sd">        command automatically sets e_order=0.</span>
 
 <span class="sd">    e_lags: int, default 0</span>
-<span class="sd">        a scalar that sets the number of lags of B when predicting moments of e.</span>
+<span class="sd">        a scalar that sets the number of lags of B when predicting moments of e. If there is risk of over-fitting the</span>
+<span class="sd">        command automatically sets e_lags=0.</span>
 
 <span class="sd">    e_design : numpy.array, default None</span>
 <span class="sd">        an array with the same number of rows of A and B and whose columns specify the design matrix</span>
 <span class="sd">        to be used when modeling the estimated out-of-sample residuals e.</span>
 
 <span class="sd">    e_alpha : float, default 0.05</span>
-<span class="sd">        an integer specifying the confidence level for out-of-sample uncertainty.</span>
+<span class="sd">        an float specifying the confidence level for out-of-sample uncertainty, i.e. 1- e_alpha is the confidence level.</span>
 
 <span class="sd">    sims : int, default 200</span>
 <span class="sd">        an integer providing the number of simulations to be used in quantifying in-sample uncertainty.</span>
@@ -183,6 +187,9 @@
 <span class="sd">    opt_dict_inf : dictionary</span>
 <span class="sd">        same as above but for inference purposes. The default values are &#39;maxeval = 5000&#39;, &#39;xtol_rel = 1e-8&#39;,</span>
 <span class="sd">        &#39;xtol_abs = 1e-8&#39;, &#39;ftol_rel = 1e-4&#39;, &#39;ftol_abs = 1e-4&#39;, &#39;tol_eq = 1e-8&#39;, and &#39;tol_ineq = 1e-8&#39;.</span>
+
+<span class="sd">    verbose : bool</span>
+<span class="sd">        if True prints additional information in the console.</span>
 
 <span class="sd">    pass_stat : bool</span>
 <span class="sd">        for internal use only.</span>
@@ -315,7 +322,16 @@
 <span class="sd">        a logical indicating whether the design matrix to predict moments of u was user-provided.</span>
 
 <span class="sd">    u_alpha : float</span>
-<span class="sd">        a float indicating the confidence level used for in-sample uncertainty.</span>
+<span class="sd">        a float specifying the confidence level used for in-sample uncertainty, i.e. 1-u_alpha is the confidence level.</span>
+
+<span class="sd">    u_T : int</span>
+<span class="sd">        an integer indicating the number of observations used to estimate (conditional) moments of the pseudo-residuals.</span>
+
+<span class="sd">    u_params : int</span>
+<span class="sd">        an integer indicating the number of parameters used to estimate (conditional) moments of the pseudo-residuals.</span>
+
+<span class="sd">    u_D : array</span>
+<span class="sd">        the design matrix used to predict moments of the pseudo-residuals.</span>
 
 <span class="sd">    e_method : str</span>
 <span class="sd">        a string indicating the specification used to predict moments of the out-of-sample error e.</span>
@@ -329,8 +345,17 @@
 <span class="sd">    e_user : bool</span>
 <span class="sd">        a logical indicating whether the design matrix to predict moments of e was user-provided.</span>
 
+<span class="sd">    e_T : int</span>
+<span class="sd">        an integer indicating the number of observations used to estimate (conditional) moments of the out-of-sample error.</span>
+
+<span class="sd">    e_params : int</span>
+<span class="sd">        an integer indicating the number of parameters used to estimate (conditional) moments of the out-of-sample error.</span>
+
+<span class="sd">    e_D : array</span>
+<span class="sd">        the design matrix used to predict moments of the out-of-sample error.</span>
+
 <span class="sd">    e_alpha : float</span>
-<span class="sd">        a float indicating the confidence level used for out-of-sample uncertainty.</span>
+<span class="sd">        a float indicating the confidence level used for out-of-sample uncertainty, i.e. 1-e_alpha is the confidence level.</span>
 
 <span class="sd">    rho : str/float</span>
 <span class="sd">        an integer specifying the estimated regularizing parameter that imposes sparsity on</span>
@@ -366,7 +391,7 @@
 
     <span class="c1">######################################</span>
     <span class="c1"># Estimation of synthetic weights</span>
-    <span class="k">if</span> <span class="n">pass_stata</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">pass_stata</span> <span class="ow">is</span> <span class="kc">False</span> <span class="ow">and</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-----------------------------------------------&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Estimating Weights...&quot;</span><span class="p">)</span>
     <span class="n">sc_pred</span> <span class="o">=</span> <span class="n">scest</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="n">V</span><span class="p">,</span> <span class="n">opt_dict</span><span class="o">=</span><span class="n">opt_dict_est</span><span class="p">)</span>
@@ -487,7 +512,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">cores</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span>
 
-    <span class="k">if</span> <span class="n">pass_stata</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">pass_stata</span> <span class="ow">is</span> <span class="kc">False</span> <span class="ow">and</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Quantifying Uncertainty&quot;</span><span class="p">)</span>
         <span class="n">executionTime</span><span class="p">(</span><span class="n">T0</span><span class="p">,</span> <span class="n">T1</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">cores</span><span class="p">,</span> <span class="n">sims</span><span class="p">,</span> <span class="n">w_constr</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
@@ -500,7 +525,7 @@
 
     <span class="c1"># Regularize w</span>
     <span class="n">w_constr_inf</span><span class="p">,</span> <span class="n">w_star</span><span class="p">,</span> <span class="n">index_w</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">Q_star</span> <span class="o">=</span> <span class="n">local_geom</span><span class="p">(</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span>
-                                                            <span class="n">rho_max</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">coig_data</span><span class="p">,</span> <span class="n">T0_tot</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+                                                            <span class="n">rho_max</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">coig_data</span><span class="p">,</span> <span class="n">T0_tot</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
 
     <span class="c1"># Create an index that selects all non-zero weights and additional covariates</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index_w</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">indexes</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Index</span><span class="p">):</span>
@@ -561,16 +586,26 @@
 
     <span class="c1"># If the model is thought to be misspecified then E[u|H] is estimated</span>
     <span class="k">if</span> <span class="n">u_missp</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="n">u_des_0_na</span> <span class="o">=</span> <span class="n">DUflexGet</span><span class="p">(</span><span class="n">u_des_0_na</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">u_des_0_na</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">u_des_0_na</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Consider specifying a less complicated model for u. The number of observations used &quot;</span> <span class="o">+</span>
-                          <span class="s2">&quot;to parametrically predict moments is smaller than the number of covariates used.&quot;</span> <span class="o">+</span>
-                          <span class="s2">&quot; Consider reducing either the number &quot;</span> <span class="o">+</span>
-                          <span class="s2">&quot;of lags (u_lags) or the order of the polynomial (u_order)!&quot;</span><span class="p">)</span>
+        <span class="n">T_u</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">u_des_0_na</span><span class="p">)</span>
+        <span class="n">params_u</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">u_des_0_na</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">T_u</span> <span class="o">-</span> <span class="mi">20</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">params_u</span><span class="p">:</span>
+            <span class="n">u_des_0_na</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">u_des_0_na</span><span class="p">)),</span> <span class="n">index</span><span class="o">=</span><span class="n">u_des_0_na</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="p">(</span><span class="n">u_order</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">u_lags</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;One of u_order &gt; 0 and  u_lags &gt; 0 was specified, however the current number of observations (&quot;</span> <span class="o">+</span>
+                              <span class="nb">str</span><span class="p">(</span><span class="n">T_u</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;) used to estimate conditional moments of the pseudo-residuals is not larger than the &quot;</span> <span class="o">+</span>
+                              <span class="s2">&quot;number of parameters used in estimation (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">params_u</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;) plus 20. To avoid over-fitting issues&quot;</span> <span class="o">+</span>
+                              <span class="s2">&quot; u_order and u_lags were set to 0.&quot;</span><span class="p">)</span>
+            <span class="n">u_order</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">u_lags</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">u_des_0_na</span> <span class="o">=</span> <span class="n">DUflexGet</span><span class="p">(</span><span class="n">u_des_0_na</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
+
         <span class="n">u_mean</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">u_des_0_na</span><span class="p">,</span> <span class="n">res_na</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">u_des_0_na</span><span class="p">)</span>
 
     <span class="k">elif</span> <span class="n">u_missp</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
         <span class="n">u_mean</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">params_u</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">T_u</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="c1"># Use HC inference to estimate V[u|H]</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">df_EST</span><span class="p">(</span><span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="p">,</span> <span class="n">KM</span><span class="o">=</span><span class="n">KM</span><span class="p">)</span>
@@ -579,7 +614,7 @@
                                <span class="n">res</span><span class="o">=</span><span class="n">res_na</span><span class="p">,</span> <span class="n">Z</span><span class="o">=</span><span class="n">Z_na</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="n">V_na</span><span class="p">,</span>
                                <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">TT</span><span class="o">=</span><span class="n">TT</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">)</span>
 
-    <span class="n">Sigma_root</span> <span class="o">=</span> <span class="n">sqrtm</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>
+    <span class="n">Sigma_root</span> <span class="o">=</span> <span class="n">sqrtm</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
 
     <span class="c1"># Auxiliary logical values to estimate bounds for w</span>
     <span class="n">w_lb_est</span> <span class="o">=</span> <span class="kc">True</span>
@@ -609,7 +644,7 @@
             <span class="n">p_int</span> <span class="o">=</span> <span class="mi">2</span>
 
         <span class="n">vsig</span> <span class="o">=</span> <span class="n">scpi_in</span><span class="p">(</span><span class="n">sims</span><span class="p">,</span> <span class="n">b_arr</span><span class="p">,</span> <span class="n">Sigma_root</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">P_na</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">KM</span><span class="p">,</span> <span class="n">w_lb_est</span><span class="p">,</span>
-                       <span class="n">w_ub_est</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p_int</span><span class="p">,</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">dire</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">cores</span><span class="p">,</span> <span class="n">opt_dict_inf</span><span class="p">,</span> <span class="n">pass_stata</span><span class="p">)</span>
+                       <span class="n">w_ub_est</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p_int</span><span class="p">,</span> <span class="n">QQ</span><span class="p">,</span> <span class="n">dire</span><span class="p">,</span> <span class="n">lb</span><span class="p">,</span> <span class="n">cores</span><span class="p">,</span> <span class="n">opt_dict_inf</span><span class="p">,</span> <span class="n">pass_stata</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">w_lb_est</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">w_lb</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nanquantile</span><span class="p">(</span><span class="n">vsig</span><span class="p">[:,</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">P_na</span><span class="p">)],</span> <span class="n">q</span><span class="o">=</span><span class="n">u_alpha</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -637,7 +672,7 @@
     <span class="n">failed_sims</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">fail</span><span class="p">,</span>
                                    <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lb&#39;</span><span class="p">,</span> <span class="s1">&#39;ub&#39;</span><span class="p">])</span>
 
-    <span class="k">if</span> <span class="n">fail</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">sims</span> <span class="o">*</span> <span class="n">vsig</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="p">(</span><span class="n">fail</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">sims</span> <span class="o">*</span> <span class="n">vsig</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;For some of the simulations used to quantify in-sample uncertainty the solution of &quot;</span> <span class="o">+</span>
                       <span class="s2">&quot;the optimization problem was not found! We suggest inspecting the magnitude of this issue &quot;</span> <span class="o">+</span>
                       <span class="s2">&quot;by consulting the percentage of simulations that failed contained in &quot;</span> <span class="o">+</span>
@@ -667,6 +702,18 @@
             <span class="n">e_lb_est</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">e_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">Y_post_fit</span><span class="p">):</span>
             <span class="n">e_ub_est</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">T_e</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">e_des_0_na</span><span class="p">)</span>
+    <span class="n">params_e</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">e_des_0_na</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">T_e</span> <span class="o">-</span> <span class="n">params_e</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">20</span><span class="p">:</span>
+        <span class="n">e_des_0_na</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">e_des_0_na</span><span class="p">)),</span> <span class="n">index</span><span class="o">=</span><span class="n">e_des_0_na</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">e_des_1</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">e_des_1</span><span class="p">)),</span> <span class="n">index</span><span class="o">=</span><span class="n">e_des_1</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="p">(</span><span class="n">e_order</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">e_lags</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;One of e_order &gt; 0 and e_lags &gt; 0 was specified, however the current number of observations (&quot;</span> <span class="o">+</span>
+                              <span class="nb">str</span><span class="p">(</span><span class="n">T_e</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;) used to estimate conditional moments of the out-of-sample error is not larger than the &quot;</span> <span class="o">+</span>
+                              <span class="s2">&quot;number of parameters used in estimation (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">params_e</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;) plus 20. To avoid over-fitting issues &quot;</span> <span class="o">+</span>
+                              <span class="s2">&quot;e_order and e_lags were set to 0.&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s1">&#39;gaussian&#39;</span> <span class="ow">or</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
         <span class="n">e_lb</span><span class="p">,</span> <span class="n">e_ub</span><span class="p">,</span> <span class="n">e_1</span><span class="p">,</span> <span class="n">e_2</span> <span class="o">=</span> <span class="n">scpi_out</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">e_res_na</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">e_des_0_na</span><span class="p">,</span> <span class="n">preds</span><span class="o">=</span><span class="n">e_des_1</span><span class="p">,</span>
@@ -856,10 +903,16 @@
                        <span class="n">u_order</span><span class="o">=</span><span class="n">u_order</span><span class="p">,</span>
                        <span class="n">u_sigma</span><span class="o">=</span><span class="n">u_sigma</span><span class="p">,</span>
                        <span class="n">u_user</span><span class="o">=</span><span class="n">u_user</span><span class="p">,</span>
+                       <span class="n">u_T</span><span class="o">=</span><span class="n">T_u</span><span class="p">,</span>
+                       <span class="n">u_params</span><span class="o">=</span><span class="n">params_u</span><span class="p">,</span>
+                       <span class="n">u_D</span><span class="o">=</span><span class="n">u_des_0_na</span><span class="p">,</span>
                        <span class="n">e_method</span><span class="o">=</span><span class="n">e_method</span><span class="p">,</span>
                        <span class="n">e_lags</span><span class="o">=</span><span class="n">e_lags</span><span class="p">,</span>
                        <span class="n">e_order</span><span class="o">=</span><span class="n">e_order</span><span class="p">,</span>
                        <span class="n">e_user</span><span class="o">=</span><span class="n">e_user</span><span class="p">,</span>
+                       <span class="n">e_T</span><span class="o">=</span><span class="n">T_e</span><span class="p">,</span>
+                       <span class="n">e_params</span><span class="o">=</span><span class="n">params_e</span><span class="p">,</span>
+                       <span class="n">e_D</span><span class="o">=</span><span class="n">e_des_0_na</span><span class="p">,</span>
                        <span class="n">rho</span><span class="o">=</span><span class="n">rho</span><span class="p">,</span>
                        <span class="n">u_alpha</span><span class="o">=</span><span class="n">u_alpha</span><span class="p">,</span>
                        <span class="n">e_alpha</span><span class="o">=</span><span class="n">e_alpha</span><span class="p">,</span>
@@ -877,8 +930,8 @@
                  <span class="n">T1_outcome</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">outcome_var</span><span class="p">,</span> <span class="n">glob_cons</span><span class="p">,</span> <span class="n">out_in_features</span><span class="p">,</span>
                  <span class="n">CI_in_sample</span><span class="p">,</span> <span class="n">CI_all_gaussian</span><span class="p">,</span> <span class="n">CI_all_ls</span><span class="p">,</span> <span class="n">CI_all_qreg</span><span class="p">,</span> <span class="n">Sigma</span><span class="p">,</span>
                  <span class="n">u_mean</span><span class="p">,</span> <span class="n">u_var</span><span class="p">,</span> <span class="n">e_mean</span><span class="p">,</span> <span class="n">e_var</span><span class="p">,</span> <span class="n">u_missp</span><span class="p">,</span> <span class="n">u_lags</span><span class="p">,</span> <span class="n">u_order</span><span class="p">,</span>
-                 <span class="n">u_sigma</span><span class="p">,</span> <span class="n">u_user</span><span class="p">,</span> <span class="n">e_method</span><span class="p">,</span> <span class="n">e_lags</span><span class="p">,</span> <span class="n">e_order</span><span class="p">,</span> <span class="n">e_user</span><span class="p">,</span>
-                 <span class="n">rho</span><span class="p">,</span> <span class="n">u_alpha</span><span class="p">,</span> <span class="n">e_alpha</span><span class="p">,</span> <span class="n">sims</span><span class="p">,</span> <span class="n">failed_sims</span><span class="p">,</span> <span class="n">plotres</span><span class="p">):</span>
+                 <span class="n">u_sigma</span><span class="p">,</span> <span class="n">u_user</span><span class="p">,</span> <span class="n">u_T</span><span class="p">,</span> <span class="n">u_params</span><span class="p">,</span> <span class="n">u_D</span><span class="p">,</span> <span class="n">e_method</span><span class="p">,</span> <span class="n">e_lags</span><span class="p">,</span> <span class="n">e_order</span><span class="p">,</span> <span class="n">e_user</span><span class="p">,</span> <span class="n">e_T</span><span class="p">,</span>
+                 <span class="n">e_params</span><span class="p">,</span> <span class="n">e_D</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">u_alpha</span><span class="p">,</span> <span class="n">e_alpha</span><span class="p">,</span> <span class="n">sims</span><span class="p">,</span> <span class="n">failed_sims</span><span class="p">,</span> <span class="n">plotres</span><span class="p">):</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">w</span>
@@ -924,10 +977,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">u_order</span> <span class="o">=</span> <span class="n">u_order</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">u_sigma</span> <span class="o">=</span> <span class="n">u_sigma</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">u_user</span> <span class="o">=</span> <span class="n">u_user</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_T</span> <span class="o">=</span> <span class="n">u_T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_params</span> <span class="o">=</span> <span class="n">u_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_D</span> <span class="o">=</span> <span class="n">u_D</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">e_method</span> <span class="o">=</span> <span class="n">e_method</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">e_lags</span> <span class="o">=</span> <span class="n">e_lags</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">e_order</span> <span class="o">=</span> <span class="n">e_order</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">e_user</span> <span class="o">=</span> <span class="n">e_user</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_T</span> <span class="o">=</span> <span class="n">e_T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_params</span> <span class="o">=</span> <span class="n">e_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_D</span> <span class="o">=</span> <span class="n">e_D</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="n">rho</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">u_alpha</span> <span class="o">=</span> <span class="n">u_alpha</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">e_alpha</span> <span class="o">=</span> <span class="n">e_alpha</span>
@@ -1014,6 +1073,7 @@
         <span class="c1"># Prepare objects to print (inference)</span>
         <span class="n">e_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_method</span>
         <span class="n">Y_tr_post</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y_post</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">Y_tr_post</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y_post</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
         <span class="n">Y_sc_post</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y_post_fit</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">Y_tr_post</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Index</span><span class="p">([</span><span class="s1">&#39;Treated&#39;</span><span class="p">])</span>
         <span class="n">Y_sc_post</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Index</span><span class="p">([</span><span class="s1">&#39;Synthetic&#39;</span><span class="p">])</span>
@@ -1040,6 +1100,7 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     Order of polynomial (B)                  &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u_order</span><span class="p">))</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     Lags (B)                                 &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u_lags</span><span class="p">))</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     Variance-Covariance Estimator            &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">u_sigma</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     Parameters used to estimate moments      &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u_params</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;In-sample Inference:&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     User provided&quot;</span><span class="p">)</span>
@@ -1049,6 +1110,7 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     Method                                   &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_method</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     Order of polynomial (B)                  &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">e_order</span><span class="p">))</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     Lags (B)                                 &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">e_lags</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     Parameters used to estimate moments      &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">e_params</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Out-of-sample Inference:&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     User provided&quot;</span><span class="p">)</span>

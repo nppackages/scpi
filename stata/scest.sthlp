@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 0.1 2022-01-25}{...}
+{* *!version 0.2.1 2022-03-01}{...}
 {viewerjumpto "Syntax" "scest##syntax"}{...}
 {viewerjumpto "Description" "scest##description"}{...}
 {viewerjumpto "Options" "scest##options"}{...}
@@ -23,7 +23,9 @@
 {cmd:Q(}{it:#}{cmd:)}  
 {cmd:lb(}{it:#}{cmd:)}  
 {cmd:name(}{it:string}{cmd:)}
-{cmd:opt(}{it:string}{cmd:)}]
+{cmd:opt(}{it:string}{cmd:)}
+{cmd:pypinocheck}]{p_end}
+
 {p_end}
 
 {synoptset 28 tabbed}{...}
@@ -86,6 +88,7 @@ some popular constraints can be selected through the option {opt name}. A detail
     The default value is {cmd:opt("'maxeval' = 5000, 'xtol_rel' = 1e-8, 'xtol_abs' = 1e-8, 'ftol_rel' = 1e-12, 'ftol_abs' = 1e-12, 'tol_eq' = 1e-8, 'tol_ineq' = 1e-8")}.
     In case a lasso-type constraint is implemented, a different optimizer ({browse "https://www.cvxpy.org/":cvxpy}) is used and stopping criteria cannot be changed. {p_end}
 
+{p 4 8}{cmd:pypinocheck)} if specified avoids to check that the version of scpi_pkg in Python is the one required by {cmd:scest} in Stata. When not specified performs the check and stores a macro called to avoid checking it multiple times.{p_end}
 
     {hline}
 

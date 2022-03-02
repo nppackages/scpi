@@ -79,8 +79,8 @@ def scpi(data,
         the conditional variance of u. Available choices are HC0, HC1, HC2, and HC3.
 
     u_order : int, default 1
-        an integer that sets the order of the polynomial in B when predicting moments of u. If there is risk of over-fitting
-        the command automatically sets u_order = 0.
+        an integer that sets the order of the polynomial in B when predicting moments of u.
+        If there is risk of over-fitting the command automatically sets u_order = 0.
 
     u_lags : int, default 0
         an integer that sets the number of lags of B when predicting moments of u. If there is risk of over-fitting the
@@ -99,8 +99,8 @@ def scpi(data,
         which employs a quantile regressions to get the conditional bounds; "all" uses each one of the previous methods.
 
     e_order : int, default 1
-        an integer that sets the order of the polynomial in B when predicting moments of e. If there is risk of over-fitting the
-        command automatically sets e_order=0.
+        an integer that sets the order of the polynomial in B when predicting moments of e.
+        If there is risk of over-fitting the command automatically sets e_order=0.
 
     e_lags: int, default 0
         a scalar that sets the number of lags of B when predicting moments of e. If there is risk of over-fitting the
@@ -311,16 +311,19 @@ def scpi(data,
         a logical indicating whether the design matrix to predict moments of e was user-provided.
 
     e_T : int
-        an integer indicating the number of observations used to estimate (conditional) moments of the out-of-sample error.
+        an integer indicating the number of observations used to estimate (conditional) moments of the out-of-sample
+        error.
 
     e_params : int
-        an integer indicating the number of parameters used to estimate (conditional) moments of the out-of-sample error.
+        an integer indicating the number of parameters used to estimate (conditional) moments of the out-of-sample
+        error.
 
     e_D : array
         the design matrix used to predict moments of the out-of-sample error.
 
     e_alpha : float
-        a float indicating the confidence level used for out-of-sample uncertainty, i.e. 1-e_alpha is the confidence level.
+        a float indicating the confidence level used for out-of-sample uncertainty, i.e. 1-e_alpha is the confidence
+        level.
 
     rho : str/float
         an integer specifying the estimated regularizing parameter that imposes sparsity on
@@ -552,13 +555,14 @@ def scpi(data,
     # If the model is thought to be misspecified then E[u|H] is estimated
     if u_missp is True:
         T_u = len(u_des_0_na)
-        params_u = len(u_des_0_na.columns)
-        if (T_u - 20) <= params_u:
+        
+        if (T_u - 20) <= len(u_des_0_na.columns):
             u_des_0_na = pandas.DataFrame(numpy.ones(len(u_des_0_na)), index=u_des_0_na.index)
             if verbose and (u_order > 0 or u_lags > 0):
-                warnings.warn("One of u_order > 0 and  u_lags > 0 was specified, however the current number of observations (" +
-                              str(T_u) + ") used to estimate conditional moments of the pseudo-residuals is not larger than the " +
-                              "number of parameters used in estimation (" + str(params_u) + ") plus 20. To avoid over-fitting issues" +
+                warnings.warn("One of u_order > 0 and  u_lags > 0 was specified, however the current number of " +
+                              "observations (" + str(T_u) + ") used to estimate conditional moments of the " +
+                              "pseudo-residuals is not larger than the number of parameters used in " +
+                              "estimation (" + str(len(u_des_0_na.columns)) + ") plus 20. To avoid over-fitting issues" +
                               " u_order and u_lags were set to 0.")
             u_order = 0
             u_lags = 0
@@ -566,13 +570,14 @@ def scpi(data,
             u_des_0_na = DUflexGet(u_des_0_na, C)
 
         u_mean = LinearRegression().fit(u_des_0_na, res_na).predict(u_des_0_na)
+        params_u = len(u_des_0_na.columns)
 
     elif u_missp is False:
         u_mean = 0
         params_u = 0
         T_u = 0
 
-    # Use HC inference to estimate V[u|H] (note that w is pre-regularization)
+    # Use HC inference to estimate V[u|H]
     df = df_EST(w_constr=w_constr, w=w, A=A, B=B, J=J, KM=KM)
 
     Sigma, Omega = u_sigma_est(u_mean=u_mean, u_sigma=u_sigma,
@@ -669,16 +674,18 @@ def scpi(data,
             e_ub_est = False
 
     T_e = len(e_des_0_na)
-    params_e = len(e_des_0_na.columns)
 
-    if (T_e - params_e) <= 20:
+    if (T_e - len(e_des_0_na.columns)) <= 20:
         e_des_0_na = pandas.DataFrame(numpy.ones(len(e_des_0_na)), index=e_des_0_na.index)
         e_des_1 = pandas.DataFrame(numpy.ones(len(e_des_1)), index=e_des_1.index)
         if verbose and (e_order > 0 or e_lags > 0):
-                warnings.warn("One of e_order > 0 and e_lags > 0 was specified, however the current number of observations (" +
-                              str(T_e) + ") used to estimate conditional moments of the out-of-sample error is not larger than the " +
-                              "number of parameters used in estimation (" + str(params_e) + ") plus 20. To avoid over-fitting issues " +
-                              "e_order and e_lags were set to 0.")
+            warnings.warn("One of e_order > 0 and e_lags > 0 was specified, however the current number of " +
+                          "observations (" + str(T_e) + ") used to estimate conditional moments of the " +
+                          "out-of-sample error is not larger than the number of parameters used in " +
+                          "estimation (" + len(e_des_0_na.columns) + ") plus 20. To avoid over-fitting issues " +
+                          "e_order and e_lags were set to 0.")
+
+    params_e = len(e_des_0_na.columns)
 
     if e_method == 'gaussian' or e_method == 'all':
         e_lb, e_ub, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,

@@ -1,5 +1,5 @@
-*! Date        : 25 Jan 2022
-*! Version     : 0.1
+*! Date        : 1 Mar 2022
+*! Version     : 0.2.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Synthetic control estimation
@@ -13,7 +13,16 @@ capture program drop scest
 program define scest, eclass         
 version 17.0           
 
-	syntax , dfname(string) [name(string) p(integer 1) direc(string) q(real -11.92) lb(string) opt(string)]
+	syntax , dfname(string) [name(string) p(integer 1) direc(string) q(real -11.92) lb(string) opt(string) pypinocheck]
+	
+	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
+		python: version_checker()
+		if "`alert_version'" == "y" {
+			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_pypi_version' needed! Please update the package in Python and restart Stata!"
+			exit 198
+		}
+		global scpi_version_checked "yes"
+	}
 	
 	if mi("`name'") {
 		local name "None"
@@ -96,7 +105,7 @@ end
 version 17.0
 python:
 
-import pickle, numpy
+import pickle, numpy, urllib, luddite
 from scpi_pkg.scest import scest
 from sfi import Scalar, Matrix, Macro
 
@@ -217,6 +226,22 @@ def scest_wrapper(p, dir, Q, lb, name, opt, dfname):
 	Macro.setLocal("features", ' '.join([str(elem) for elem in res_est.features]))
 	Macro.setLocal("dire", str(res_est.w_constr['dir']))
 	
+def version_checker():
+	# try to connect to pypi and get the latest version of scpi_pkg
+	try:
+		local_version = str(lver.__version__)
+		pypi_version = luddite.get_version_pypi("scpi_pkg")
+		if local_version == pypi_version:
+			alert_version = "n"
+		else:
+			alert_version = "y"
+	except urllib.error.URLError:
+		alert_version = "n"
+		pypi_version = "none"
+
+	Macro.setLocal("alert_version", alert_version)
+	Macro.setLocal("python_local_version", local_version)
+	Macro.setLocal("python_pypi_version", pypi_version)
 	
 end
 

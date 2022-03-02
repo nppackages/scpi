@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 0.1 2022-01-25}{...}
+{* *!version 0.2.1 2022-03-01}{...}
 {viewerjumpto "Syntax" "scpi##syntax"}{...}
 {viewerjumpto "Description" "scpi##description"}{...}
 {viewerjumpto "Options" "scpi##options"}{...}
@@ -35,8 +35,9 @@
 {cmd:e_alpha(}{it:#}{cmd:)}
 {cmd:rho(}{it:#}{cmd:)}
 {cmd:rho_max(}{it:#}{cmd:)}
-{cmd:opt_est(}{it:string}{cmd:)}]
-{cmd:opt_inf(}{it:string}{cmd:)}]
+{cmd:opt_est(}{it:string}{cmd:)}
+{cmd:opt_inf(}{it:string}{cmd:)}
+{cmd:pypinocheck}]{p_end}
 {p_end}
 
 {synoptset 28 tabbed}{...}
@@ -141,6 +142,8 @@ based on optimization inequalities.{p_end}
     The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization ('SLSQP'). 
     In case a lasso-type constraint is implemented, the method of moving asymptotes (MMA) is used. The default value is 
     {cmd:opt("'maxeval' = 5000, 'xtol_rel' = 1e-8, 'xtol_abs' = 1e-8, 'ftol_rel' = 1e-4, 'ftol_abs' = 1e-4, 'tol_eq' = 1e-8, 'tol_ineq' = 1e-8")}.{p_end}
+
+{p 4 8}{cmd:pypinocheck)} if specified avoids to check that the version of scpi_pkg in Python is the one required by {cmd:scpi} in Stata. When not specified performs the check and stores a macro called to avoid checking it multiple times.{p_end}
 
     {hline}
 

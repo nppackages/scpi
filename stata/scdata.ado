@@ -1,5 +1,5 @@
-*! Date        : 25 Jan 2022
-*! Version     : 0.1
+*! Date        : 1 Mar 2022
+*! Version     : 0.2.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Data preparation for scest or scpi
@@ -9,8 +9,17 @@ program define scdata, eclass
 version 17.0           
 		
 	syntax varlist [if] [in], id(varname) time(varname) outcome(varname) treatment(varname) dfname(string) ///
-							  [covadj(string) anticipation(integer 0) cointegrated constant]
-			
+							  [covadj(string) anticipation(integer 0) cointegrated pypinocheck constant]
+
+	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
+		python: version_checker()
+		if "`alert_version'" == "y" {
+			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_pypi_version' needed! Please update the package in Python and restart Stata!"
+			exit 198
+		}
+		global scpi_version_checked "yes"
+	}
+	
 	local features "`varlist'"	  
 	
 	if mi("`covadj'") {
@@ -24,7 +33,6 @@ version 17.0
 	if mi("`constant'") {
 		local constant "False"
 	} 
-	
 	
 	preserve
 	qui export delimited using "__scpi__data_to_python.csv", replace
@@ -54,9 +62,27 @@ end
 
 version 17.0
 python:
-import pandas, pickle, numpy
+import pandas, pickle, numpy, urllib, luddite
 from scpi_pkg.scdata import scdata
+from scpi_pkg import version as lver
 from sfi import Scalar, Matrix, Macro
+
+def version_checker():
+	# try to connect to pypi and get the latest version of scpi_pkg
+	try:
+		local_version = str(lver.__version__)
+		pypi_version = luddite.get_version_pypi("scpi_pkg")
+		if local_version == pypi_version:
+			alert_version = "n"
+		else:
+			alert_version = "y"
+	except urllib.error.URLError:
+		alert_version = "n"
+		pypi_version = "none"
+
+	Macro.setLocal("alert_version", alert_version)
+	Macro.setLocal("python_local_version", local_version)
+	Macro.setLocal("python_pypi_version", pypi_version)
 
 def scdata_wrapper(features, id_var, time_var, outcome_var, covadj, anticipation, cointegrated, constant, reportmissing, treatment, dfname):
 	

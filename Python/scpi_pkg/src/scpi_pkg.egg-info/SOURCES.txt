@@ -8,6 +8,7 @@ src/scpi_pkg/scdata.py
 src/scpi_pkg/scest.py
 src/scpi_pkg/scpi.py
 src/scpi_pkg/scplot.py
+src/scpi_pkg/version.py
 src/scpi_pkg.egg-info/PKG-INFO
 src/scpi_pkg.egg-info/SOURCES.txt
 src/scpi_pkg.egg-info/dependency_links.txt

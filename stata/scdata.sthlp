@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 0.1 2022-01-25}{...}
+{* *!version 0.2.1 2022-03-01}{...}
 {viewerjumpto "Syntax" "scdata##syntax"}{...}
 {viewerjumpto "Description" "scdata##description"}{...}
 {viewerjumpto "Options" "scdata##options"}{...}
@@ -25,7 +25,8 @@
 [{cmd:covadj(}{it:string}{cmd:)}
 {cmd:anticipation(}{it:#}{cmd:)}
 {cmd:cointegrated}
-{cmd:constant}]{p_end}
+{cmd:constant}
+{cmd:pypinocheck}]{p_end}
 
 {synoptset 28 tabbed}{...}
 
@@ -82,6 +83,8 @@ references therein.{p_end}
 {dlgtab:Others}
 
 {p 4 8}{cmd:dfname(}{it:string}{cmd:)} specifies the name of the Python object that is saved and that will be passed to {help scest:scest} or {help scpi:scpi}.{p_end}
+
+{p 4 8}{cmd:pypinocheck)} if specified avoids to check that the version of scpi_pkg in Python is the one required by {cmd:scdata} in Stata. When not specified performs the check and stores a macro called to avoid checking it multiple times.{p_end}
 
     {hline}
 

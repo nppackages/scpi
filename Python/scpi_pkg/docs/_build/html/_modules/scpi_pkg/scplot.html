@@ -57,7 +57,7 @@
            <span class="n">x_lab</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
            <span class="n">y_lab</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
            <span class="n">e_out</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-           <span class="n">e_method</span><span class="o">=</span><span class="s2">&quot;gaussian&quot;</span><span class="p">,</span>
+           <span class="n">e_method</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
            <span class="n">save_data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
     <span class="sd">&#39;&#39;&#39;</span>
@@ -194,13 +194,18 @@
                                    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Treated&quot;</span><span class="p">,</span> <span class="s2">&quot;Synthetic Control&quot;</span><span class="p">],</span>
                                    <span class="n">guide</span><span class="o">=</span><span class="n">guide_legend</span><span class="p">(</span><span class="n">override_aes</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;linetype&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;solid&#39;</span><span class="p">,</span> <span class="s1">&#39;dashed&#39;</span><span class="p">],</span>
                                                                     <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">]})))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
-
         <span class="k">return</span> <span class="n">plot</span>
 
     <span class="k">elif</span> <span class="n">class_input</span> <span class="o">==</span> <span class="s1">&#39;scpi_output&#39;</span><span class="p">:</span>
+
         <span class="k">if</span> <span class="n">e_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">e_method</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">e_method</span>
+
+        <span class="k">if</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">e_method</span> <span class="o">=</span> <span class="s1">&#39;qreg&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">e_method</span> <span class="o">==</span> <span class="n">result</span><span class="o">.</span><span class="n">e_method</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">e_method</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Make sure that e_method is the same as the one in scpi!&quot;</span><span class="p">)</span>
 
         <span class="n">sc_l_0</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">CI_in_sample</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
         <span class="n">sc_r_0</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">CI_in_sample</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
@@ -270,26 +275,22 @@
         <span class="k">if</span> <span class="n">e_out</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
             <span class="n">plot</span> <span class="o">=</span> <span class="n">plot_lines</span> <span class="o">+</span> <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;lb0&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;ub0&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;sc&#39;</span><span class="p">),</span>
                                               <span class="n">size</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s1">&#39;solid&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">ggtitle</span><span class="p">(</span><span class="s1">&#39;In-sample Uncertainty&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">e_out</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">:</span>
                 <span class="n">title_str</span> <span class="o">=</span> <span class="s1">&#39;In and Out of Sample Uncertainty - Subgaussian Bounds&#39;</span>
                 <span class="n">plot</span> <span class="o">=</span> <span class="n">plot_lines</span> <span class="o">+</span> <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;lb1&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;ub1&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;sc&#39;</span><span class="p">),</span>
                                                   <span class="n">size</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s1">&#39;solid&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">ggtitle</span><span class="p">(</span><span class="n">title_str</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s1">&#39;ls&#39;</span><span class="p">:</span>
                 <span class="n">title_str</span> <span class="o">=</span> <span class="s1">&#39;In and Out of Sample Uncertainty - Location-scale Model&#39;</span>
                 <span class="n">plot</span> <span class="o">=</span> <span class="n">plot_lines</span> <span class="o">+</span> <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;lb1&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;ub1&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;sc&#39;</span><span class="p">),</span>
                                                   <span class="n">size</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s1">&#39;solid&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">ggtitle</span><span class="p">(</span><span class="n">title_str</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s1">&#39;qreg&#39;</span><span class="p">:</span>
                 <span class="n">title_str</span> <span class="o">=</span> <span class="s1">&#39;In and Out of Sample Uncertainty - Quantile Regression&#39;</span>
                 <span class="n">plot</span> <span class="o">=</span> <span class="n">plot_lines</span> <span class="o">+</span> <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;lb1&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;ub1&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;sc&#39;</span><span class="p">),</span>
                                                   <span class="n">size</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s1">&#39;solid&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">ggtitle</span><span class="p">(</span><span class="n">title_str</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
 
         <span class="c1"># Save data to reproduce plot</span>
         <span class="k">if</span> <span class="n">save_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

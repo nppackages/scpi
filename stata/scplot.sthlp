@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 0.1 2022-01-25}{...}
+{* *!version 0.2.1 2022-03-01}{...}
 {viewerjumpto "Syntax" "scplot##syntax"}{...}
 {viewerjumpto "Description" "scplot##description"}{...}
 {viewerjumpto "Options" "scplot##options"}{...}
@@ -36,8 +36,8 @@
 {cmd:spike_sc_width(}{it:{help linewidthstyle:linewidthstyle}}{cmd:)}
 {cmd:gphoptions(}{it:string}{cmd:)}
 {cmd:gphsave(}{it:string}{cmd:)}
-{cmd:savedata(}{it:dta_name}{cmd:)}]{p_end}
-
+{cmd:savedata(}{it:dta_name}{cmd:)}
+{cmd:pypinocheck}]{p_end}
 {synoptset 28 tabbed}{...}
 
 {marker description}{...}
@@ -108,6 +108,8 @@ references therein.{p_end}
 {p 4 8}{cmd:gphoptions(}{it:string}{cmd:)} specifies additional options to modify the plot.{p_end}
 {p 4 8}{cmd:gphsave(}{it:string}{cmd:)} specifies the path and the name of the {it:.gph} file that is saved by the command.{p_end}
 {p 4 8}{cmd:savedata(}{it:dta_name}{cmd:)} saves a {it:dta_name.dta} file containing the processed data used to produce the plot.{p_end}
+
+{p 4 8}{cmd:pypinocheck)} if specified avoids to check that the version of scpi_pkg in Python is the one required by {cmd:scplot} in Stata. When not specified performs the check and stores a macro called to avoid checking it multiple times.{p_end}
 
     {hline}
 

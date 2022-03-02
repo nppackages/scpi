@@ -1,5 +1,5 @@
-*! Date        : 25 Jan 2022
-*! Version     : 0.1
+*! Date        : 1 Mar 2022
+*! Version     : 0.2.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Synthetic control inference
@@ -15,7 +15,16 @@ program define scpi, eclass
 version 17.0           
 
 	syntax , dfname(string) [p(integer 1) direc(string) q(real -11.92) lb(string) name(string) u_missp u_sigma(string) u_order(integer 1) u_lags(integer 0) u_alpha(real 0.05) sims(integer 200) ///
-			 e_method(string) e_order(integer 1) e_lags(integer 0) e_alpha(real 0.05) rho(real -11) rho_max(real -11) cores(integer 1) opt_est(string) opt_inf(string)]
+			 e_method(string) e_order(integer 1) e_lags(integer 0) e_alpha(real 0.05) rho(real -11) rho_max(real -11) cores(integer 1) opt_est(string) opt_inf(string) pypinocheck]
+
+	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
+		python: version_checker()
+		if "`alert_version'" == "y" {
+			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_pypi_version' needed! Please update the package in Python and restart Stata!"
+			exit 198
+		}
+		global scpi_version_checked "yes"
+	}			 
 			 
 	if mi("`name'") {
 		local name "None"
@@ -57,10 +66,6 @@ version 17.0
 	if "`lb'" != "0" & "`lb'" != "-inf" {
 		di as error "The option lb should be either 'zero' or '-inf'."
 		exit 198
-	}
-	
-	if `q' == -11.92 {
-		local q "None"
 	}
 	
 	if mi("`u_missp'") {
@@ -143,47 +148,13 @@ end
 
 version 17.0
 python:
-import pickle, numpy
+import pickle, numpy, urllib, luddite
 from scpi_pkg.scpi import scpi
 from sfi import Scalar, Matrix, Macro
 from math import ceil
 
 
-def executionTime(cores, sims, dfname):
-	filename = dfname + '.obj'
-	filehandler = open(filename, 'rb') 
-	df = pickle.load(filehandler)
-
-	T0 = df.T0_features
-	T1 = df.T1_outcome
-	J = df.J
-	Ttot = sum(T0.values())
-	tincr = Ttot / 1000
-
-	coefsJ = numpy.array([-0.54755616, 0.09985644])
-
-	time = numpy.array([1, J]) @ coefsJ
-	time = time * sims / 10
-	time = time / cores
-	time = time * tincr
-	time = time * T1
-	time = time / 60
-	time = ceil(time)
-	time = 2 * time
-
-	if time < 1:
-		toprint = "Maximum expected execution time: less than a minute."
-	elif time == 1:
-		toprint = "Maximum expected execution time: " + str(time) + " minute."
-	else:
-		toprint = "Maximum expected execution time: " + str(time) + " minutes."
-
-	Macro.setLocal("toprint", toprint)
-
-
-
-
-def scpi_wrapper(p, dir, Q, lb, name, u_missp, u_sigma, u_order, u_lags, u_alpha, e_method, e_order, e_lags, e_alpha, sims, rho, rho_max, cores, opt_est, opt_inf, dfname):
+def scpi_wrapper(p, dir, q, lb, name, u_missp, u_sigma, u_order, u_lags, u_alpha, e_method, e_order, e_lags, e_alpha, sims, rho, rho_max, cores, opt_est, opt_inf, dfname):
 
 	filename = dfname + '.obj'
 	filehandler = open(filename, 'rb') 
@@ -193,22 +164,28 @@ def scpi_wrapper(p, dir, Q, lb, name, u_missp, u_sigma, u_order, u_lags, u_alpha
 		lb = 0
 	else:
 		lb = -numpy.inf
-	
+
 	if dir == "None":
 		dire = None
 	else:
 		dire = dir		
 		
+	if q == -11.92:
+		Q = None
+	else:
+		Q = q
+	
 	if name == "None":
-		w_constr = {'p': p, 'dir': dir, 'Q': Q, 'lb': lb}
+		if Q is None:
+			w_constr = {'p': p, 'dir': dir, 'Q': 1, 'lb': lb}
+		else:
+			w_constr = {'p': p, 'dir': dir, 'Q': Q, 'lb': lb}
 	else:
 		if Q is None:
 			w_constr = {'name': str(name)}
 		else:
 			w_constr = {'name': str(name), 'Q': Q}
 				
-
-		
 	if opt_est == "None":
 		opt_est = {}
 		
@@ -355,8 +332,9 @@ def scpi_wrapper(p, dir, Q, lb, name, u_missp, u_sigma, u_order, u_lags, u_alpha
 		names = [str(col) for col in res_pi.CI_all_qreg.columns.tolist()]
 		Matrix.setColNames("CI_all_qreg", names)	
 
-	Matrix.create("u_mean", res_pi.u_mean.shape[0], res_pi.u_mean.shape[1], 0)
-	Matrix.store("u_mean", res_pi.u_mean)
+	if u_missp_bool:
+		Matrix.create("u_mean", res_pi.u_mean.shape[0], res_pi.u_mean.shape[1], 0)
+		Matrix.store("u_mean", res_pi.u_mean)
 
 	Matrix.create("u_var", res_pi.u_var.shape[0], res_pi.u_var.shape[1], 0)
 	Matrix.store("u_var", res_pi.u_var)
@@ -383,6 +361,56 @@ def scpi_wrapper(p, dir, Q, lb, name, u_missp, u_sigma, u_order, u_lags, u_alpha
 	Macro.setLocal("e_lags", str(res_pi.e_lags))
 	Macro.setLocal("e_method", res_pi.e_method)
 	Macro.setLocal("dire", str(res_pi.w_constr['dir']))
+
 	
+	
+def version_checker():
+	# try to connect to pypi and get the latest version of scpi_pkg
+	try:
+		local_version = str(lver.__version__)
+		pypi_version = luddite.get_version_pypi("scpi_pkg")
+		if local_version == pypi_version:
+			alert_version = "n"
+		else:
+			alert_version = "y"
+	except urllib.error.URLError:
+		alert_version = "n"
+		pypi_version = "none"
+
+	Macro.setLocal("alert_version", alert_version)
+	Macro.setLocal("python_local_version", local_version)
+	Macro.setLocal("python_pypi_version", pypi_version)
+
+	
+def executionTime(cores, sims, dfname):
+	filename = dfname + '.obj'
+	filehandler = open(filename, 'rb') 
+	df = pickle.load(filehandler)
+
+	T0 = df.T0_features
+	T1 = df.T1_outcome
+	J = df.J
+	Ttot = sum(T0.values())
+	tincr = Ttot / 1000
+
+	coefsJ = numpy.array([-0.54755616, 0.09985644])
+
+	time = numpy.array([1, J]) @ coefsJ
+	time = time * sims / 10
+	time = time / cores
+	time = time * tincr
+	time = time * T1
+	time = time / 60
+	time = ceil(time)
+	time = 2 * time
+
+	if time < 1:
+		toprint = "Maximum expected execution time: less than a minute."
+	elif time == 1:
+		toprint = "Maximum expected execution time: " + str(time) + " minute."
+	else:
+		toprint = "Maximum expected execution time: " + str(time) + " minutes."
+
+	Macro.setLocal("toprint", toprint)
 	
 end

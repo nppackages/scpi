@@ -1,5 +1,5 @@
-*! Date        : 25 Jan 2022
-*! Version     : 0.1
+*! Date        : 1 Mar 2022
+*! Version     : 0.2.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Plot Synthetic Control
@@ -9,13 +9,22 @@ capture program drop scplot
 program define scplot, eclass         
 version 17.0           
 
-	syntax , [scest uncertainty(string) dots_tr_col(string) dots_tr_symb(string) dots_tr_size(string)  ///
-										dots_sc_col(string) dots_sc_symb(string) dots_sc_size(string)  ///
-										line_tr_col(string) line_tr_patt(string) line_tr_width(string) ///
-										line_sc_col(string) line_sc_patt(string) line_sc_width(string) ///
+	syntax , [scest uncertainty(string) dots_tr_col(string) dots_tr_symb(string) dots_tr_size(string)     ///
+										dots_sc_col(string) dots_sc_symb(string) dots_sc_size(string)     ///
+										line_tr_col(string) line_tr_patt(string) line_tr_width(string)    ///
+										line_sc_col(string) line_sc_patt(string) line_sc_width(string)    ///
 										spike_sc_col(string) spike_sc_patt(string) spike_sc_width(string) ///
-										gphoptions(string) gphsave(string) savedata(string)]
-		
+										gphoptions(string) gphsave(string) savedata(string) pypinocheck]
+
+	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
+		python: version_checker()
+		if "`alert_version'" == "y" {
+			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_pypi_version' needed! Please update the package in Python and restart Stata!"
+			exit 198
+		}
+		global scpi_version_checked "yes"
+	}										
+										
 	if !mi("`uncertainty'") {	
 		if !inlist("`uncertainty'", "insample", "gaussian", "ls", "qreg") {
 			di as error "{err}The option 'uncertainty' should be of 'insample', 'gaussian', 'ls', or 'qreg'!"
@@ -203,7 +212,7 @@ end
 
 version 17.0
 python:
-import pickle, numpy, pandas
+import pickle, numpy, pandas, urllib, luddite
 from sfi import Macro
 
 def scplot_loader(last_object):
@@ -289,5 +298,22 @@ def scplot_loader(last_object):
 		Macro.setLocal("e_method", e_method)
 
 	data_points.to_stata("__scpi__stata_plot.dta", write_index = False)
-			
+
+def version_checker():
+	# try to connect to pypi and get the latest version of scpi_pkg
+	try:
+		local_version = str(lver.__version__)
+		pypi_version = luddite.get_version_pypi("scpi_pkg")
+		if local_version == pypi_version:
+			alert_version = "n"
+		else:
+			alert_version = "y"
+	except urllib.error.URLError:
+		alert_version = "n"
+		pypi_version = "none"
+
+	Macro.setLocal("alert_version", alert_version)
+	Macro.setLocal("python_local_version", local_version)
+	Macro.setLocal("python_pypi_version", pypi_version)
+	
 end
