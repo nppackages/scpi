@@ -186,8 +186,8 @@ The third list is labeled 'inference.results' and contains all the inference-rel
 \item{failed.sims}{a matrix containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.}
 }
 \description{
-The command implements estimation and inference procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints according to
-\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}} returns the estimated
+The command implements estimation and inference procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints. Uncertainty is quantified using prediction
+intervals according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}} returns the estimated
 post-treatment series for the synthetic unit through the command \code{\link{scest}} and quantifies in-sample and out-of-sample uncertainty to provide confidence intervals
 for each point estimate.
 
@@ -263,7 +263,7 @@ HC0, HC1, HC2, HC3, and HC4 using the option \code{u.sigma}.}
 \eqn{\mathbf{e}} and estimate relevant moments. By default, the design matrix used during estimation \eqn{\mathbf{D}_e} is composed of the blocks in
 \eqn{\mathbf{B}} and \eqn{\mathbf{C}} corresponding to the outcome variable. Moreover, if required by the user, \eqn{\mathbf{D}_e}
 is augmented with lags (\code{e.lags}) and polynomials (\code{e.order}) of \eqn{\mathbf{B}}. The option \code{e.design} allows the user to provide an
-ad-hoc set of variables to form \eqn{H}. Finally, the option \code{e.method} allows the user to select one of three
+ad-hoc set of variables to form \eqn{\mathbf{D}_e}. Finally, the option \code{e.method} allows the user to select one of three
 estimation methods: "gaussian" relies on conditional sub-Gaussian bounds; "ls" estimates conditional bounds using a location-scale
 model; "qreg" uses conditional quantile regression of the residuals \eqn{\mathbf{e}} on \eqn{\mathbf{D}_e}.}
 

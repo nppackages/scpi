@@ -1,9 +1,21 @@
 Package: scpi
 Title: Prediction Intervals for Synthetic Control Methods
-Version: 0.2
-Author: Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik
-Maintainer: Filippo Palomba <fpalomba@princeton.edu>
-Description: Implementation of estimation and inference procedures for Synthetic Control methods using least square, lasso, ridge, or simplex-type constraints as developed in Cattaneo, Feng, and Titiunik (2021) <https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf>.
+Version: 0.2.1
+Authors@R: 
+  c(person(given = "Matias",
+           family = "Cattaneo",
+           role = "aut"),
+    person(given = "Yingjie",
+           family = "Feng",
+           role = "aut"),
+    person(given = "Filippo",
+           family = "Palomba",
+           role = c("aut","cre"),
+           email = "fpalomba@princeton.edu"),
+    person(given = "Rocio",
+           family = "Titiunik",
+           role = "aut"))
+Description: Implementation of estimation and inference procedures for Synthetic Control methods using least square, lasso, ridge, or simplex-type constraints. Uncertainty is quantified with prediction intervals as developed in Cattaneo, Feng, and Titiunik (2021) <https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf>.
 Depends: R (>= 4.1.0)
 License: GPL-2
 Encoding: UTF-8

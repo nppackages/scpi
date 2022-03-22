@@ -79,7 +79,7 @@ The second list is labeled 'est.results' and contains estimation results.
 \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
 }
 \description{
-The command implements estimation procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints according to
+The command implements estimation procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints. For more information see
 \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}.
 
 Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.

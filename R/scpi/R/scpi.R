@@ -2,8 +2,8 @@
 
 #' @title Prediction Intervals for Synthetic Control Methods
 #'
-#' @description The command implements estimation and inference procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints according to
-#'  \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}} returns the estimated 
+#' @description The command implements estimation and inference procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints. Uncertainty is quantified using prediction
+#' intervals according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}} returns the estimated 
 #' post-treatment series for the synthetic unit through the command \code{\link{scest}} and quantifies in-sample and out-of-sample uncertainty to provide confidence intervals
 #' for each point estimate.
 #' 
@@ -206,7 +206,7 @@
 #' \eqn{\mathbf{e}} and estimate relevant moments. By default, the design matrix used during estimation \eqn{\mathbf{D}_e} is composed of the blocks in 
 #' \eqn{\mathbf{B}} and \eqn{\mathbf{C}} corresponding to the outcome variable. Moreover, if required by the user, \eqn{\mathbf{D}_e}
 #' is augmented with lags (\code{e.lags}) and polynomials (\code{e.order}) of \eqn{\mathbf{B}}. The option \code{e.design} allows the user to provide an
-#' ad-hoc set of variables to form \eqn{H}. Finally, the option \code{e.method} allows the user to select one of three
+#' ad-hoc set of variables to form \eqn{\mathbf{D}_e}. Finally, the option \code{e.method} allows the user to select one of three
 #' estimation methods: "gaussian" relies on conditional sub-Gaussian bounds; "ls" estimates conditional bounds using a location-scale
 #' model; "qreg" uses conditional quantile regression of the residuals \eqn{\mathbf{e}} on \eqn{\mathbf{D}_e}.}
 #' 
@@ -527,14 +527,13 @@ scpi  <- function(data,
   # If the model is thought to be misspecified then E[u|H] is estimated
   if (u.missp == TRUE) {
     T.u <- nrow(u.des.0.na) 
-    params.u <- ncol(u.des.0.na)
 
-    if ((T.u - 20) <= params.u) {
+    if ((T.u - 20) <= ncol(u.des.0.na)) {
       u.des.0.na <- matrix(1, nrow = T.u, 1)
       if (verbose & (u.order > 0 | u.lags > 0)) {
         warning(paste0("One of u.order > 0 and u.lags > 0 was specified, however the current number of observations (",
                       T.u,") used to estimate conditional moments of the pseudo-residuals ",
-                      "is not larger than the number of parameters used in estimation (",params.u,") plus 20. ",
+                      "is not larger than the number of parameters used in estimation (",ncol(u.des.0.na),") plus 20. ",
                       "To avoid over-fitting issues u.order and u.lags were set to 0."), immediate. = TRUE, call. = FALSE)
       }
       u.order <- 0
@@ -547,6 +546,7 @@ scpi  <- function(data,
     }   
     
     u.mean <- lm(res.na ~ u.des.0.na - 1)$fitted.values 
+	params.u <- ncol(u.des.0.na)
     
   } else if (u.missp == FALSE) {
     u.mean <- 0
@@ -554,7 +554,7 @@ scpi  <- function(data,
     T.u <- 0
   }
 
-  # Estimate degrees of freedom to be used for V[u|H]
+  # Estimate degrees of freedom to be used for V[u|H] (note that w is pre-regularization)
   df <- df.EST(w.constr = w.constr, w = w, A = A, B = B, J = J, KM = KM)
   
   # Use HC inference to estimate V[u|H]
@@ -728,20 +728,21 @@ scpi  <- function(data,
   }
   
   T.e <- nrow(e.des.0.na) 
-  params.e <- ncol(e.des.0.na)
   
-  if ((T.e - 20) <= params.e) {
+  if ((T.e - 20) <= ncol(e.des.0.na)) {
     e.des.0.na <- matrix(1, nrow = T.e, 1)
     e.des.1 <- matrix(1, nrow = nrow(e.des.1), 1)
     if (verbose & (e.order > 0 | e.lags > 0)) {
       warning(paste0("One of e.order > 0 and e.lags > 0 was specified, however the current number of observations (",
                     T.e,") used to estimate conditional moments of the out-of-sample error",
-                    " is not larger than the number of parameters used in estimation (",params.e,") plus 20.",
+                    " is not larger than the number of parameters used in estimation (",ncol(e.des.0.na),") plus 20.",
                     " To avoid over-fitting issues e.order and e.lags were set to 0."), immediate. = TRUE, call. = FALSE)
     }
     e.order <- 0
     e.lags <- 0
   }  
+
+  params.e <- ncol(e.des.0.na)
 
   if (e.method == "gaussian" | e.method == "all") {
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1, e.method = "gaussian", alpha = e.alpha/2,

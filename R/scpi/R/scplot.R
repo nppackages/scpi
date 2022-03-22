@@ -1,9 +1,9 @@
 #' @title Plot Synthetic Control Estimate
 #'
 #' @description The command plots the actual pre-treatment and post-treatment series of the treated
-#' unit and the estimated counterfactual synthetic control unit with corresponding confidence intervals.
-#' Confidence intervals can take into account either in-sample uncertainty only or in-sample and
-#' out-of-sample uncertainty as developed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}}.
+#' unit and the estimated counterfactual synthetic control unit with corresponding prediction intervals.
+#' Prediction intervals can take into account either in-sample uncertainty only or in-sample and
+#' out-of-sample uncertainty using prediction intervals as developed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}}.
 #' The input object should come from the command \code{\link{scest}} or from the command \code{\link{scpi}}.
 #' 
 #' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.

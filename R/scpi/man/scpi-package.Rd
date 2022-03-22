@@ -6,8 +6,8 @@
 \alias{_PACKAGE}
 \title{scpi: A package to compute Synthetic Control Prediction Intervals}
 \description{
-The package implements estimation, inference procedures, and produce plots for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type
-constraints according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}.
+The package implements estimation, inference procedures, and produces plots for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type
+constraints. Uncertainty is quantified using prediction intervals according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}.
 
 Included functions are: \link{scdata} for data preparation, \link{scest} for point estimation, \link{scpi} for inference procedures, and \link{scplot} for plots.
 
