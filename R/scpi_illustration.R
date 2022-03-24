@@ -7,7 +7,7 @@
 rm(list=ls(all=TRUE))
 
 ### Install R library
-install.packages('scpi_0.1.tar.gz', type = 'source', repos = NULL, lib = .libPaths())
+install.packages('scpi')
 
 ### Load SCPI package
 library(scpi)

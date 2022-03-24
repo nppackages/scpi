@@ -14,7 +14,7 @@
 #' 
 #' \href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
 #' 
-#' For an introduction to synthetic control methods, see \href{https://economics.mit.edu/files/17847}{Abadie (2021)} and references therein. 
+#' For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
 #' 
 #' @param result a class `scpi_est' object, obtained by calling \code{\link{scest}}, or a class
 #' `scpi_pi' object, obtained by calling \code{\link{scpi}}
@@ -48,7 +48,7 @@
 #'  
 #' @references
 #' \itemize{
-#' \item{\href{https://economics.mit.edu/files/17847}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
+#' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
 #' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.} 
@@ -78,10 +78,6 @@
 scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png",  e.out = TRUE,  col.treated = "grey46", col.synth ="mediumblue",
                     label.xy = NULL, plot.range = NULL, x.ticks = NULL, event.label = NULL, plot.specs = NULL,
                     save.data = NULL) {
-
-  if (!class(result) %in% c('scest','scpi')) {
-    stop("The object 'result' should be the output of scest or scpi!")
-  }
   
   if (!is.null(fig.path)) {
     if (is.character(fig.path) == FALSE) stop("The object 'fig.path' should be a character!")
@@ -160,7 +156,7 @@ scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png"
       save.plot  <- TRUE
   }      
 
-  if (class(result) == 'scest') {    # Result comes from scest
+  if (methods::is(result, 'scpi_scest') == TRUE) {    # Result comes from scest
     
     if (save.plot == TRUE) {
       if (!fig.format %in% c("eps","ps","tex","pdf","jpeg","tiff","png","bmp","svg","wmf")) {
@@ -252,7 +248,8 @@ scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png"
     ## Return plot object to be modified by the user if needed
     plots <- list('plot_out' = plot)
     
-  } else if (class(result) == 'scpi') {
+  } else if (methods::is(result, 'scpi_scpi') == TRUE) {    # Result comes from scpi
+
     e.method <- result$inference.results$e.method
 
     if (save.plot == TRUE) {
@@ -442,8 +439,6 @@ scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png"
         }
     }
     
-
-    
     if (e.out == FALSE) {plots = list('plot_in'= plot.w)}
     else if (e.method == 'gaussian') {plots = list('plot_out'= plot.w1)}
     else if (e.method == 'ls') {plots = list('plot_out'= plot.w2)}    
@@ -451,6 +446,8 @@ scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png"
     else if (e.method == 'all') {plots = list('plot_out_gau'=plot.w1,
                                                   'plot_out_ls'=plot.w2,
                                                   'plot_out_qr'=plot.w3)}
+  } else {
+    stop("The object 'result' should be the output of scest or scpi!")
   }
   
   ## Save data to reproduce plot
