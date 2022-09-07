@@ -1,6 +1,6 @@
 *****************************************************************************************
 ** SCPI Stata Package
-** Do-file for Empirical Illustration - Single Treated Unit
+** Do-file for Empirical Illustration - Multiple Treated Unit
 ** Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik 
 *****************************************************************************************
   
