@@ -7,7 +7,7 @@
 \method{summary}{scest}(object, ...)
 }
 \arguments{
-\item{object}{Class "scest" object, obtained by calling \code{\link{scest}}.}
+\item{object}{Class "scpi_scest" or "scpi_scest_multi" object, obtained by calling \code{\link{scest}}.}
 
 \item{...}{Additional arguments}
 }

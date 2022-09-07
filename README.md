@@ -19,6 +19,8 @@ pip install scpi_pkg
 
 - Replication: [py-script](Python/scpi_illustration.py), [plot illustration](Python/scpi_illustration_plot.py), [data](Python/scpi_germany.csv).
 
+- Illustration Staggered Adoption: [py-script](Python/scpi_illustration-multi.py), [plot illustration](Python/scpi_illustration_plot-multi.py).
+
 ## R Implementation
 
 To install/update in R from CRAN type:
@@ -29,6 +31,8 @@ install.packages('scpi')
 - Help: [R Manual](https://cran.r-project.org/web/packages/scpi/scpi.pdf), [CRAN repository](https://cran.r-project.org/package=scpi).
 
 - Replication: [R-script](R/scpi_illustration.R), [plot illustration](R/scpi_illustration_plot.R), [data](R/scpi_germany.csv).
+
+- Illustration Staggered Adoption: [R-script](R/scpi_illustration-multi.R), [plot illustration](R/scpi_illustration_plot-multi.R).
 
 ## Stata Implementation
 
@@ -52,6 +56,8 @@ net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/
 - Help: [scdata](stata/scdata.pdf), [scest](/stata/scest.pdf), [scpi](stata/scpi.pdf), [scplot](stata/scplot.pdf).
 
 - Replication files: [do-file](stata/scpi_illustration.do), [plot illustration](stata/scpi_illustration_plot.do), [data](stata/scpi_germany.dta).
+
+- Illustration Staggered Adoption: [do-file](stata/scpi_illustration-multi.do), [plot illustration](stata/scpi_illustration_plot-multi.do).
 
 
 ## References

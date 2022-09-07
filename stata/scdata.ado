@@ -1,5 +1,5 @@
-*! Date        : 1 Mar 2022
-*! Version     : 0.2.1
+*! Date        : 28 Jul 2022
+*! Version     : 1.0
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Data preparation for scest or scpi
@@ -19,9 +19,10 @@ version 17.0
 		}
 		global scpi_version_checked "yes"
 	}
-	
+		
+
 	local features "`varlist'"	  
-	
+
 	if mi("`covadj'") {
 		local covadj "None"
 	}
@@ -34,17 +35,18 @@ version 17.0
 		local constant "False"
 	} 
 	
-	preserve
 	qui export delimited using "__scpi__data_to_python.csv", replace
-	restore	
 	
 	python: scdata_wrapper("`features'", "`id'", "`time'", "`outcome'", "`covadj'", `anticipation', "`cointegrated'", "`constant'", "False", "`treatment'", "`dfname'")
 	
 	erase "__scpi__data_to_python.csv"
 	
+	ereturn clear
+
 	ereturn scalar KM = scalar(KM)
 	ereturn scalar J = scalar(J)
 	
+	ereturn local effect = "unit-time"
 	ereturn local cointegrated_data = "`cointegrated_data'"
 	ereturn local constant          = "`constant'"
 	ereturn local outcomevar        = "`outcomevar'"
@@ -103,7 +105,7 @@ def scdata_wrapper(features, id_var, time_var, outcome_var, covadj, anticipation
 	
 	# Parse features
 	aux = features.split()
-	f_list = [f for f in aux]
+	f_list = [f.strip() for f in aux]
 	
 	# Parse cointegrated
 	if cointegrated == "False":

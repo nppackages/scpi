@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 0.2.1 2022-03-01}{...}
+{* *!version 0.3 2022-03-07}{...}
 {viewerjumpto "Syntax" "scplot##syntax"}{...}
 {viewerjumpto "Description" "scplot##description"}{...}
 {viewerjumpto "Options" "scplot##options"}{...}
@@ -17,8 +17,9 @@
 
 {p 4 8}{cmd:scplot } 
 {cmd:,} 
-[{cmd:scest)}
+[{cmd:scest}
 {cmd:uncertainty(}{it:string}{cmd:)}
+{cmd:joint}
 {cmd:dots_tr_col(}{it:{help colorstyle:colorstyle}}{cmd:)}
 {cmd:dots_tr_symb(}{it:{help symbolstyle:symbolstyle}}{cmd:)}
 {cmd:dots_tr_size(}{it:{help markersizestyle:markersizestyle}}{cmd:)}
@@ -72,6 +73,7 @@ references therein.{p_end}
 {p 8 12} {opt ls} prediction intervals quantify in-sample and out-of-sample uncertainty imposing a location-scale model. {p_end}
 {p 8 12} {opt qreg} prediction intervals quantify in-sample and out-of-sample uncertainty using quantile regressions. {p_end}
 
+{p 4 8}{cmd:joint} if specified simultaneous prediction intervals are included in the plot.{p_end}
 
 {dlgtab:Marker Options}
 

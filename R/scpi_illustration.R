@@ -1,16 +1,20 @@
 ################################################################################
 ## SCPI R Package
-## R-file for Empirical Illustration
+## R-file for Empirical Illustration - Single Treated Unit
 ## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik  
 ################################################################################
 ### Clear R environment
 rm(list=ls(all=TRUE))
 
 ### Install R library
-install.packages('scpi')
+#install.packages('scpi')
 
 ### Load SCPI package
 library(scpi)
+
+###############################################################################
+# SINGLE TREATED UNIT
+###############################################################################
 
 ### Load data
 data <- scpi_germany
@@ -36,7 +40,7 @@ cointegrated.data <- TRUE                            # Belief that the data are 
 df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
                 period.pre = period.pre, period.post = period.post,
                 unit.tr = unit.tr, unit.co = unit.co, cov.adj = cov.adj, features = features,
-                constant = constant,  report.missing = report.missing, cointegrated.data = cointegrated.data)
+                constant = constant, cointegrated.data = cointegrated.data)
 
 ####################################
 ### SC - point estimation with simplex
@@ -63,7 +67,6 @@ est.lasso2 <- scest(data = df, w.constr = list(p = "L1", dir = "<=", Q = 1, lb =
 summary(est.lasso2)
 
 
-
 ####################################
 ### SC - point estimation with ridge
 est.ridge <- scest(data = df, w.constr = list(name="ridge"))
@@ -71,6 +74,15 @@ summary(est.ridge)
 Qest <- est.ridge$est.results$w.constr$Q
 est.ridge2 <- scest(data = df, w.constr = list(p = "L2", dir = "<=", Q = Qest, lb = -Inf))
 summary(est.ridge2)
+
+
+####################################
+### SC - point estimation with L1-L2
+est.l1l2 <- scest(data = df, w.constr = list(name="L1-L2"))
+summary(est.l1l2)
+est.l1l2.2 <- scest(data = df, w.constr = list(p = "L1-L2", dir = "==/<=", Q = 1, 
+                                             Q2 = Qest, lb = -Inf))
+summary(est.l1l2.2)
 
 
 ####################################
@@ -88,14 +100,13 @@ e.alpha  <- 0.05                         # Confidence level (out-of-sample uncer
 rho      <- NULL                         # Regularization parameter (if NULL it is estimated)
 rho.max  <- 1                            # Maximum value attainable by rho
 sims     <- 200                          # Number of simulations
-V        <- NULL                         # Weighting matrix (if NULL it is the identity matrix)
 u.order  <- 1                            # Degree of polynomial in B and C when modelling u
 u.lags   <- 0                            # Lags of B to be used when modelling u
 u.sigma  <- "HC1"                        # Estimator for the variance-covariance of u
 u.missp  <- T                            # If TRUE then the model is treated as misspecified
 e.lags   <- 0                            # Degree of polynomial in B and C when modelling e
 e.order  <- 1                            # Lags of B to be used when modelling e
-e.method <- "qreg"                       # Estimation method for out-of-sample uncertainty
+e.method <- "gaussian"                   # Estimation method for out-of-sample uncertainty
 cores    <- 1                            # Number of cores to be used by scpi
 w.constr <- list(name = "simplex")       # Simplex-type constraint set
 
@@ -103,7 +114,7 @@ set.seed(8894)
 pi.si   <- scpi(data = df,u.order = u.order, u.lags = u.lags, u.sigma = u.sigma, 
                 u.missp = u.missp, sims = sims, e.order = e.order, e.lags = e.lags,
                 e.method = e.method, cores = cores, w.constr = w.constr, u.alpha = u.alpha,
-                e.alpha = e.alpha, V = V, rho = rho, rho.max = rho.max) 
+                e.alpha = e.alpha, rho = rho, rho.max = rho.max) 
 
 # Use print or summary methods to check results
 print(pi.si)
@@ -125,16 +136,11 @@ scplot(result = pi.si, fig.path = ".",
 df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
                 period.pre = period.pre, period.post = period.post,
                 unit.tr = unit.tr, unit.co = unit.co, cov.adj = cov.adj, features = c("gdp", "trade"),
-                constant = constant,  report.missing = report.missing, cointegrated.data = cointegrated.data)
+                constant = constant, cointegrated.data = cointegrated.data)
 
 ## multiple features and featuer-specific covariate adjustment
 df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
                 period.pre = period.pre, period.post = period.post,
                 unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "trade"), 
-                cov.adj = list('gdp' = c("constant","trend"), 'infrate' = c("constant")),
-                constant = constant,  report.missing = report.missing, 
-                cointegrated.data = cointegrated.data)
-
-
-
-
+                cov.adj = list('gdp' = c("constant","trend"), 'trade' = c("constant")),
+                constant = constant, cointegrated.data = cointegrated.data)

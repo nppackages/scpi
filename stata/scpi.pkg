@@ -6,11 +6,13 @@ d          Yingjie Feng, Tsinghua University, fengyingjiepku@gmail.com
 d          Filippo Palomba, Princeton University, fpalomba@princeton.edu
 d          Rocio Titiunik, Princeton University, titiunik@princeton.edu
 d
-d Date: 01-MAR-2022
-d Distribution-Date: 20220301
+d Date: 07-SEP-2022
+d Distribution-Date: 20220907
 d 
 f scdata.ado
 f scdata.sthlp
+f scdatamulti.ado
+f scdatamulti.sthlp
 f scest.ado
 f scest.sthlp
 f scpi.ado
@@ -18,3 +20,5 @@ f scpi.sthlp
 f scpi_germany.dta
 f scplot.ado
 f scplot.sthlp
+f scplotmulti.ado
+f scplotmulti.sthlp

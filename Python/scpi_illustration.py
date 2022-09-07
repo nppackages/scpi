@@ -1,6 +1,6 @@
 ###############################################################################
 # SCPI Python Package
-# Script for Empirical Illustration
+# Script for Empirical Illustration - Single Treated Unit
 # Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik
 ###############################################################################
 
@@ -13,15 +13,22 @@ import os
 from plotnine import ggsave
 from warnings import filterwarnings
 from scpi_pkg.scdata import scdata
+from scpi_pkg.scdataMulti import scdataMulti
 from scpi_pkg.scest import scest
 from scpi_pkg.scpi import scpi
 from scpi_pkg.scplot import scplot
+from scpi_pkg.scplotMulti import scplotMulti
 
-os.chdir('YOUR_PATH_HERE')
-filterwarnings("ignore")
 ########################################
 # Load database
+os.chdir('YOUR_PATH_HERE')
 data = pandas.read_csv("scpi_germany.csv")
+
+filterwarnings("ignore")
+
+##############################################################################
+# SINGLE TREATED UNIT
+##############################################################################
 
 ########################################
 # Set options for data preparation
@@ -36,15 +43,13 @@ unit_tr = 'West Germany'
 unit_co = list(set(data[id_var].to_list()))
 unit_co = [cou for cou in unit_co if cou != 'West Germany']
 constant = True
-report_missing = False
 cointegrated_data = True
 
 data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
                    outcome_var=outcome_var, period_pre=period_pre,
                    period_post=period_post, unit_tr=unit_tr,
                    unit_co=unit_co, features=features, cov_adj=cov_adj,
-                   cointegrated_data=cointegrated_data, constant=constant,
-                   report_missing=report_missing)
+                   cointegrated_data=cointegrated_data, constant=constant)
 
 
 ####################################
@@ -72,7 +77,7 @@ print(est_lasso2)
 # SC - point estimation with ridge
 est_ridge = scest(data_prep, w_constr={'name': "ridge"})
 print(est_ridge)
-Q_est = est_ridge.w_constr['Q']
+Q_est = est_ridge.w_constr['West Germany']['Q']
 est_ridge2 = scest(data_prep, w_constr={'p': 'L2', 'dir': '<=', 'Q': Q_est, 'lb': -numpy.inf})
 print(est_ridge2)
 
@@ -91,12 +96,12 @@ u_missp = True
 u_sigma = "HC1"
 u_order = 1
 u_lags = 0
-e_method = "qreg"
+e_method = "gaussian"
 e_order = 1
 e_lags = 0
 e_alpha = 0.05
 u_alpha = 0.05
-sims = 500
+sims = 200
 cores = 1
 
 random.seed(8894)
@@ -118,13 +123,11 @@ data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
                    outcome_var=outcome_var, period_pre=period_pre,
                    period_post=period_post, unit_tr=unit_tr,
                    unit_co=unit_co, features=['gdp', 'trade'], cov_adj=cov_adj,
-                   cointegrated_data=cointegrated_data, constant=constant,
-                   report_missing=report_missing)
+                   cointegrated_data=cointegrated_data, constant=constant)
 
 # multiple features and feature-specific covariate adjustment
 data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
                    outcome_var=outcome_var, period_pre=period_pre,
                    period_post=period_post, unit_tr=unit_tr,
-                   unit_co=unit_co, features=['gdp', 'trade'], cov_adj=[['constant', 'trend'], ['constant']],
-                   cointegrated_data=cointegrated_data, constant=constant,
-                   report_missing=report_missing)
+                   unit_co=unit_co, features=['gdp', 'trade'], cov_adj=[['constant', 'trend'], []],
+                   cointegrated_data=cointegrated_data, constant=constant)

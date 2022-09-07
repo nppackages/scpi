@@ -1,5 +1,5 @@
-*! Date        : 1 Mar 2022
-*! Version     : 0.2.1
+*! Date        : 28 Jul 2022
+*! Version     : 1.0
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Plot Synthetic Control
@@ -9,12 +9,12 @@ capture program drop scplot
 program define scplot, eclass         
 version 17.0           
 
-	syntax , [scest uncertainty(string) dots_tr_col(string) dots_tr_symb(string) dots_tr_size(string)     ///
-										dots_sc_col(string) dots_sc_symb(string) dots_sc_size(string)     ///
-										line_tr_col(string) line_tr_patt(string) line_tr_width(string)    ///
-										line_sc_col(string) line_sc_patt(string) line_sc_width(string)    ///
-										spike_sc_col(string) spike_sc_patt(string) spike_sc_width(string) ///
-										gphoptions(string) gphsave(string) savedata(string) pypinocheck]
+	syntax , [scest uncertainty(string) joint dots_tr_col(string) dots_tr_symb(string) dots_tr_size(string)     ///
+											  dots_sc_col(string) dots_sc_symb(string) dots_sc_size(string)     ///
+											  line_tr_col(string) line_tr_patt(string) line_tr_width(string)    ///
+											  line_sc_col(string) line_sc_patt(string) line_sc_width(string)    ///
+											  spike_sc_col(string) spike_sc_patt(string) spike_sc_width(string) ///
+											  gphoptions(string) gphsave(string) savedata(string) pypinocheck]
 
 	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
 		python: version_checker()
@@ -33,7 +33,7 @@ version 17.0
 	}
 	
 	if mi("`dots_tr_col'") {
-		local dots_tr_col "gray"
+		local dots_tr_col "black"
 	}
 	if mi("`dots_tr_size'") {
 		local dots_tr_size "small"
@@ -52,7 +52,7 @@ version 17.0
 	}
 	
 	if mi("`line_tr_col'") {
-		local line_tr_col "gray"
+		local line_tr_col "black"
 	}
 	if mi("`line_tr_patt'") {
 		local line_tr_patt "solid"
@@ -107,7 +107,7 @@ version 17.0
 		twoway (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))  ///
 			   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col'))  ///
 			   (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))  ///
-			   (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_tr_width') lcolor(`line_sc_col')), ///
+			   (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_sc_width') lcolor(`line_sc_col')), ///
 			   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    							  ///
 			   xline(`tline', lcolor(black) lpattern(dash))                 							  ///
 			   legend(order(3 4) lab(3 "Treated") lab(4 "Synthetic Control") region(style(none)) nobox)   ///
@@ -129,6 +129,8 @@ version 17.0
 		la var ub2 "upper - In + Out (location-scale)"
 		la var lb3 "lower - In + Out (quantile)"
 		la var ub3 "upper - In + Out (quantile)"
+		la var lbj "lower - joint"
+		la var ubj "upper - joint"
 		la var Tdate "Treatment Date"			
 		
 		
@@ -136,11 +138,11 @@ version 17.0
 		if "`uncertainty'" == "insample" {
 			local tline = Tdate[1]
 		
-			twoway (rcap lb0 ub0 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col')) ///
+			twoway (rcap lb0 ub0 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col'))   ///
 				   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))  		///
 				   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col'))  		///
 			       (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))  		///
-			       (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_tr_width') lcolor(`line_sc_col')), 		///
+			       (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_sc_width') lcolor(`line_sc_col')), 		///
 				   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									///
 				   xline(`tline', lcolor(black) lpattern(dash))                 									///
 				   legend(order(4 5) lab(4 "Treated") lab(5 "Synthetic Control") region(style(none)) nobox) 		///
@@ -151,49 +153,107 @@ version 17.0
 		
 		if "`uncertainty'" == "gaussian" | "`uncertainty'" == "all" {
 			local tline = Tdate[1]
+			
+			if mi("`joint'") {
 		
-			twoway (rcap lb1 ub1 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col')) ///
-				   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))  		///
-				   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col'))  		///
-			       (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))  		///
-			       (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_tr_width') lcolor(`line_sc_col')), 		///
-				   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									///
-				   xline(`tline', lcolor(black) lpattern(dash))                 									///
-				   legend(order(4 5) lab(4 "Treated") lab(5 "Synthetic Control") region(style(none)) nobox) 		///
-				   graphregion(color(white)) plotregion(color(white)) scheme(s2manual) 								///
-				   note("In and Out of Sample Uncertainty - Subgaussian Bounds") `gphoptions'
+				twoway (rcap lb1 ub1 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col'))   ///
+					   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))  		///
+					   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col'))  		///
+					   (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))  		///
+					   (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_sc_width') lcolor(`line_sc_col')), 		///
+					   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									///
+					   xline(`tline', lcolor(black) lpattern(dash))                 									///
+					   legend(order(4 5) lab(4 "Treated") lab(5 "Synthetic Control") region(style(none)) nobox) 		///
+					   graphregion(color(white)) plotregion(color(white)) scheme(s2manual) 								///
+					   note("In and Out of Sample Uncertainty - Subgaussian Bounds") `gphoptions'
+		    }
+			
+			if !mi("`joint'") {
 
+				twoway (rarea lbj ubj time, color(`spike_sc_col'%10) lcolor(`spike_sc_col'%0))	                        ///
+					   (rcap lb1 ub1 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col'))   ///
+					   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))  		///
+					   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col'))  		///
+					   (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))  		///
+					   (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_sc_width') lcolor(`line_sc_col')), 		///
+					   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									///
+					   xline(`tline', lcolor(black) lpattern(dash))                 									///
+					   legend(order(5 6) lab(5 "Treated") lab(6 "Synthetic Control") region(style(none)) nobox) 		///
+					   graphregion(color(white)) plotregion(color(white)) scheme(s2manual) 								///
+					   note("In and Out of Sample Uncertainty - Subgaussian Bounds") `gphoptions'
+
+			}
 		} 
 		
 		if "`uncertainty'" == "ls" | "`uncertainty'" == "all" {
 			local tline = Tdate[1]
 		
-			twoway (rcap lb2 ub2 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col'))  ///
-				   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))  		 ///
-				   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col')) 		 ///
-			       (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))  		 ///
-			       (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_tr_width') lcolor(`line_sc_col')), 		 ///
-				   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									 ///
-				   xline(`tline', lcolor(black) lpattern(dash))                 									 ///
-				   legend(order(4 5) lab(4 "Treated") lab(5 "Synthetic Control") region(style(none)) nobox) 		 ///
-				   graphregion(color(white)) plotregion(color(white)) scheme(s2manual) 								 ///
-				   note("In and Out of Sample Uncertainty - Location-scale Model")  `gphoptions'
+			if mi("`joint'") {
+			
+				twoway (rcap lb2 ub2 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col'))    ///
+					   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))  		 ///
+					   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col')) 		 ///
+					   (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))  		 ///
+					   (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_sc_width') lcolor(`line_sc_col')), 		 ///
+					   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									 ///
+					   xline(`tline', lcolor(black) lpattern(dash))                 									 ///
+					   legend(order(4 5) lab(4 "Treated") lab(5 "Synthetic Control") region(style(none)) nobox) 		 ///
+					   graphregion(color(white)) plotregion(color(white)) scheme(s2manual) 								 ///
+					   note("In and Out of Sample Uncertainty - Location-scale Model")  `gphoptions'
+			
+			}
+
+			if !mi("`joint'") {
+			
+				twoway (rarea lbj ubj time, color(`spike_sc_col'%10) lcolor(`spike_sc_col'%0))	                         ///
+					   (rcap lb2 ub2 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col'))    ///
+					   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))  		 ///
+					   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col')) 		 ///
+					   (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))  		 ///
+					   (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_sc_width') lcolor(`line_sc_col')), 		 ///
+					   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									 ///
+					   xline(`tline', lcolor(black) lpattern(dash))                 									 ///
+					   legend(order(5 6) lab(5 "Treated") lab(6 "Synthetic Control") region(style(none)) nobox) 		///
+					   graphregion(color(white)) plotregion(color(white)) scheme(s2manual) 								 ///
+					   note("In and Out of Sample Uncertainty - Location-scale Model")  `gphoptions'
+			
+			}
 
 		} 
 		
 		if "`uncertainty'" == "qreg" | "`uncertainty'" == "all" {
 			local tline = Tdate[1]
-		
-			twoway (rcap lb3 ub3 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col')) ///
-				   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))        ///
-				   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col'))        ///
-			       (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))        ///
-			       (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_tr_width') lcolor(`line_sc_col')),       ///
-				   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									///
-				   xline(`tline', lcolor(black) lpattern(dash))                 									///
-				   legend(order(4 5) lab(4 "Treated") lab(5 "Synthetic Control") region(style(none)) nobox) 	 	///
-				   graphregion(color(white)) plotregion(color(white)) scheme(s2manual) 								///
-				   note("In and Out of Sample Uncertainty - Quantile Regression")  `gphoptions'
+
+			if mi("`joint'") {
+			
+				twoway (rcap lb3 ub3 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col'))   ///
+					   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))        ///
+					   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col'))        ///
+					   (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))        ///
+					   (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_sc_width') lcolor(`line_sc_col')),       ///
+					   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									///
+					   xline(`tline', lcolor(black) lpattern(dash))                 									///
+					   legend(order(4 5) lab(4 "Treated") lab(5 "Synthetic Control") region(style(none)) nobox) 	 	///
+					   graphregion(color(white)) plotregion(color(white)) scheme(s2manual) 								///
+					   note("In and Out of Sample Uncertainty - Quantile Regression")  `gphoptions'
+					   
+			}
+
+			if !mi("`joint'") {
+			
+				twoway (rarea lbj ubj time, color(`spike_sc_col'%10) lcolor(`spike_sc_col'%0))	                        ///
+				       (rcap lb3 ub3 time, lpattern(`spike_sc_patt') lwidth(`spike_sc_width') lcolor(`spike_sc_col'))   ///
+					   (scatter y_act time, msymbol(`dots_tr_symb') msize(`dots_tr_size') mcolor(`dots_tr_col'))        ///
+					   (scatter y_sc time,  msymbol(`dots_sc_symb') msize(`dots_sc_size') mcolor(`dots_sc_col'))        ///
+					   (line y_act time, lpattern(`line_tr_patt') lwidth(`line_tr_width') lcolor(`line_tr_col'))        ///
+					   (line y_sc time,  lpattern(`line_sc_patt') lwidth(`line_sc_width') lcolor(`line_sc_col')),       ///
+					   ytitle("Outcome Variable") xtitle("Time") ylabel(,nogrid)    									///
+					   xline(`tline', lcolor(black) lpattern(dash))                 									///
+					   legend(order(5 6) lab(5 "Treated") lab(6 "Synthetic Control") region(style(none)) nobox) 		///
+					   graphregion(color(white)) plotregion(color(white)) scheme(s2manual) 								///
+					   note("In and Out of Sample Uncertainty - Quantile Regression")  `gphoptions'
+					   
+			}
 
 		} 
 		
@@ -201,7 +261,7 @@ version 17.0
 	}		
 	
 	if !mi("`gphsave'") graph export "`gphsave'.png", replace 
-	if !mi("`savedata'") save "`savedata'", replace
+	if !mi("`savedata'") save "`savedata'.dta", replace
 	
 	restore
 	
@@ -213,6 +273,7 @@ end
 version 17.0
 python:
 import pickle, numpy, pandas, urllib, luddite
+from scpi_pkg import version as lver
 from sfi import Macro
 
 def scplot_loader(last_object):
@@ -232,7 +293,7 @@ def scplot_loader(last_object):
 	y_sc_na = pandas.DataFrame(numpy.array([numpy.nan]*len(time)))
 	
 	if class_input == "scest_output":
-		not_miss_plot = [t in y_sc_df.index.tolist() for t in time]
+		not_miss_plot = [t in y_sc_df.index.get_level_values(1).tolist() for t in time]
 		y_sc_na.loc[not_miss_plot,] = y_sc_df.iloc[:,[0]].to_numpy()
 		data_points_act     = pandas.DataFrame({'time' : time, 'y_act': y_act})
 		data_points         = pandas.concat([data_points_act, y_sc_na, Tdate], axis = 1)
@@ -270,9 +331,11 @@ def scplot_loader(last_object):
 		sc_r_2_na = pandas.DataFrame(numpy.array([numpy.nan]*len(time)))
 		sc_l_3_na = pandas.DataFrame(numpy.array([numpy.nan]*len(time)))
 		sc_r_3_na = pandas.DataFrame(numpy.array([numpy.nan]*len(time)))
+		sc_l_j_na = pandas.DataFrame(numpy.array([numpy.nan]*len(time)))
+		sc_r_j_na = pandas.DataFrame(numpy.array([numpy.nan]*len(time)))
 		
-		not_miss_plot = [t in y_sc_df.index.tolist() for t in time]
-		not_miss_ci   = [t in result.CI_in_sample.index.tolist() for t in time]
+		not_miss_plot = [t in y_sc_df.index.get_level_values(1).tolist() for t in time]
+		not_miss_ci   = [t in result.CI_in_sample.index.get_level_values(1).tolist() for t in time]
 		
 		
 		y_sc_na.loc[not_miss_plot, ] = y_sc_df.iloc[:,[0]].to_numpy()
@@ -284,6 +347,8 @@ def scplot_loader(last_object):
 		sc_r_2_na.loc[not_miss_ci, ] = sc_r_2
 		sc_l_3_na.loc[not_miss_ci, ] = sc_l_3.astype(numpy.float64)
 		sc_r_3_na.loc[not_miss_ci, ] = sc_r_3.astype(numpy.float64)
+		sc_l_j_na.loc[not_miss_ci, ] = sc_l_0 + result.bounds['joint'].iloc[:, [0]].to_numpy()
+		sc_r_j_na.loc[not_miss_ci, ] = sc_r_0 + result.bounds['joint'].iloc[:, [1]].to_numpy()
 
 				
 		data_points_act = pandas.DataFrame({'time': time, 'y_act': y_act})		
@@ -292,9 +357,10 @@ def scplot_loader(last_object):
 									sc_l_1_na, sc_r_1_na,
 									sc_l_2_na, sc_r_2_na,
 									sc_l_3_na, sc_r_3_na,
+									sc_l_j_na, sc_r_j_na,
 									Tdate], axis = 1)
 									
-		data_points.columns = ['time', 'y_act', 'y_sc', 'lb0', 'ub0', 'lb1', 'ub1', 'lb2', 'ub2', 'lb3', 'ub3', 'Tdate']
+		data_points.columns = ['time', 'y_act', 'y_sc', 'lb0', 'ub0', 'lb1', 'ub1', 'lb2', 'ub2', 'lb3', 'ub3', 'lbj', 'ubj', 'Tdate']
 		Macro.setLocal("e_method", e_method)
 
 	data_points.to_stata("__scpi__stata_plot.dta", write_index = False)

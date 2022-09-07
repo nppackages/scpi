@@ -1,0 +1,556 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scpi_pkg.scplotMulti &#8212; scpi-pkg 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">scpi_pkg.scplotMulti</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scpi_pkg.scplotMulti</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Mon Jul 25 16:59:19 2022</span>
+
+<span class="sd">@author: Filippo Palomba</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">plotnine</span> <span class="kn">import</span> <span class="n">ggplot</span><span class="p">,</span> <span class="n">aes</span><span class="p">,</span> <span class="n">geom_point</span><span class="p">,</span> <span class="n">geom_errorbar</span><span class="p">,</span> <span class="n">geom_vline</span><span class="p">,</span> <span class="n">geom_line</span><span class="p">,</span> <span class="n">geom_hline</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">theme_bw</span>
+<span class="kn">from</span> <span class="nn">plotnine</span> <span class="kn">import</span> <span class="n">element_blank</span><span class="p">,</span> <span class="n">labs</span><span class="p">,</span> <span class="n">guide_legend</span><span class="p">,</span> <span class="n">scale_color_manual</span><span class="p">,</span> <span class="n">ggtitle</span><span class="p">,</span> <span class="n">facet_wrap</span><span class="p">,</span> <span class="n">coord_flip</span><span class="p">,</span> <span class="n">geom_ribbon</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">.funs</span> <span class="kn">import</span> <span class="n">CIrename</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+
+<div class="viewcode-block" id="scplotMulti"><a class="viewcode-back" href="../../scplotMulti.html#scpi_pkg.scplotMulti.scplotMulti">[docs]</a><span class="k">def</span> <span class="nf">scplotMulti</span><span class="p">(</span><span class="n">result</span><span class="p">,</span>
+                <span class="n">ptype</span><span class="o">=</span><span class="s2">&quot;series&quot;</span><span class="p">,</span>
+                <span class="n">e_out</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">joint</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">col_treated</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+                <span class="n">col_synth</span><span class="o">=</span><span class="s2">&quot;mediumblue&quot;</span><span class="p">,</span>
+                <span class="n">scales</span><span class="o">=</span><span class="s2">&quot;fixed&quot;</span><span class="p">,</span>
+                <span class="n">point_size</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+                <span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="n">e_method_input</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">save_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    result : scest_output/scpi_output</span>
+<span class="sd">        a class `scest_multi_output&#39; object, obtained by calling scest, or a class</span>
+<span class="sd">        `scpi_multi_output&#39; object, obtained by calling scpi. The data object given as input to</span>
+<span class="sd">        this command has to be processed with scdataMulti.</span>
+
+<span class="sd">    ptype : str, default &quot;series&quot;</span>
+<span class="sd">        a string that specifies the type of plot to be produced. If set to &#39;treatment&#39;, then treatment effects are</span>
+<span class="sd">        plotted. If set to &#39;series&#39; (default), the actual and synthetic time series are reported.</span>
+
+<span class="sd">    e_out : bool, default True</span>
+<span class="sd">        a logical specifying whether out-of-sample uncertainty should be included in the plot(s).</span>
+
+<span class="sd">    joint : bool, default False</span>
+<span class="sd">        a logical specifying whether simultaneous prediction intervals should be included in the plot(s).</span>
+<span class="sd">        It requires e_out=True.</span>
+
+<span class="sd">    col_treated : str, default &quot;black&quot;</span>
+<span class="sd">        a string specifying the color for the treated unit series. Find the full list at</span>
+<span class="sd">        http://sape.inf.usi.ch/quick-reference/ggplot2/colour.</span>
+
+<span class="sd">    col_synth : str, default &quot;mediumblue&quot;</span>
+<span class="sd">        a string specifying the color for the synthetic unit series. Find the full list at</span>
+<span class="sd">        http://sape.inf.usi.ch/quick-reference/ggplot2/colour.</span>
+
+<span class="sd">    scales : str, defaul &quot;fixed&quot;</span>
+<span class="sd">        should axes scales be fixed (&quot;fixed&quot;, the default), free (&quot;free&quot;),</span>
+<span class="sd">        or free in one dimension (&quot;free_x&quot;, &quot;free_y&quot;)?</span>
+
+<span class="sd">    point_size : float, default 1.5</span>
+<span class="sd">        a scalar controlling the size of points in the scatter plot. Default is 1.5.</span>
+
+<span class="sd">    ncols : int, default 3</span>
+<span class="sd">        an integer controlling the number of columns in the plot.</span>
+
+<span class="sd">    e_method_input : str</span>
+<span class="sd">        a string specifying the type of uncertainty estimation used for out-of-sample uncertainty quantification.</span>
+<span class="sd">        To be used only when scpi received the option &quot;e_method=&#39;all&#39;&quot; and the user wants to choose among the three</span>
+<span class="sd">        techniques to quantify out-of-sample uncertainty.</span>
+
+<span class="sd">    save_data : str</span>
+<span class="sd">        a string specifying the name (and the folder) of the saved dataframe containing the processed data used to</span>
+<span class="sd">        produce the plot. The data is saved in .csv format and the folder specified.</span>
+
+<span class="sd">    verbose : bool, default True</span>
+<span class="sd">        if True prints additional information in the console.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ----------</span>
+<span class="sd">    plot : plotnine</span>
+<span class="sd">        plotnine object that can be further modified.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological</span>
+<span class="sd">    Aspects,” Journal of Economic Literature, 59, 391-425.</span>
+
+<span class="sd">    Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control</span>
+<span class="sd">    Methods,” Journal of the American Statistical Association, 116, 1865-1880.</span>
+
+<span class="sd">    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for</span>
+<span class="sd">    Synthetic Control Estimators”.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scdata, scdataMulti, scest, scpi, scplot</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">class_input</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+
+    <span class="k">if</span> <span class="n">class_input</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;scest_multi_output&#39;</span><span class="p">,</span> <span class="s1">&#39;scpi_multi_output&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;result&#39; should be the output of scest or scpi &quot;</span> <span class="o">+</span>
+                        <span class="s2">&quot;when the data have been processed through scdataMulti!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ptype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;series&quot;</span><span class="p">,</span> <span class="s2">&quot;treatment&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;&#39;type&#39; should be either &#39;series&#39; or &#39;treatment&#39;!&quot;</span><span class="p">)</span>
+
+    <span class="n">plot_type</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">effect</span>
+    <span class="n">iota</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">iota</span>
+
+    <span class="k">if</span> <span class="n">iota</span> <span class="o">&gt;</span> <span class="mi">20</span> <span class="ow">and</span> <span class="p">(</span><span class="n">plot_type</span> <span class="o">!=</span> <span class="s2">&quot;unit&quot;</span> <span class="ow">or</span> <span class="n">ptype</span> <span class="o">!=</span> <span class="s2">&quot;treatment&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">iota</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; treated units detected, therefore some graphs might be too crowded!&quot;</span> <span class="o">+</span>
+                      <span class="s2">&quot;We suggest saving the data with the option save_data, consult our replication &quot;</span> <span class="o">+</span>
+                      <span class="s2">&quot;files at https://nppackages.github.io/scpi/, and reproduce the same graph for just&quot;</span> <span class="o">+</span>
+                      <span class="s2">&quot; a fraction of the sample at a time!&quot;</span><span class="p">)</span>
+
+    <span class="n">Y_pre_fit</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">Y_pre_fit</span>
+    <span class="n">Y_post_fit</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">Y_post_fit</span>
+    <span class="n">synth_mat</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_pre_fit</span><span class="p">,</span> <span class="n">Y_post_fit</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">synth_mat</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">synth_mat</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">rename</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">])</span>
+    <span class="n">synth_mat</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Synthetic&#39;</span><span class="p">]</span>
+    <span class="n">Y_df</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">Y_df</span>
+    <span class="n">Y_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="s1">&#39;Treatment&#39;</span><span class="p">,</span> <span class="s1">&#39;Actual&#39;</span><span class="p">]</span>
+
+    <span class="n">sel_units</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">units_est</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">Y_df</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
+    <span class="n">res_df</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">Y_df</span><span class="p">[</span><span class="n">sel_units</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span>
+        <span class="n">Y_actual_pre</span> <span class="o">=</span> <span class="n">res_df</span><span class="p">[</span><span class="n">res_df</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">Y_actual_post</span> <span class="o">=</span> <span class="n">res_df</span><span class="p">[</span><span class="n">res_df</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">Y_actual_post_agg</span> <span class="o">=</span> <span class="n">Y_actual_post</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Actual&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">Y_actual_post_agg</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">Y_actual_post_agg</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">Y_post_fit</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">Y_actual_pre</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">append</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">Y_actual</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_actual_pre</span><span class="p">,</span> <span class="n">Y_actual_post_agg</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">Y_actual</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">res_df</span><span class="p">)</span>
+        <span class="n">Y_actual</span><span class="o">.</span><span class="n">set_index</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">treated_periods</span> <span class="o">=</span> <span class="n">Y_actual</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">Y_actual</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">treated_periods</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">treated_reception</span> <span class="o">=</span> <span class="n">treated_periods</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">treated_reception</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Tdate&quot;</span><span class="p">,</span> <span class="s2">&quot;Treatment&quot;</span><span class="p">,</span> <span class="s2">&quot;Actual&quot;</span><span class="p">]</span>
+    <span class="n">ant_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">anticipation</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+    <span class="n">ant_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ant_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;anticipation&quot;</span><span class="p">]</span>
+    <span class="n">treated_reception</span> <span class="o">=</span> <span class="n">treated_reception</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">ant_df</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;ID&quot;</span><span class="p">)</span>
+    <span class="n">treated_reception</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">treated_reception</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">treated_reception</span><span class="p">[</span><span class="s1">&#39;anticipation&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="n">treated_reception</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sel_units</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">units_est</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">treated_reception</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
+    <span class="n">treated_reception</span> <span class="o">=</span> <span class="n">treated_reception</span><span class="p">[</span><span class="n">sel_units</span><span class="p">]</span>
+
+    <span class="n">toplot</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_actual</span><span class="p">,</span> <span class="n">synth_mat</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Actual&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Synthetic&#39;</span><span class="p">]</span>
+    <span class="n">toplot</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">treated_reception</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Tdate&#39;</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;unit-time&#39;</span> <span class="ow">and</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;series&quot;</span><span class="p">:</span>  <span class="c1"># plot series</span>
+
+        <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[[</span><span class="s2">&quot;ID&quot;</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="s2">&quot;Actual&quot;</span><span class="p">,</span> <span class="s2">&quot;Synthetic&quot;</span><span class="p">]]</span>
+        <span class="n">toplot</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">melt</span><span class="p">(</span><span class="n">toplot</span><span class="p">,</span>
+                             <span class="n">id_vars</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span>
+                             <span class="n">value_vars</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Actual&#39;</span><span class="p">,</span> <span class="s1">&#39;Synthetic&#39;</span><span class="p">],</span>
+                             <span class="n">var_name</span><span class="o">=</span><span class="s1">&#39;Type&#39;</span><span class="p">,</span>
+                             <span class="n">value_name</span><span class="o">=</span><span class="s1">&#39;Outcome&#39;</span><span class="p">)</span>
+        <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">treated_reception</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Tdate&#39;</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">)</span>
+
+        <span class="n">plot_struc</span> <span class="o">=</span> <span class="p">(</span><span class="n">ggplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">)</span> <span class="o">+</span> <span class="n">theme_bw</span><span class="p">()</span> <span class="o">+</span>
+                      <span class="n">theme</span><span class="p">(</span><span class="n">panel_grid</span><span class="o">=</span><span class="n">element_blank</span><span class="p">(),</span>
+                            <span class="n">legend_position</span><span class="o">=</span><span class="p">(</span><span class="mf">.5</span><span class="p">,</span> <span class="mf">.05</span><span class="p">),</span>
+                            <span class="n">legend_direction</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span>
+                            <span class="n">legend_box</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span>
+                            <span class="n">legend_title</span><span class="o">=</span><span class="n">element_blank</span><span class="p">(),</span>
+                            <span class="n">subplots_adjust</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;bottom&#39;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">})</span> <span class="o">+</span>
+                      <span class="n">labs</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Outcome&quot;</span><span class="p">))</span>
+
+        <span class="n">plot</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_struc</span> <span class="o">+</span>
+                <span class="n">geom_line</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Outcome&#39;</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="s1">&#39;Type&#39;</span><span class="p">))</span> <span class="o">+</span>
+                <span class="n">geom_point</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Outcome&#39;</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="s1">&#39;Type&#39;</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">point_size</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">geom_vline</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">treated_reception</span><span class="p">,</span> <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">xintercept</span><span class="o">=</span><span class="s1">&#39;Tdate&#39;</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">))</span> <span class="o">+</span>
+                <span class="n">facet_wrap</span><span class="p">(</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="n">ncols</span><span class="p">,</span> <span class="n">scales</span><span class="o">=</span><span class="n">scales</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">scale_color_manual</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="n">col_treated</span><span class="p">,</span> <span class="n">col_synth</span><span class="p">],</span>
+                                   <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Treated&quot;</span><span class="p">,</span> <span class="s2">&quot;Synthetic Control&quot;</span><span class="p">]))</span>
+
+    <span class="k">elif</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit-time&quot;</span> <span class="ow">and</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">:</span>
+
+        <span class="n">plot_struc</span> <span class="o">=</span> <span class="p">(</span><span class="n">ggplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">)</span> <span class="o">+</span> <span class="n">theme_bw</span><span class="p">()</span> <span class="o">+</span>
+                      <span class="n">theme</span><span class="p">(</span><span class="n">panel_grid</span><span class="o">=</span><span class="n">element_blank</span><span class="p">(),</span>
+                            <span class="n">legend_position</span><span class="o">=</span><span class="p">(</span><span class="mf">.5</span><span class="p">,</span> <span class="mf">.05</span><span class="p">),</span>
+                            <span class="n">legend_direction</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span>
+                            <span class="n">legend_box</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span>
+                            <span class="n">legend_title</span><span class="o">=</span><span class="n">element_blank</span><span class="p">(),</span>
+                            <span class="n">subplots_adjust</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;bottom&#39;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">})</span> <span class="o">+</span>
+                      <span class="n">labs</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Effect&quot;</span><span class="p">))</span>
+
+        <span class="n">plot</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_struc</span> <span class="o">+</span>
+                <span class="n">geom_line</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Effect&#39;</span><span class="p">),</span> <span class="n">colour</span><span class="o">=</span><span class="n">col_synth</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">geom_point</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Effect&#39;</span><span class="p">),</span> <span class="n">colour</span><span class="o">=</span><span class="n">col_synth</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">point_size</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">geom_vline</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">treated_reception</span><span class="p">,</span> <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">xintercept</span><span class="o">=</span><span class="s1">&#39;Tdate&#39;</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">))</span> <span class="o">+</span>
+                <span class="n">geom_hline</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">yintercept</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">),</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">facet_wrap</span><span class="p">(</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="n">ncols</span><span class="p">,</span> <span class="n">scales</span><span class="o">=</span><span class="n">scales</span><span class="p">))</span>
+
+    <span class="k">elif</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span> <span class="ow">and</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;series&quot;</span><span class="p">:</span>
+
+        <span class="c1"># add number of post-treatment periods that have been averaged</span>
+        <span class="n">auxdf</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;ID&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">T1_outcome</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+                                  <span class="s1">&#39;T1&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">T1_outcome</span><span class="o">.</span><span class="n">values</span><span class="p">()})</span>
+        <span class="n">treated_reception</span> <span class="o">=</span> <span class="n">treated_reception</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">auxdf</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;ID&quot;</span><span class="p">)</span>
+
+        <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[[</span><span class="s2">&quot;ID&quot;</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="s2">&quot;Actual&quot;</span><span class="p">,</span> <span class="s2">&quot;Synthetic&quot;</span><span class="p">]]</span>
+        <span class="n">toplot</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">melt</span><span class="p">(</span><span class="n">toplot</span><span class="p">,</span>
+                             <span class="n">id_vars</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span>
+                             <span class="n">value_vars</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Actual&#39;</span><span class="p">,</span> <span class="s1">&#39;Synthetic&#39;</span><span class="p">],</span>
+                             <span class="n">var_name</span><span class="o">=</span><span class="s1">&#39;Type&#39;</span><span class="p">,</span>
+                             <span class="n">value_name</span><span class="o">=</span><span class="s1">&#39;Outcome&#39;</span><span class="p">)</span>
+        <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">treated_reception</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Tdate&#39;</span><span class="p">,</span> <span class="s1">&#39;T1&#39;</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">)</span>
+
+        <span class="n">plot_struc</span> <span class="o">=</span> <span class="p">(</span><span class="n">ggplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">)</span> <span class="o">+</span> <span class="n">theme_bw</span><span class="p">()</span> <span class="o">+</span>
+                      <span class="n">theme</span><span class="p">(</span><span class="n">panel_grid</span><span class="o">=</span><span class="n">element_blank</span><span class="p">(),</span>
+                            <span class="n">legend_position</span><span class="o">=</span><span class="p">(</span><span class="mf">.5</span><span class="p">,</span> <span class="mf">.05</span><span class="p">),</span>
+                            <span class="n">legend_direction</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span>
+                            <span class="n">legend_box</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span>
+                            <span class="n">legend_title</span><span class="o">=</span><span class="n">element_blank</span><span class="p">(),</span>
+                            <span class="n">subplots_adjust</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;bottom&#39;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">})</span> <span class="o">+</span>
+                      <span class="n">labs</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Outcome&quot;</span><span class="p">))</span>
+
+        <span class="n">plot</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_struc</span> <span class="o">+</span>
+                <span class="n">geom_line</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]],</span>
+                          <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Outcome&#39;</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="s1">&#39;Type&#39;</span><span class="p">))</span> <span class="o">+</span>
+                <span class="n">geom_point</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Outcome&#39;</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="s1">&#39;Type&#39;</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">point_size</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">facet_wrap</span><span class="p">(</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="n">ncols</span><span class="p">,</span> <span class="n">scales</span><span class="o">=</span><span class="n">scales</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">scale_color_manual</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="n">col_treated</span><span class="p">,</span> <span class="n">col_synth</span><span class="p">],</span>
+                                   <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Treated&quot;</span><span class="p">,</span> <span class="s2">&quot;Synthetic Control&quot;</span><span class="p">]))</span>
+
+    <span class="k">elif</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span> <span class="ow">and</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">:</span>
+
+        <span class="c1"># add number of post-treatment periods that have been averaged</span>
+        <span class="n">auxdf</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;ID&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">T1_outcome</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+                                  <span class="s1">&#39;T1&#39;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">T1_outcome</span><span class="o">.</span><span class="n">values</span><span class="p">()})</span>
+        <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">auxdf</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;ID&quot;</span><span class="p">)</span>
+
+        <span class="n">plot_struc</span> <span class="o">=</span> <span class="p">(</span><span class="n">ggplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s2">&quot;Treatment&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">theme_bw</span><span class="p">()</span> <span class="o">+</span>
+                      <span class="n">theme</span><span class="p">(</span><span class="n">panel_grid</span><span class="o">=</span><span class="n">element_blank</span><span class="p">(),</span>
+                            <span class="n">legend_position</span><span class="o">=</span><span class="p">(</span><span class="mf">.5</span><span class="p">,</span> <span class="mf">.05</span><span class="p">),</span>
+                            <span class="n">legend_direction</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span>
+                            <span class="n">legend_box</span><span class="o">=</span><span class="s1">&#39;horizontal&#39;</span><span class="p">,</span>
+                            <span class="n">legend_title</span><span class="o">=</span><span class="n">element_blank</span><span class="p">(),</span>
+                            <span class="n">subplots_adjust</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;bottom&#39;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">})</span> <span class="o">+</span>
+                      <span class="n">labs</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Effect&quot;</span><span class="p">))</span>
+
+        <span class="n">plot</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_struc</span> <span class="o">+</span>
+                <span class="n">geom_point</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Effect&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s1">&#39;T1&#39;</span><span class="p">),</span> <span class="n">colour</span><span class="o">=</span><span class="s2">&quot;#D67236&quot;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">geom_hline</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">yintercept</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;dashed&quot;</span><span class="p">)</span> <span class="o">+</span>
+                <span class="n">coord_flip</span><span class="p">())</span>
+
+    <span class="c1">#############################################################################</span>
+    <span class="c1"># ADD UNCERTAINTY</span>
+    <span class="c1">#############################################################################</span>
+
+    <span class="k">if</span> <span class="n">class_input</span> <span class="o">==</span> <span class="s2">&quot;scpi_multi_output&quot;</span><span class="p">:</span>
+        <span class="n">e_method</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">e_method</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="n">e_method</span> <span class="o">=</span> <span class="s2">&quot;gaussian&quot;</span>
+        <span class="k">if</span> <span class="n">e_method_input</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">e_method</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">e_method_input</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;series&quot;</span><span class="p">:</span>
+
+            <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">CI_in_sample</span><span class="p">,</span> <span class="s1">&#39;insample&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">e_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;gaussian&quot;</span><span class="p">]:</span>
+                <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">CI_all_gaussian</span><span class="p">,</span> <span class="s1">&#39;gaussian&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">e_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;ls&quot;</span><span class="p">]:</span>
+                <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">CI_all_ls</span><span class="p">,</span> <span class="s1">&#39;ls&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">e_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;qreg&quot;</span><span class="p">]:</span>
+                <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">CI_all_qreg</span><span class="p">,</span> <span class="s1">&#39;qreg&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">joint</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;joint&#39;</span><span class="p">],</span> <span class="s1">&#39;bd&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Outcome&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Outcome&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">,</span> <span class="s1">&#39;Upper_bd&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">:</span>
+
+            <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;insample&#39;</span><span class="p">],</span> <span class="s1">&#39;bd&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+            <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_insample&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">]</span>
+            <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_insample&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_bd&#39;</span><span class="p">]</span>
+            <span class="n">toplot</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">,</span> <span class="s1">&#39;Upper_bd&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">e_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;gaussian&quot;</span><span class="p">]:</span>
+                <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;subgaussian&#39;</span><span class="p">],</span> <span class="s1">&#39;bd&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_gaussian&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_gaussian&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">,</span> <span class="s1">&#39;Upper_bd&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">e_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;ls&quot;</span><span class="p">]:</span>
+                <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;ls&#39;</span><span class="p">],</span> <span class="s1">&#39;bd&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_ls&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_ls&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">,</span> <span class="s1">&#39;Upper_bd&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">e_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;qreg&quot;</span><span class="p">]:</span>
+                <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;qreg&#39;</span><span class="p">],</span> <span class="s1">&#39;bd&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_qreg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_qreg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">,</span> <span class="s1">&#39;Upper_bd&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">joint</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">CIrename</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="s1">&#39;joint&#39;</span><span class="p">],</span> <span class="s1">&#39;bd&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Upper_bd&#39;</span><span class="p">]</span>
+                <span class="n">toplot</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Lower_bd&#39;</span><span class="p">,</span> <span class="s1">&#39;Upper_bd&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># In sample uncertainty</span>
+        <span class="k">if</span> <span class="n">e_out</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span>
+                <span class="n">plot_w</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot</span> <span class="o">+</span>
+                          <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">,</span>
+                                        <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_insample&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_insample&#39;</span><span class="p">),</span>
+                                        <span class="n">colour</span><span class="o">=</span><span class="s2">&quot;#FD6467&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">)</span> <span class="o">+</span>
+                          <span class="n">ggtitle</span><span class="p">(</span><span class="s2">&quot;In-sample Uncertainty&quot;</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plot_w</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot</span> <span class="o">+</span>
+                          <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">,</span>
+                                        <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_insample&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_insample&#39;</span><span class="p">),</span>
+                                        <span class="n">colour</span><span class="o">=</span><span class="n">col_synth</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">)</span> <span class="o">+</span>
+                          <span class="n">ggtitle</span><span class="p">(</span><span class="s2">&quot;In-sample Uncertainty&quot;</span><span class="p">))</span>
+
+        <span class="c1"># In and out of sample uncertainty: subgaussian</span>
+        <span class="k">if</span> <span class="n">e_out</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">e_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;gaussian&quot;</span><span class="p">]:</span>
+
+            <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span>
+                <span class="n">plot_w1</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot</span> <span class="o">+</span>
+                           <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">,</span>
+                                         <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_gaussian&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_gaussian&#39;</span><span class="p">),</span>
+                                         <span class="n">colour</span><span class="o">=</span><span class="s2">&quot;#FD6467&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">)</span> <span class="o">+</span>
+                           <span class="n">ggtitle</span><span class="p">(</span><span class="s2">&quot;In and Out of Sample Uncertainty - Subgaussian Bounds&quot;</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plot_w1</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot</span> <span class="o">+</span>
+                           <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">,</span>
+                                         <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_gaussian&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_gaussian&#39;</span><span class="p">),</span>
+                                         <span class="n">colour</span><span class="o">=</span><span class="n">col_synth</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">)</span> <span class="o">+</span>
+                           <span class="n">ggtitle</span><span class="p">(</span><span class="s2">&quot;In and Out of Sample Uncertianty - Subgaussian Bounds&quot;</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">joint</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit-time&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Synthetic&quot;</span><span class="p">]</span>
+
+                <span class="n">plot_w1</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_w1</span> <span class="o">+</span>
+                           <span class="n">geom_ribbon</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">plotdf</span><span class="p">,</span>
+                                       <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">),</span>
+                                       <span class="n">fill</span><span class="o">=</span><span class="n">col_synth</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">))</span>
+
+            <span class="k">elif</span> <span class="n">joint</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="n">plot_w1</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_w1</span> <span class="o">+</span>
+                               <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">plotdf</span><span class="p">,</span>
+                                             <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">),</span>
+                                             <span class="n">colour</span><span class="o">=</span><span class="s2">&quot;#5B1A18&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.25</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;series&quot;</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Synthetic&#39;</span><span class="p">]</span>
+                    <span class="n">plot_w1</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_w1</span> <span class="o">+</span>
+                               <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">plotdf</span><span class="p">,</span>
+                                             <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">),</span>
+                                             <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkred&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.6</span><span class="p">))</span>
+
+        <span class="c1"># In and out of sample uncertainty: location-scale</span>
+
+        <span class="k">if</span> <span class="n">e_out</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">e_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;ls&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span>
+                <span class="n">plot_w2</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot</span> <span class="o">+</span>
+                           <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">,</span>
+                                         <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_ls&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Lower_ls&#39;</span><span class="p">),</span>
+                                         <span class="n">colour</span><span class="o">=</span><span class="s2">&quot;#FD6467&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">)</span> <span class="o">+</span>
+                           <span class="n">ggtitle</span><span class="p">(</span><span class="s2">&quot;In and Out of Sample Uncertainty - Location-scale Model&quot;</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plot_w2</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot</span> <span class="o">+</span>
+                           <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">,</span>
+                                         <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_ls&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Lower_ls&#39;</span><span class="p">),</span>
+                                         <span class="n">colour</span><span class="o">=</span><span class="n">col_synth</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">)</span> <span class="o">+</span>
+                           <span class="n">ggtitle</span><span class="p">(</span><span class="s2">&quot;In and Out of Sample Uncertainty - Location-scale Model&quot;</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">joint</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit-time&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Synthetic&quot;</span><span class="p">]</span>
+
+                <span class="n">plot_w2</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_w2</span> <span class="o">+</span>
+                           <span class="n">geom_ribbon</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">plotdf</span><span class="p">,</span>
+                                       <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">),</span>
+                                       <span class="n">fill</span><span class="o">=</span><span class="n">col_synth</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">))</span>
+
+            <span class="k">elif</span> <span class="n">joint</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="n">plot_w2</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_w2</span> <span class="o">+</span>
+                               <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">plotdf</span><span class="p">,</span>
+                                             <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">),</span>
+                                             <span class="n">colour</span><span class="o">=</span><span class="s2">&quot;#5B1A18&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.25</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;series&quot;</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Synthetic&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="n">plot_w2</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_w2</span> <span class="o">+</span>
+                               <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">plotdf</span><span class="p">,</span>
+                                             <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">),</span>
+                                             <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkred&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.6</span><span class="p">))</span>
+
+        <span class="c1"># In and out of sample uncertainty: quantile regression</span>
+
+        <span class="k">if</span> <span class="n">e_out</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">e_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;qreg&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span>
+                <span class="n">plot_w3</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot</span> <span class="o">+</span>
+                           <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">,</span>
+                                         <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_qreg&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_qreg&#39;</span><span class="p">),</span>
+                                         <span class="n">colour</span><span class="o">=</span><span class="s2">&quot;#FD6467&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">)</span> <span class="o">+</span>
+                           <span class="n">ggtitle</span><span class="p">(</span><span class="s2">&quot;In and Out of Sample Uncertainty - Qunatile Regression&quot;</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plot_w3</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot</span> <span class="o">+</span>
+                           <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">toplot</span><span class="p">,</span>
+                                         <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_qreg&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_qreg&#39;</span><span class="p">),</span>
+                                         <span class="n">colour</span><span class="o">=</span><span class="n">col_synth</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">linetype</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">)</span> <span class="o">+</span>
+                           <span class="n">ggtitle</span><span class="p">(</span><span class="s2">&quot;In and Out of Sample Uncertainty - Qunatile Regression&quot;</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">joint</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit-time&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Synthetic&quot;</span><span class="p">]</span>
+
+                <span class="n">plot_w3</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_w3</span> <span class="o">+</span>
+                           <span class="n">geom_ribbon</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">plotdf</span><span class="p">,</span>
+                                       <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">),</span>
+                                       <span class="n">fill</span><span class="o">=</span><span class="n">col_synth</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">))</span>
+
+            <span class="k">elif</span> <span class="n">joint</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;treatment&quot;</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="n">plot_w3</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_w3</span> <span class="o">+</span>
+                               <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">plotdf</span><span class="p">,</span>
+                                             <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">),</span>
+                                             <span class="n">colour</span><span class="o">=</span><span class="s2">&quot;#5B1A18&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.25</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;series&quot;</span><span class="p">:</span>
+                    <span class="n">plotdf</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Synthetic&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="n">plot_w3</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_w3</span> <span class="o">+</span>
+                               <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">plotdf</span><span class="p">,</span>
+                                             <span class="n">mapping</span><span class="o">=</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="s1">&#39;Lower_joint&#39;</span><span class="p">,</span> <span class="n">ymax</span><span class="o">=</span><span class="s1">&#39;Upper_joint&#39;</span><span class="p">),</span>
+                                             <span class="n">color</span><span class="o">=</span><span class="s2">&quot;darkred&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.6</span><span class="p">))</span>
+
+    <span class="c1"># Save data to reproduce plot</span>
+    <span class="k">if</span> <span class="n">save_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data_name</span> <span class="o">=</span> <span class="n">save_data</span> <span class="o">+</span> <span class="s2">&quot;.csv&quot;</span>
+        <span class="n">toplot</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">data_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">class_input</span> <span class="o">==</span> <span class="s2">&quot;scpi_multi_output&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e_out</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">plot_w</span>
+        <span class="k">elif</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s2">&quot;gaussian&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">plot_w1</span>
+        <span class="k">elif</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s2">&quot;ls&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">plot_w2</span>
+        <span class="k">elif</span> <span class="n">e_method</span> <span class="o">==</span> <span class="s2">&quot;qreg&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">plot_w3</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">plot</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">scpi_pkg.scplotMulti</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+    </div>
+  </body>
+</html>

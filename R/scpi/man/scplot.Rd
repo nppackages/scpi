@@ -2,7 +2,7 @@
 % Please edit documentation in R/scplot.R
 \name{scplot}
 \alias{scplot}
-\title{Plot Synthetic Control Estimate}
+\title{Plot Synthetic Control Point Estimates and Prediction Interval}
 \usage{
 scplot(
   result,
@@ -10,7 +10,8 @@ scplot(
   fig.name = NULL,
   fig.format = "png",
   e.out = TRUE,
-  col.treated = "grey46",
+  joint = FALSE,
+  col.treated = "black",
   col.synth = "mediumblue",
   label.xy = NULL,
   plot.range = NULL,
@@ -21,7 +22,8 @@ scplot(
 )
 }
 \arguments{
-\item{result}{a class \verb{scpi_est' object, obtained by calling \code{\link{scest}}, or a class }scpi_pi' object, obtained by calling \code{\link{scpi}}}
+\item{result}{a class 'scpi_est' object, obtained by calling \code{\link{scest}}, or a class
+'scpi_pi' object, obtained by calling \code{\link{scpi}}}
 
 \item{fig.path}{a string indicating the path where the plot(s) should be saved.}
 
@@ -32,9 +34,11 @@ generates a numeric suffix to avoid overwriting them.}
 
 \item{e.out}{a logical specifying whether out-of-sample uncertainty should be included in the plot(s).}
 
-\item{col.treated}{a string specifying the color for the treated unit series. Find the full list at http://sape.inf.usi.ch/quick-reference/ggplot2/colour.}
+\item{joint}{a logical specifying whether simultaneous prediction intervals should be included in the plot(s). It requires \code{e.out = TRUE}.}
 
-\item{col.synth}{a string specifying the color for the synthetic unit series. Find the full list at http://sape.inf.usi.ch/quick-reference/ggplot2/colour.}
+\item{col.treated}{a string specifying the color for the treated unit series. Find the full list at \url{http://sape.inf.usi.ch/quick-reference/ggplot2/colour}.}
+
+\item{col.synth}{a string specifying the color for the synthetic unit series. Find the full list at \url{http://sape.inf.usi.ch/quick-reference/ggplot2/colour}.}
 
 \item{label.xy}{a character list with two elements indicating the name of the axes
 (eg. label.xy = list(x.lab = "Year", y.lab = "GDP growth (\%)")).}
@@ -48,7 +52,8 @@ a numeric object indicating the height of the label in the plot.}
 
 \item{plot.specs}{a list containing some specifics to be passed to ggsave (eg. img.width, img.height, dpi)}
 
-\item{save.data}{a character specifying the name and the path of the saved dataframe containing the processed data used to produce the plot.}
+\item{save.data}{a character specifying the name and the path of the saved dataframe containing the processed data used
+to produce the plot.}
 }
 \value{
 \item{plots}{a list containing standard ggplot object(s) that can be used for further customization.}
@@ -57,12 +62,13 @@ a numeric object indicating the height of the label in the plot.}
 The command plots the actual pre-treatment and post-treatment series of the treated
 unit and the estimated counterfactual synthetic control unit with corresponding prediction intervals.
 Prediction intervals can take into account either in-sample uncertainty only or in-sample and
-out-of-sample uncertainty using prediction intervals as developed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}}.
+out-of-sample uncertainty using the techniques developed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}. \code{\link{scpi}}.
 The input object should come from the command \code{\link{scest}} or from the command \code{\link{scpi}}.
 
 Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 
-Companion commands are: \link{scdata} for data preparation, \link{scest} for point estimation, and \link{scpi} for inference procedures.
+Companion commands are:  \link{scdata} and \link{scdataMulti} for data preparation in the single and multiple treated unit(s) cases, respectively,
+\link{scest} for point estimation, \link{scpi} for inference procedures, and \link{scplotMulti} for plots with multiple treated units.
 
 Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
 
@@ -74,12 +80,12 @@ For an introduction to synthetic control methods, see \href{https://www.aeaweb.o
 
 data <- scpi_germany
 
-df <- scdata(df = data, id.var = "country", time.var = "year", 
-             outcome.var = "gdp", period.pre = (1960:1990), 
+df <- scdata(df = data, id.var = "country", time.var = "year",
+             outcome.var = "gdp", period.pre = (1960:1990),
              period.post = (1991:2003), unit.tr = "West Germany",
              unit.co = unique(data$country)[-7], constant = TRUE,
              cointegrated.data = TRUE)
-             
+
 result <- scest(df, w.constr = list(name = "simplex", Q = 1))
 
 scplot(result)
@@ -87,16 +93,17 @@ scplot(result)
 }
 \references{
 \itemize{
-\item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
+\item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls:
+Feasibility, data requirements, and methodological aspects.
 \emph{Journal of Economic Literature}, 59(2), 391-425.}
-\item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R.
+\item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022)},
 scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
 }
 }
 \seealso{
-\code{\link{scdata}}, \code{\link{scest}}, \code{\link{scpi}}
+\code{\link{scdata}}, \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplotMulti}}
 }
 \author{
 Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.

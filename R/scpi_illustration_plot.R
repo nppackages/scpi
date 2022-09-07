@@ -1,17 +1,23 @@
 ################################################################################
 ## SCPI R Package
-## R-file for Empirical Illustration
+## R-file for Empirical Illustration - Single Treated Unit
 ## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik  
 ################################################################################
 ### Clear R environment
 rm(list=ls(all=TRUE))
 
 ### Install R library
-install.packages('scpi')
+#install.packages('scpi')
 
 ### Load packages
 library(scpi)
 library(ggplot2)
+
+theme_set(theme_bw())
+
+##############################################################################
+# SINGLE TREATED UNIT
+##############################################################################
 
 ### Load data
 data <- scpi_germany
@@ -37,7 +43,7 @@ cointegrated.data <- T                               # Belief that the data are 
 df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
                 period.pre = period.pre, period.post = period.post,
                 unit.tr = unit.tr, unit.co = unit.co, cov.adj = cov.adj, features = features,
-                constant = constant,  report.missing = report.missing, cointegrated.data = cointegrated.data)
+                constant = constant, cointegrated.data = cointegrated.data)
 
 
 ####################################
@@ -54,15 +60,15 @@ u.sigma  <- "HC1"                        # Estimator for the variance-covariance
 u.missp  <- T                            # If TRUE then the model is treated as misspecified
 e.lags   <- 0                            # Degree of polynomial in B and C when modelling e
 e.order  <- 1                            # Lags of B to be used when modelling e
-e.method <- "qreg"                       # Estimation method for out-of-sample uncertainty
-cores    <- 2                            # Number of cores to be used by scpi
+e.method <- "gaussian"                   # Estimation method for out-of-sample uncertainty
+cores    <- 1                            # Number of cores to be used by scpi
 w.constr <- list(name = "simplex")       # Simplex-type constraint set
 
 set.seed(8894)
 result  <- scpi(data = df,u.order = u.order, u.lags = u.lags, u.sigma = u.sigma, 
                 u.missp = u.missp, sims = sims, e.order = e.order, e.lags = e.lags,
                 e.method = e.method, cores = cores, w.constr = w.constr, u.alpha = u.alpha,
-                e.alpha = e.alpha, V = V, rho = rho, rho.max = rho.max) 
+                e.alpha = e.alpha, rho = rho, rho.max = rho.max) 
 
 ####################################
 ### SC - plot results
@@ -78,15 +84,14 @@ scplot(result = result, fig.path = ".",
 y.fit <- rbind(result$est.results$Y.pre.fit, result$est.results$Y.post.fit)
 y.act <- rbind(result$data$Y.pre, result$data$Y.post)
 
-sc.l  <- result$inference.results$CI.all.qreg[, 1, drop = F]
-sc.r  <- result$inference.results$CI.all.qreg[, 2, drop = F]
+sc.l  <- result$inference.results$CI.all.gaussian[, 1, drop = FALSE]
+sc.r  <- result$inference.results$CI.all.gaussian[, 2, drop = FALSE]
 
 # Store other specifics
 period.pre  <- result$data$specs$period.pre
 period.post <- result$data$specs$period.post
 T0          <- period.pre[length(period.pre)] # intercept
 plot.range  <- c(period.pre, period.post)
-
 
 # Actual data
 dat    <- data.frame(t     = c(period.pre, period.post),
@@ -98,13 +103,14 @@ Y.fit.na  <- matrix(NA, nrow = length(c(period.pre, period.post)))
 sc.l.na   <- matrix(NA, nrow = length(c(period.pre, period.post)))
 sc.r.na   <- matrix(NA, nrow = length(c(period.pre, period.post)))
 
-not.missing.plot <- c(period.pre,period.post) %in% rownames(y.fit)
-not.missing.ci   <- c(period.pre,period.post) %in% rownames(sc.l)
+names <- strsplit(rownames(y.fit), "\\.")
+not.missing.plot <- c(period.pre,period.post) %in% unlist(lapply(names, "[[", 2))
+names <- strsplit(rownames(sc.l), "\\.")
+not.missing.ci   <- c(period.pre,period.post) %in% unlist(lapply(names, "[[", 2))
 
 Y.fit.na[not.missing.plot, 1] <- y.fit
 sc.l.na[not.missing.ci, 1]    <- sc.l
 sc.r.na[not.missing.ci, 1]    <- sc.r
-
 
 # Synthetic unit data
 dat.sc <- data.frame(t        = c(period.pre, period.post),
@@ -135,10 +141,10 @@ plot <- ggplot() + theme_bw() +
 
 ## Add Series to plot
 plot <- plot + 
-  geom_line( data = plotdf, aes(x = t, y = .data$Y.act, colour = .data$sname.x), linetype = 'solid') +
-  geom_point(data = plotdf, aes(x = t, y = .data$Y.act, colour = .data$sname.x), shape = 1) +
-  geom_line( data = plotdf, aes(x = t, y = .data$Y.sc,  colour = .data$sname.y), linetype = 'dashed') +
-  geom_point(data = plotdf, aes(x = t, y = .data$Y.sc,  colour = .data$sname.y), shape = 19) +
+  geom_line( data = plotdf, aes(x = t, y = Y.act, colour = sname.x), linetype = 'solid') +
+  geom_point(data = plotdf, aes(x = t, y = Y.act, colour = sname.x), shape = 1) +
+  geom_line( data = plotdf, aes(x = t, y = Y.sc,  colour = sname.y), linetype = 'dashed') +
+  geom_point(data = plotdf, aes(x = t, y = Y.sc,  colour = sname.y), shape = 19) +
   geom_vline(xintercept = T0, linetype = "dashed") +
   geom_text(aes(x = T0, label = event.lab, y = event.lab.height), angle = 90, size = 4) +
   scale_x_continuous(breaks = x.ticks) + 
@@ -149,10 +155,5 @@ plot <- plot +
 
 ## Add confidence bars and plot
 plot + geom_errorbar(data = plotdf,
-                    aes(x = .data$t, ymin = .data$lb, ymax = .data$ub, colour = .data$sname.y),
+                    aes(x = t, ymin = lb, ymax = ub, colour = sname.y),
                     width = 0.5, linetype = 1) + ggtitle("In and Out of Sample Uncertainty")
-
-
-
-
-

@@ -7,7 +7,7 @@
 scest(
   data,
   w.constr = NULL,
-  V = NULL,
+  V = "separate",
   opt.list = NULL,
   plot = FALSE,
   plot.name = NULL,
@@ -16,7 +16,7 @@ scest(
 )
 }
 \arguments{
-\item{data}{a class `scpi_data' object, obtained by calling \code{\link{scdata}}.}
+\item{data}{a class 'scpi_data' object, obtained by calling \code{\link{scdata}}, or class 'scpi_data_multi' obtained via \code{\link{scdataMulti}}.}
 
 \item{w.constr}{a list specifying the constraint set the estimated weights of the donors must belong to.
 \code{w.constr} can contain up to four objects:
@@ -29,10 +29,11 @@ scest(
 See the \strong{Details} section for more.
 }}
 
-\item{V}{a weighting matrix to be used when minimizing the sum of squared
-residuals
+\item{V}{specifies the weighting matrix to be used when minimizing the sum of squared residuals
 \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
-The default is the identity matrix, so equal weight is given to all observations.}
+The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
+(you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
+See the \strong{Details} section for more.}
 
 \item{opt.list}{a list specifying the stopping criteria and the algorithm for the underlying optimizer (\code{\link{nloptr}} or \code{\link{CVXR}}) for point estimation.
 See the \strong{Details} section for more.}
@@ -51,6 +52,7 @@ The function returns an object of class 'scpi_scest' containing two lists. The f
 \item{B}{a matrix containing pre-treatment features of the control units.}
 \item{C}{a matrix containing covariates for adjustment.}
 \item{P}{a matrix whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.}
+\item{P.diff}{for internal use only.}
 \item{Y.pre}{a matrix containing the pre-treatment outcome of the treated unit.}
 \item{Y.post}{a matrix containing the post-treatment outcome of the treated unit.}
 \item{Y.donors}{a matrix containing the pre-treatment outcome of the control units.}
@@ -58,14 +60,21 @@ The function returns an object of class 'scpi_scest' containing two lists. The f
 \itemize{
 \item{\code{J}, the number of control units}
 \item{\code{K}, a numeric vector with the number of covariates used for adjustment for each feature}
-\item{\code{KM}, the total number of covariates used for adjustment}
 \item{\code{M}, number of features}
+\item{\code{KM}, the total number of covariates used for adjustment}
+\item{\code{KMI}, the total number of covariates used for adjustment}
+\item{\code{I}, number of treated units}
 \item{\code{period.pre}, a numeric vector with the pre-treatment period}
 \item{\code{period.post}, a numeric vector with the post-treatment period}
 \item{\code{T0.features}, a numeric vector with the number of periods used in estimation for each feature}
 \item{\code{T1.outcome}, the number of post-treatment periods}
-\item{\code{glob.cons}, for internal use only}
-\item{\code{out.in.features}, for internal use only}}}
+\item{\code{constant}, for internal use only}
+\item{\code{effect}, for internal use only}
+\item{\code{anticipation}, number of periods of potential anticipation effects}
+\item{\code{out.in.features}, for internal use only}
+\item{\code{treated.units}, list containing the IDs of all treated units}
+\item{\code{donors.list}, list containing the IDs of the donors of each treated unit}
+\item{\code{class.type}, for internal use only}}}
 
 The second list is labeled 'est.results' and contains estimation results.
 \item{w}{a matrix containing the estimated weights of the donors.}
@@ -77,14 +86,16 @@ The second list is labeled 'est.results' and contains estimation results.
 \item{res}{a matrix containing the residuals \eqn{\mathbf{A}-\widehat{\mathbf{A}}}.}
 \item{V}{a matrix containing the weighting matrix used in estimation.}
 \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
+\item{S}{for internal use only.}
 }
 \description{
-The command implements estimation procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints. For more information see
-\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}.
+The command implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints. For more information see
+\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 
 Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 
-Companion commands are: \link{scdata} for data preparation, \link{scpi} for inference procedures, and \link{scplot} for plots.
+Companion commands are: \link{scdata} and \link{scdataMulti} for data preparation in the single and multiple treated unit(s) cases, respectively,
+\link{scpi} for inference procedures, \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
 
 Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
 
@@ -93,6 +104,7 @@ Related Stata, R, and Python packages useful for inference in SC designs are des
 For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
 }
 \details{
+Information is provided for the simple case in which \eqn{N_1=1} if not specified otherwise.
 \itemize{
 \item{\strong{Estimation of Weights.} \code{w.constr} specifies the constraint set on the weights. First, the element
 \code{p} allows the user to choose between imposing a constraint on either the L1 (\code{p = "L1"})
@@ -128,8 +140,21 @@ list(name = "ridge", Q = 1)}).}
 
 \item{If \code{name == "ols"}, then the problem is unconstrained and the vector of weights
 is estimated via ordinary least squares.}
-}
-}
+
+\item{If \code{name == "L1-L2"}, then
+\deqn{||\mathbf{w}||_1 = 1,\:\:\: ||\mathbf{w}||_2 \leq Q,}
+where \eqn{Q} is a tuning parameter computed as in the "ridge" case.}
+}}
+
+\item{\strong{Weighting Matrix with Multiple Treated Units.}
+\itemize{
+\item{if \code{V <- "separate"}, then \eqn{\mathbf{V} = \mathbf{I}} and the minimized objective function is
+\deqn{\sum_{i=1}^{N_1} \sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{{i \prime }} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{{i \prime}} \mathbf{r}_{l}^{i}\right)^{2},}
+which optimizes the separate fit for each treated unit.}
+\item{if \code{V <- "pooled"}, then \eqn{\mathbf{V} = \frac{1}{I}\mathbf{1}\mathbf{1}'\otimes \mathbf{I}} and the minimized objective function is
+\deqn{\sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(\frac{1}{N_1^2} \sum_{i=1}^{N_1}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{i \prime} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{i\prime} \mathbf{r}_{l}^{i}\right)\right)^{2},}
+which optimizes the pooled fit for the average of the treated units.}
+}}
 
 \item{\strong{Algorithm Options.} The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization
 (\code{algorithm = 'NLOPTR_LD_SLSQP'}) for all cases not involving the L1 norm.
@@ -159,14 +184,14 @@ result <- scest(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1))
 \itemize{
 \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 \emph{Journal of Economic Literature}, 59(2), 391-425.}
-\item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R.
+\item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
 }
 }
 \seealso{
-\code{\link{scdata}}, \code{\link{scpi}}, \code{\link{scplot}}
+\code{\link{scdataMulti}}, \code{\link{scdata}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
 }
 \author{
 Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.

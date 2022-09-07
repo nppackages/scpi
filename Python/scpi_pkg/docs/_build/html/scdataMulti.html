@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti) &#8212; scpi-pkg 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Point estimation for Synthetic Control (scest.scest)" href="scest.html" />
+    <link rel="prev" title="Data Preparation for Synthetic Control (scdata.scdata)" href="scdata.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="scest.html" title="Point estimation for Synthetic Control (scest.scest)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="scdata.html" title="Data Preparation for Synthetic Control (scdata.scdata)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="data-preparation-for-synthetic-control-with-staggered-adoption-scdatamulti-scdatamulti">
+<h1>Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)<a class="headerlink" href="#data-preparation-for-synthetic-control-with-staggered-adoption-scdatamulti-scdatamulti" title="Permalink to this heading">¶</a></h1>
+<p>This page describes the function <code class="docutils literal notranslate"><span class="pre">scdataMulti</span></code> to prepare data for synthetic control designs in the general
+case of multiple treated units, possibly with staggered adoption. The function
+produces an object of class <code class="docutils literal notranslate"><span class="pre">scdataMulti_output</span></code> to be passed to <code class="docutils literal notranslate"><span class="pre">scest</span></code> or <code class="docutils literal notranslate"><span class="pre">scpi</span></code>.</p>
+<p>The command prepares the data to be used by scest or scpi for point estimation and inference procedures using
+Synthetic Control. It allows the user to specify the outcome variable and, for each treated unit, the features
+to be matched, and covariate-adjustment feature by feature. The names of the output matrices
+follow the notation proposed in <a class="reference external" href="https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf">Cattaneo, Feng, Palomba, and Titiunik (2022)</a>
+[UPDATE LINK].</p>
+<section id="syntax">
+<h2>Syntax<a class="headerlink" href="#syntax" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="scpi_pkg.scdataMulti.scdataMulti">
+<span class="sig-prename descclassname"><span class="pre">scpi_pkg.scdataMulti.</span></span><span class="sig-name descname"><span class="pre">scdataMulti</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treatment_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_adj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cointegrated_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_est</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units_est</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anticipation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">effect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'unit-time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scpi_pkg/scdataMulti.html#scdataMulti"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scpi_pkg.scdataMulti.scdataMulti" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – a dataframe object containing the data to be processed</p></li>
+<li><p><strong>id_var</strong> (<em>str</em>) – a character with the name of the variable containing units’ IDs</p></li>
+<li><p><strong>time_var</strong> (<em>str</em>) – a character with the name of the time variable. The time variable has to be numpy.int64, or one of
+pandas.Timestamp and numpy.datetime64. Input a numeric time variable is suggested when working with
+yearly data, whereas for all other frequencies either pandas.Timestamp or numpy.datetime64 types are preferred.</p></li>
+<li><p><strong>outcome_var</strong> (<em>str</em>) – a character with the name of the outcome variable. The outcome variable has to be numeric.</p></li>
+<li><p><strong>treatment_var</strong> (<em>str</em>) – a character with the name of the treatment variable. The treatment variable has to be 1 only in periods
+where a unit is treated.</p></li>
+<li><p><strong>features</strong> (<em>dict</em>) – a dictionary whose elements are lists containing the name of the feature variables used for estimation.
+If a dictionary with a single key
+is provided as input, then the same features are used for all treated units. Alternatively, if the user wants to
+specify different features for different treated units, the dictionary must contain as many keys as the number
+of treated units in the data. Each key must correspond to the identifier (id_var) of one treated unit.
+If this option is not specified the default is features = outcome_var.</p></li>
+<li><p><strong>cov_adj</strong> (<em>dict</em><em>, </em><em>default None</em>) – <p>a dictionary whose elements are lists containing the name of the covariates used for adjustment.
+If a dictionary with a single key
+is provided as input, then the same covariates are used for adjustment for all treated units.
+Alternatively, if the user wants to specify different covariates for different treated units,
+the dictionary must contain as many keys as the number of treated units in the data. Each key must
+correspond to the identifier (id_var) of one treated unit.</p>
+<p>More in detail, if the user wants
+to specify the same set of covariates for all features, a single list should be provided. If instead a
+different set of covariates per feature has to be specified, then a list of lists should be provided. Note that
+in this latter case the number of sub-lists must be equal to the number of features. Moreover, the order of the
+sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates for the first
+feature, and so on. Finally, the user can specify ‘constant’ and ‘trend’ as covariates even if they are not
+present in the loaded dataframe.</p>
+</p></li>
+<li><p><strong>post_est</strong> (<em>int</em><em>, </em><em>default None</em>) – an integer specifying the number of post-treatment periods
+for which treatment effects have to be estimated for each treated unit.</p></li>
+<li><p><strong>units_est</strong> (<em>list</em><em>, </em><em>default None</em>) – a list specifying the treated units for which treatment effects have to be estimated.</p></li>
+<li><p><strong>constant</strong> (<em>bool/dict</em><em>, </em><em>default False</em>) – a logical which controls the inclusion of a constant term across features. If the user wants to specify this
+option indipendently for each treated unit, a dictionary must be provided instead of a boolean value.
+Specifically, the dictionary must contain as many keys as the number of treated units in the data.
+Each key must correspond to the identifier (id_var) of one treated unit.</p></li>
+<li><p><strong>cointegrated_data</strong> (<em>bool/dict</em><em>, </em><em>default False</em>) – a logical that indicates if there is a belief that the data is cointegrated or not. If the user wants to specify
+this option indipendently for each treated unit, a dictionary must be provided instead of a boolean value.
+Specifically, the dictionary must contain as many keys as the number of treated units in the data.
+Each key must correspond to the identifier (id_var) of one treated unit.</p></li>
+<li><p><strong>effect</strong> (<em>str</em><em>, </em><em>default &quot;unit-time&quot;</em>) – a string indicating the type of treatment effect to be estimated. Options are: ‘unit-time’, which estimates
+treatment effects for each treated unit-time combination; ‘unit’, which estimates the treatment effect for
+each unit by averaging post-treatment features over time.</p></li>
+<li><p><strong>anticipation</strong> (<em>int/dict</em><em>, </em><em>default 0</em>) – a scalar that indicates the number of periods of potential anticipation effects. If the user wants to specify
+this option indipendently for each treated unit, a dictionary must be provided instead of an integer value.
+Specifically, the dictionary must contain as many keys as the number of treated units in the data.
+Each key must correspond to the identifier (id_var) of one treated unit.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The function returns an object of class <a href="#id1"><span class="problematic" id="id2">`</span></a>scdata_output’ containing the following objects</p></li>
+<li><p><strong>A</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the treated units.</p></li>
+<li><p><strong>B</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the control units.</p></li>
+<li><p><strong>C</strong> (<em>pandas.DataFrame</em>) – a dataframe containing covariates for adjustment.</p></li>
+<li><p><strong>P</strong> (<em>pandas.DataFrame</em>) – a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic units.</p></li>
+<li><p><strong>Y_df</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the outcome variable for all units.</p></li>
+<li><p><strong>Y_donors</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre-treatment outcome of the control units.</p></li>
+<li><p><strong>J</strong> (<em>dict</em>) – a dictionary containing the number of donors for each treated unit</p></li>
+<li><p><strong>K</strong> (<em>dict</em>) – a dictionary containing the number of covariates used for adjustment for each feature for each treated unit</p></li>
+<li><p><strong>KM</strong> (<em>dict</em>) – a dictionary containing the total number of covariates used for adjustment for each treated unit</p></li>
+<li><p><strong>M</strong> (<em>dict</em>) – a dictionary containing number of features used for each treated unit</p></li>
+<li><p><strong>iota</strong> (<em>int</em>) – number of treated units</p></li>
+<li><p><strong>KMI</strong> (<em>int</em>) – overall number of covariates used for adjustment</p></li>
+<li><p><strong>period_pre</strong> (<em>dict</em>) – a dictionary containing a numeric vector with the pre-treatment period for each treated unit</p></li>
+<li><p><strong>period_post</strong> (<em>dict</em>) – a dictionary containing a numeric vector with the post-treatment period for each treated unit</p></li>
+<li><p><strong>T0_features</strong> (<em>dict</em>) – a dictionary containing a numeric vector with the number of periods used in estimation for each feature for each
+treated unit</p></li>
+<li><p><strong>T1_outcome</strong> (<em>dict</em>) – a dictionary containing the number of post-treatment periods for each treated unit</p></li>
+<li><p><strong>glob_cons</strong> (<em>bool</em>) – for internal use only</p></li>
+<li><p><strong>out_in_features</strong> (<em>bool</em>) – for internal use only</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
+Aspects,” Journal of Economic Literature, 59, 391-425.</p>
+<p>Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control
+Methods,” Journal of the American Statistical Association, 116, 1865-1880.</p>
+<p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
+Synthetic Control Estimators”.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">scdata</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scest</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scpi</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplot</span></code></p>
+</div>
+</dd></dl>
+
+</section>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading">¶</a></h2>
+<p><strong>Python</strong>: <a class="reference external" href="https://www.cvxpy.org/">cvxpy</a>,</p>
+<blockquote>
+<div><p><a class="reference external" href="https://docs.dask.org/en/stable/">dask</a>,</p>
+<p><a class="reference external" href="https://nlopt.readthedocs.io/en/latest/">nlopt</a>,</p>
+<p><a class="reference external" href="https://numpy.org/">numpy</a>,</p>
+<p><a class="reference external" href="https://pandas.pydata.org/">pandas</a>,</p>
+<p><a class="reference external" href="https://plotnine.readthedocs.io/en/stable/">plotnine</a>,</p>
+<p><a class="reference external" href="https://scikit-learn.org/stable/">scikit-learn</a>,</p>
+<p><a class="reference external" href="https://scipy.org/">scipy</a>,</p>
+<p><a class="reference external" href="https://www.statsmodels.org/stable/index.html">statsmodels</a></p>
+</div></blockquote>
+<p><strong>scpi_pkg</strong>: none</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
+<p>Some examples regarding features and cov_adj:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># same features for all treated units</span>
+<span class="n">features</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;anyname&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">list</span> <span class="n">of</span> <span class="n">variables</span> <span class="n">to</span> <span class="n">match</span> <span class="n">on</span><span class="p">]}</span>
+
+<span class="c1"># specify features for each treated unit</span>
+<span class="n">features</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;treated_1&#39;</span><span class="p">:</span> <span class="p">[</span><span class="nb">list</span> <span class="n">of</span> <span class="n">variables</span> <span class="n">to</span> <span class="n">match</span> <span class="n">on</span><span class="p">],</span>
+            <span class="s1">&#39;treated_2&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="n">possibly</span> <span class="n">different</span><span class="p">)</span> <span class="nb">list</span> <span class="n">of</span> <span class="n">variables</span> <span class="n">to</span> <span class="n">match</span> <span class="n">on</span><span class="p">]}</span>
+
+<span class="c1"># same covariate adjustment for all treated units for all features</span>
+<span class="n">cov_adj</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;anyname&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="s1">&#39;trend&#39;</span><span class="p">]}</span>
+
+<span class="c1"># same covariate adjustment for all treated units but feature-specific (say, three features)</span>
+<span class="n">cov_adj</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;anyname&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="s1">&#39;trend&#39;</span><span class="p">],</span> <span class="p">[],</span> <span class="p">[</span><span class="s1">&#39;constant&#39;</span><span class="p">]]}</span>
+
+<span class="c1"># different covariate adjustment for each treated unit and feature-specific (say, two features for the first unit</span>
+<span class="c1"># and three for the second treated unit)</span>
+<span class="n">cov_adj</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;treated_1&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s1">&#39;constant&#39;</span><span class="p">],</span> <span class="p">[]</span> <span class="p">],</span>
+           <span class="s1">&#39;treated_2&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="s1">&#39;constant&#39;</span><span class="p">,</span> <span class="s1">&#39;trend&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;trend&#39;</span><span class="p">],</span> <span class="p">[]]}</span>
+
+<span class="c1"># unit specific presence of global constant</span>
+<span class="n">constant</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;treated_1&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;treated_2&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+
+<span class="c1"># unit specific presence of cointegration</span>
+<span class="n">cointegrated_data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;treated_1&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;treated_2&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+
+<span class="c1"># unit specific presence of anticipation effects</span>
+<span class="n">anticipation</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;treated_1&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;treated_2&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+
+<span class="n">aux</span> <span class="o">=</span> <span class="n">scdataMulti</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+                <span class="n">id_var</span><span class="o">=</span><span class="s1">&#39;country&#39;</span><span class="p">,</span>
+                <span class="n">treatment_var</span><span class="o">=</span><span class="s1">&#39;treatment&#39;</span><span class="p">,</span>
+                <span class="n">outcome_var</span><span class="o">=</span><span class="s1">&#39;gdp&#39;</span><span class="p">,</span>
+                <span class="n">time_var</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+                <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+                <span class="n">constant</span><span class="o">=</span><span class="n">constant</span><span class="p">,</span>
+                <span class="n">anticipation</span><span class="o">=</span><span class="n">anticipation</span><span class="p">,</span>
+                <span class="n">cointegrated_data</span><span class="o">=</span><span class="n">cointegrated_data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This example shows how to prepare the data for synthetic control methods. The raw data can be downloaded
+<a class="reference external" href="https://raw.githubusercontent.com/nppackages/scpi/main/Python/scpi_germany.csv">here</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">from</span> <span class="nn">scdataMulti</span> <span class="kn">import</span> <span class="n">scdataMulti</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;scpi_germany.csv&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create a second placebo treated unit</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;country&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Italy&quot;</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1992</span><span class="p">),</span> <span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">aux</span> <span class="o">=</span> <span class="n">scdataMulti</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+                  <span class="n">id_var</span><span class="o">=</span><span class="s1">&#39;country&#39;</span><span class="p">,</span>
+                  <span class="n">treatment_var</span><span class="o">=</span><span class="s1">&#39;treatment&#39;</span><span class="p">,</span>
+                  <span class="n">outcome_var</span><span class="o">=</span><span class="s1">&#39;gdp&#39;</span><span class="p">,</span>
+                  <span class="n">time_var</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a><ul>
+<li><a class="reference internal" href="#syntax">Syntax</a></li>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="scdata.html"
+                          title="previous chapter">Data Preparation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdata.scdata</span></code>)</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="scest.html"
+                          title="next chapter">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/scdataMulti.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="scest.html" title="Point estimation for Synthetic Control (scest.scest)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="scdata.html" title="Data Preparation for Synthetic Control (scdata.scdata)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+    </div>
+  </body>
+</html>

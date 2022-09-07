@@ -1,0 +1,681 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scpi_pkg.scdataMulti &#8212; scpi-pkg 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">scpi_pkg.scdataMulti</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for scpi_pkg.scdataMulti</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Mon Mar  7 15:47:09 2022</span>
+
+<span class="sd">@author: ux310uq-gl443t</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1"># Temporary code to suppress pandas FutureWarning</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">.scdata</span> <span class="kn">import</span> <span class="n">scdata</span>
+
+<div class="viewcode-block" id="scdataMulti"><a class="viewcode-back" href="../../scdataMulti.html#scpi_pkg.scdataMulti.scdataMulti">[docs]</a><span class="k">def</span> <span class="nf">scdataMulti</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
+                <span class="n">id_var</span><span class="p">,</span>
+                <span class="n">time_var</span><span class="p">,</span>
+                <span class="n">outcome_var</span><span class="p">,</span>
+                <span class="n">treatment_var</span><span class="p">,</span>
+                <span class="n">features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">cov_adj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">cointegrated_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">post_est</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">units_est</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">anticipation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">effect</span><span class="o">=</span><span class="s2">&quot;unit-time&quot;</span><span class="p">,</span>
+                <span class="n">constant</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pandas.DataFrame</span>
+<span class="sd">        a dataframe object containing the data to be processed</span>
+
+<span class="sd">    id_var : str</span>
+<span class="sd">        a character with the name of the variable containing units&#39; IDs</span>
+
+<span class="sd">    time_var : str</span>
+<span class="sd">        a character with the name of the time variable. The time variable has to be numpy.int64, or one of</span>
+<span class="sd">        pandas.Timestamp and numpy.datetime64. Input a numeric time variable is suggested when working with</span>
+<span class="sd">        yearly data, whereas for all other frequencies either pandas.Timestamp or numpy.datetime64 types are preferred.</span>
+
+<span class="sd">    outcome_var : str</span>
+<span class="sd">        a character with the name of the outcome variable. The outcome variable has to be numeric.</span>
+
+<span class="sd">    treatment_var : str</span>
+<span class="sd">        a character with the name of the treatment variable. The treatment variable has to be 1 only in periods</span>
+<span class="sd">        where a unit is treated.</span>
+
+<span class="sd">    features : dict</span>
+<span class="sd">        a dictionary whose elements are lists containing the name of the feature variables used for estimation.</span>
+<span class="sd">        If a dictionary with a single key</span>
+<span class="sd">        is provided as input, then the same features are used for all treated units. Alternatively, if the user wants to</span>
+<span class="sd">        specify different features for different treated units, the dictionary must contain as many keys as the number</span>
+<span class="sd">        of treated units in the data. Each key must correspond to the identifier (id_var) of one treated unit.</span>
+<span class="sd">        If this option is not specified the default is features = outcome_var.</span>
+
+<span class="sd">    cov_adj : dict, default None</span>
+<span class="sd">        a dictionary whose elements are lists containing the name of the covariates used for adjustment.</span>
+<span class="sd">        If a dictionary with a single key</span>
+<span class="sd">        is provided as input, then the same covariates are used for adjustment for all treated units.</span>
+<span class="sd">        Alternatively, if the user wants to specify different covariates for different treated units,</span>
+<span class="sd">        the dictionary must contain as many keys as the number of treated units in the data. Each key must</span>
+<span class="sd">        correspond to the identifier (id_var) of one treated unit.</span>
+
+<span class="sd">        More in detail, if the user wants</span>
+<span class="sd">        to specify the same set of covariates for all features, a single list should be provided. If instead a</span>
+<span class="sd">        different set of covariates per feature has to be specified, then a list of lists should be provided. Note that</span>
+<span class="sd">        in this latter case the number of sub-lists must be equal to the number of features. Moreover, the order of the</span>
+<span class="sd">        sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates for the first</span>
+<span class="sd">        feature, and so on. Finally, the user can specify &#39;constant&#39; and &#39;trend&#39; as covariates even if they are not</span>
+<span class="sd">        present in the loaded dataframe.</span>
+
+<span class="sd">    post_est : int, default None</span>
+<span class="sd">        an integer specifying the number of post-treatment periods</span>
+<span class="sd">        for which treatment effects have to be estimated for each treated unit.</span>
+
+<span class="sd">    units_est : list, default None</span>
+<span class="sd">        a list specifying the treated units for which treatment effects have to be estimated.</span>
+
+<span class="sd">    constant : bool/dict, default False</span>
+<span class="sd">        a logical which controls the inclusion of a constant term across features. If the user wants to specify this</span>
+<span class="sd">        option indipendently for each treated unit, a dictionary must be provided instead of a boolean value.</span>
+<span class="sd">        Specifically, the dictionary must contain as many keys as the number of treated units in the data.</span>
+<span class="sd">        Each key must correspond to the identifier (id_var) of one treated unit.</span>
+
+<span class="sd">    cointegrated_data : bool/dict, default False</span>
+<span class="sd">        a logical that indicates if there is a belief that the data is cointegrated or not. If the user wants to specify</span>
+<span class="sd">        this option indipendently for each treated unit, a dictionary must be provided instead of a boolean value.</span>
+<span class="sd">        Specifically, the dictionary must contain as many keys as the number of treated units in the data.</span>
+<span class="sd">        Each key must correspond to the identifier (id_var) of one treated unit.</span>
+
+<span class="sd">    effect : str, default &quot;unit-time&quot;</span>
+<span class="sd">        a string indicating the type of treatment effect to be estimated. Options are: &#39;unit-time&#39;, which estimates</span>
+<span class="sd">        treatment effects for each treated unit-time combination; &#39;unit&#39;, which estimates the treatment effect for</span>
+<span class="sd">        each unit by averaging post-treatment features over time.</span>
+
+<span class="sd">    anticipation : int/dict, default 0</span>
+<span class="sd">        a scalar that indicates the number of periods of potential anticipation effects. If the user wants to specify</span>
+<span class="sd">        this option indipendently for each treated unit, a dictionary must be provided instead of an integer value.</span>
+<span class="sd">        Specifically, the dictionary must contain as many keys as the number of treated units in the data.</span>
+<span class="sd">        Each key must correspond to the identifier (id_var) of one treated unit.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    The function returns an object of class `scdata_output&#39; containing the following objects</span>
+
+<span class="sd">    A : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing pre-treatment features of the treated units.</span>
+
+<span class="sd">    B : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing pre-treatment features of the control units.</span>
+
+<span class="sd">    C : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing covariates for adjustment.</span>
+
+<span class="sd">    P : pandas.DataFrame</span>
+<span class="sd">        a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic units.</span>
+
+<span class="sd">    Y_df : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the outcome variable for all units.</span>
+
+<span class="sd">    Y_donors : pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the pre-treatment outcome of the control units.</span>
+
+<span class="sd">    J : dict</span>
+<span class="sd">        a dictionary containing the number of donors for each treated unit</span>
+
+<span class="sd">    K : dict</span>
+<span class="sd">        a dictionary containing the number of covariates used for adjustment for each feature for each treated unit</span>
+
+<span class="sd">    KM : dict</span>
+<span class="sd">        a dictionary containing the total number of covariates used for adjustment for each treated unit</span>
+
+<span class="sd">    M : dict</span>
+<span class="sd">        a dictionary containing number of features used for each treated unit</span>
+
+<span class="sd">    iota : int</span>
+<span class="sd">        number of treated units</span>
+
+<span class="sd">    KMI : int</span>
+<span class="sd">        overall number of covariates used for adjustment</span>
+
+<span class="sd">    period_pre : dict</span>
+<span class="sd">        a dictionary containing a numeric vector with the pre-treatment period for each treated unit</span>
+
+<span class="sd">    period_post : dict</span>
+<span class="sd">        a dictionary containing a numeric vector with the post-treatment period for each treated unit</span>
+
+<span class="sd">    T0_features : dict</span>
+<span class="sd">        a dictionary containing a numeric vector with the number of periods used in estimation for each feature for each</span>
+<span class="sd">        treated unit</span>
+
+<span class="sd">    T1_outcome : dict</span>
+<span class="sd">        a dictionary containing the number of post-treatment periods for each treated unit</span>
+
+<span class="sd">    glob_cons : bool</span>
+<span class="sd">        for internal use only</span>
+
+<span class="sd">    out_in_features : bool</span>
+<span class="sd">        for internal use only</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological</span>
+<span class="sd">    Aspects,” Journal of Economic Literature, 59, 391-425.</span>
+
+<span class="sd">    Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control</span>
+<span class="sd">    Methods,” Journal of the American Statistical Association, 116, 1865-1880.</span>
+
+<span class="sd">    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for</span>
+<span class="sd">    Synthetic Control Estimators”.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    scdata, scest, scpi, scplot</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Error Checking</span>
+
+    <span class="c1"># Check main input is a dataframe</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Data input should be a dataframe object!&#39;</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="c1"># Store variable names and indexes</span>
+    <span class="n">var_names</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">indexes</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span>
+
+    <span class="c1"># Check inputs are strings</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">id_var</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify the name of id_var as a string! (eg. id_var = &#39;ID&#39;)&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outcome_var</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify the name of outcome_var as a string! (eg. outcome_var = &#39;outcome&#39;)&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">time_var</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify the name of time_var as a string! (eg. time_var = &#39;time&#39;)&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">treatment_var</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify the name of treatment_var as a string! (eg. treatment_var = &#39;treatment&#39;)&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">features</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;features&#39; should be a dictionary!&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;features&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">outcome_var</span><span class="p">]}</span>
+
+    <span class="k">if</span> <span class="n">cov_adj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cov_adj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;cov_adj&#39; should be a dictionary!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">effect</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;unit&quot;</span><span class="p">,</span> <span class="s2">&quot;unit-time&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;effect&#39; should be either &#39;unit&#39; or &#39;unit-time&#39;!&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check variables are in dataframe (id and time can be either variables or indices)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">id_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">var_names</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">id_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;ID variable (id_var) not found in the input dataframe neither as a variable nor as an index!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">time_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">var_names</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">time_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Time variable (time_var) not found in the input df neither as a variable nor as an index!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">outcome_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">var_names</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Outcome variable (outcome_var) not found in the input dataframe!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">treatment_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">var_names</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Treatment variable (treatment_var) not found in the input dataframe!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">post_est</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">post_est</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify post_est as an integer!&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Make time and id columns if these variables are indexes of the dataframe and rename variables</span>
+    <span class="k">if</span> <span class="n">id_var</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="n">id_var</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">id_var</span><span class="p">:</span> <span class="s1">&#39;__ID&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">time_var</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="n">time_var</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">time_var</span><span class="p">:</span> <span class="s1">&#39;__time&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">treatment_var</span><span class="p">:</span> <span class="s1">&#39;__Treatment&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">Y_df</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s1">&#39;__ID&#39;</span><span class="p">,</span> <span class="s1">&#39;__time&#39;</span><span class="p">,</span> <span class="s1">&#39;__Treatment&#39;</span><span class="p">,</span> <span class="n">outcome_var</span><span class="p">]]</span>
+
+    <span class="c1"># Identify treated units</span>
+    <span class="n">periods_treated</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s1">&#39;__Treatment&#39;</span><span class="p">,</span> <span class="s1">&#39;__ID&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;__ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">treated_units</span> <span class="o">=</span> <span class="n">periods_treated</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">periods_treated</span><span class="o">.</span><span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">treated_post</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">treated_units</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">units_est</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">units_est</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;units_est&#39; should be a list!&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">units_est</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;units_est&#39; must contain the identifiers (id_var) of the treated&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; units for which treatment effects have to be estimated!&quot;</span><span class="p">)</span>
+
+        <span class="n">treated_units</span> <span class="o">=</span> <span class="p">[</span><span class="n">tr</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span> <span class="k">if</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">units_est</span><span class="p">]</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">units_est</span> <span class="o">=</span> <span class="n">treated_units</span>
+
+    <span class="c1"># Control covariates for adjustment and matching features</span>
+    <span class="k">if</span> <span class="n">cov_adj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cov_adj</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cov_adj</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If you want to specify covariate adjustment separately&quot;</span> <span class="o">+</span>
+                                <span class="s2">&quot; for each treated unit, make sure that &#39;cov.adj&#39; has&quot;</span> <span class="o">+</span>
+                                <span class="s2">&quot; the same number of elements as there are treated&quot;</span> <span class="o">+</span>
+                                <span class="s2">&quot; units (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;)!&quot;</span><span class="p">)</span>
+            <span class="n">names_dict</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">cov_adj</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">names_dict</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">tr</span> <span class="ow">in</span> <span class="n">names_dict</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span><span class="p">):</span>
+                <span class="n">tr_not_found</span> <span class="o">=</span> <span class="p">[</span><span class="n">tr</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span> <span class="k">if</span> <span class="n">tr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names_dict</span><span class="p">]</span>
+                <span class="n">tr_print</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tr_not_found</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no match in the object &#39;cov_adj&#39; for the &quot;</span> <span class="o">+</span>
+                                <span class="s2">&quot;following treated units: &quot;</span> <span class="o">+</span> <span class="n">tr_print</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If you want to specify features separately&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; for each treated unit, make sure that &#39;features&#39; has&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; the same number of elements as there are treated&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; units (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;)!&quot;</span><span class="p">)</span>
+        <span class="n">names_dict</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">features</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">names_dict</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">tr</span> <span class="ow">in</span> <span class="n">names_dict</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span><span class="p">):</span>
+            <span class="n">tr_not_found</span> <span class="o">=</span> <span class="p">[</span><span class="n">tr</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span> <span class="k">if</span> <span class="n">tr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names_dict</span><span class="p">]</span>
+            <span class="n">tr_print</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tr_not_found</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no match in the object &#39;features&#39; for the &quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot;following treated units: &quot;</span> <span class="o">+</span> <span class="n">tr_print</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If you want to specify the presence of a constant separately&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; for each treated unit then &#39;constant&#39; has to be a dictionary!&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constant</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If you want to specify the presence of a constant separately&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; for each treated unit, make sure that &#39;constant&#39; has&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; the same number of elements as there are treated&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; units (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;)!&quot;</span><span class="p">)</span>
+        <span class="n">names_dict</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">constant</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">names_dict</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">tr</span> <span class="ow">in</span> <span class="n">names_dict</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span><span class="p">):</span>
+            <span class="n">tr_not_found</span> <span class="o">=</span> <span class="p">[</span><span class="n">tr</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span> <span class="k">if</span> <span class="n">tr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names_dict</span><span class="p">]</span>
+            <span class="n">tr_print</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tr_not_found</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no match in the object &#39;constant&#39; for the &quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot;following treated units: &quot;</span> <span class="o">+</span> <span class="n">tr_print</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cointegrated_data</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cointegrated_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If you want to specify the presence of cointegration separately&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; for each treated unit then &#39;cointegrated_data&#39; has to be a dictionary!&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cointegrated_data</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If you want to specify the presence of cointegration separately&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; for each treated unit, make sure that &#39;cointegrated_data&#39; has&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; the same number of elements as there are treated&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; units (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;)!&quot;</span><span class="p">)</span>
+        <span class="n">names_dict</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">cointegrated_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">names_dict</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">tr</span> <span class="ow">in</span> <span class="n">names_dict</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span><span class="p">):</span>
+            <span class="n">tr_not_found</span> <span class="o">=</span> <span class="p">[</span><span class="n">tr</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span> <span class="k">if</span> <span class="n">tr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names_dict</span><span class="p">]</span>
+            <span class="n">tr_print</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tr_not_found</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no match in the object &#39;cointegrated_data&#39; for the &quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot;following treated units: &quot;</span> <span class="o">+</span> <span class="n">tr_print</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">anticipation</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">anticipation</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If you want to specify the presence of anticipation effects separately&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; for each treated unit then &#39;anticipation&#39; has to be a dictionary!&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">anticipation</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If you want to specify the presence of anticipation effects separately&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; for each treated unit, make sure that &#39;anticipation&#39; has&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; the same number of elements as there are treated&quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot; units (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;)!&quot;</span><span class="p">)</span>
+        <span class="n">names_dict</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">anticipation</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">names_dict</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">tr</span> <span class="ow">in</span> <span class="n">names_dict</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span><span class="p">):</span>
+            <span class="n">tr_not_found</span> <span class="o">=</span> <span class="p">[</span><span class="n">tr</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span> <span class="k">if</span> <span class="n">tr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names_dict</span><span class="p">]</span>
+            <span class="n">tr_print</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tr_not_found</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no match in the object &#39;anticipation&#39; for the &quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot;following treated units: &quot;</span> <span class="o">+</span> <span class="n">tr_print</span><span class="p">)</span>
+
+    <span class="c1"># Data preparation</span>
+    <span class="c1"># Get first treated period of each treated unit</span>
+    <span class="n">aux</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">,</span> <span class="s1">&#39;__time&#39;</span><span class="p">]]</span>
+    <span class="n">treated_periods</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;__ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+
+    <span class="n">tr_count</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">treated_unit</span> <span class="ow">in</span> <span class="n">treated_units</span><span class="p">:</span>
+
+        <span class="c1"># parse options</span>
+        <span class="k">if</span> <span class="n">cov_adj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cov_adj</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">cov_adj_tr</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cov_adj</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cov_adj_tr</span> <span class="o">=</span> <span class="n">cov_adj</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cov_adj_tr</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">features_tr</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">features_tr</span> <span class="o">=</span> <span class="n">features</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="n">constant_tr</span> <span class="o">=</span> <span class="n">constant</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">constant_tr</span> <span class="o">=</span> <span class="n">constant</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cointegrated_data</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="n">cointegrated_data_tr</span> <span class="o">=</span> <span class="n">cointegrated_data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cointegrated_data_tr</span> <span class="o">=</span> <span class="n">cointegrated_data</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">anticipation</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">anticipation_tr</span> <span class="o">=</span> <span class="n">anticipation</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">anticipation_tr</span> <span class="o">=</span> <span class="n">anticipation</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span>
+
+        <span class="c1"># parse data</span>
+        <span class="n">treated_unit_T0</span> <span class="o">=</span> <span class="n">treated_periods</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">,</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># treatment date</span>
+
+        <span class="c1"># get all other units before treatment of treated unit</span>
+        <span class="n">donors</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">treated_post</span><span class="p">))</span> <span class="o">&amp;</span>
+                      <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">treated_unit_T0</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">donors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The current specification for &quot;</span> <span class="o">+</span> <span class="n">treated_unit</span> <span class="o">+</span> <span class="s2">&quot; does not have observations!&quot;</span><span class="p">)</span>
+
+        <span class="c1"># number of periods units have been treated before treatment of treated unit</span>
+        <span class="n">donors_count</span> <span class="o">=</span> <span class="n">donors</span><span class="p">[[</span><span class="s1">&#39;__ID&#39;</span><span class="p">,</span> <span class="s1">&#39;__Treatment&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;__ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">donors_units</span> <span class="o">=</span> <span class="n">donors_count</span><span class="p">[</span><span class="n">donors_count</span><span class="p">[</span><span class="s1">&#39;__Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">post_est</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">T1_last</span> <span class="o">=</span> <span class="n">treated_unit_T0</span> <span class="o">+</span> <span class="n">post_est</span>
+            <span class="n">treated_donors</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">treated_post</span><span class="p">))</span> <span class="o">&amp;</span>
+                                              <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">T1_last</span><span class="p">)]</span>
+            <span class="n">tr_donors_count</span> <span class="o">=</span> <span class="n">treated_donors</span><span class="p">[[</span><span class="s1">&#39;__ID&#39;</span><span class="p">,</span> <span class="s1">&#39;__Treatment&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;__ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">tr_donors_units</span> <span class="o">=</span> <span class="n">tr_donors_count</span><span class="p">[</span><span class="n">tr_donors_count</span><span class="p">[</span><span class="s1">&#39;__Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">donors_units</span> <span class="o">=</span> <span class="n">donors_units</span> <span class="o">+</span> <span class="n">tr_donors_units</span>
+            <span class="n">donors_units</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+        <span class="c1"># subset dataset selecting treated units and proper donors</span>
+        <span class="n">df_aux</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">donors_units</span> <span class="o">+</span> <span class="p">[</span><span class="n">treated_unit</span><span class="p">])]</span>
+
+        <span class="c1"># create time arrays</span>
+        <span class="n">time_array</span> <span class="o">=</span> <span class="n">df_aux</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+        <span class="n">period_pre</span> <span class="o">=</span> <span class="n">time_array</span><span class="p">[</span><span class="n">time_array</span> <span class="o">&lt;</span> <span class="n">treated_unit_T0</span><span class="p">]</span>
+        <span class="n">period_post</span> <span class="o">=</span> <span class="n">time_array</span><span class="p">[</span><span class="n">time_array</span> <span class="o">&gt;=</span> <span class="n">treated_unit_T0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">post_est</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sel_post</span> <span class="o">=</span> <span class="n">period_post</span> <span class="o">&lt;</span> <span class="n">T1_last</span>
+            <span class="n">period_post</span> <span class="o">=</span> <span class="n">period_post</span><span class="p">[</span><span class="n">sel_post</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">scdata_out</span> <span class="o">=</span> <span class="n">scdata</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df_aux</span><span class="p">,</span>
+                                <span class="n">id_var</span><span class="o">=</span><span class="s1">&#39;__ID&#39;</span><span class="p">,</span>
+                                <span class="n">time_var</span><span class="o">=</span><span class="s1">&#39;__time&#39;</span><span class="p">,</span>
+                                <span class="n">outcome_var</span><span class="o">=</span><span class="n">outcome_var</span><span class="p">,</span>
+                                <span class="n">period_pre</span><span class="o">=</span><span class="n">period_pre</span><span class="p">,</span>
+                                <span class="n">period_post</span><span class="o">=</span><span class="n">period_post</span><span class="p">,</span>
+                                <span class="n">unit_tr</span><span class="o">=</span><span class="n">treated_unit</span><span class="p">,</span>
+                                <span class="n">unit_co</span><span class="o">=</span><span class="n">donors_units</span><span class="p">,</span>
+                                <span class="n">features</span><span class="o">=</span><span class="n">features_tr</span><span class="p">,</span>
+                                <span class="n">cov_adj</span><span class="o">=</span><span class="n">cov_adj_tr</span><span class="p">,</span>
+                                <span class="n">constant</span><span class="o">=</span><span class="n">constant_tr</span><span class="p">,</span>
+                                <span class="n">cointegrated_data</span><span class="o">=</span><span class="n">cointegrated_data_tr</span><span class="p">,</span>
+                                <span class="n">anticipation</span><span class="o">=</span><span class="n">anticipation_tr</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">str1</span> <span class="o">=</span> <span class="s2">&quot;There is a problem with your specification for the treated unit: &quot;</span> <span class="o">+</span> <span class="n">treated_unit</span>
+            <span class="n">str2</span> <span class="o">=</span> <span class="s2">&quot;. Here is the original error message: &quot;</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">str1</span> <span class="o">+</span> <span class="n">str2</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+        <span class="c1"># Store data matrices</span>
+        <span class="n">A_tr</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">A</span>
+        <span class="n">B_tr</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">B</span>
+        <span class="n">C_tr</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">C</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">C_tr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># to avoid bad behavior of block_diag when C is null</span>
+            <span class="n">C_tr</span> <span class="o">=</span> <span class="n">A_tr</span><span class="p">[[]]</span>
+
+        <span class="n">Y_donors_tr</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">Y_donors</span>
+        <span class="n">P_tr</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">P</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">effect</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span> <span class="ow">and</span> <span class="n">cointegrated_data_tr</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="n">P_diff</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">effect</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span>  <span class="c1"># average within unit</span>
+            <span class="k">if</span> <span class="n">cointegrated_data_tr</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>  <span class="c1"># differentiate the data if cointegration</span>
+                <span class="n">JJ</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">J</span>
+                <span class="k">if</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">out_in_features</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                    <span class="n">P_first</span> <span class="o">=</span> <span class="n">P_tr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:</span><span class="n">JJ</span><span class="p">]</span> <span class="o">-</span> <span class="n">Y_donors_tr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="nb">len</span><span class="p">(</span><span class="n">Y_donors_tr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">values</span>
+                    <span class="n">P_diff</span> <span class="o">=</span> <span class="n">P_tr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">:</span><span class="n">JJ</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+                    <span class="n">P_diff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">P_first</span>
+
+                <span class="k">elif</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">out_in_features</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="c1"># Remove last observation of first feature from first period of P</span>
+                    <span class="n">P_first</span> <span class="o">=</span> <span class="n">P_tr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:</span><span class="n">JJ</span><span class="p">]</span> <span class="o">-</span> <span class="n">B_tr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="n">scdata_out</span><span class="o">.</span><span class="n">T0_features</span><span class="p">[</span><span class="n">outcome_var</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">values</span>
+                    <span class="n">P_diff</span> <span class="o">=</span> <span class="n">P_tr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">:</span><span class="n">JJ</span><span class="p">]</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+                    <span class="n">P_diff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">P_first</span>
+                    <span class="n">P_diff</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">P_diff</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">:</span><span class="n">JJ</span><span class="p">],</span>
+                                            <span class="n">P_tr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="n">JJ</span><span class="p">:]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">aux</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">P_diff</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)])</span>
+                    <span class="n">time</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_post</span><span class="p">[</span><span class="n">ceil</span><span class="p">(</span><span class="n">scdata_out</span><span class="o">.</span><span class="n">T1_outcome</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="n">treated_unit</span><span class="p">],</span> <span class="p">[</span><span class="n">time</span><span class="p">]],</span>
+                                                         <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;treated_unit&#39;</span><span class="p">,</span> <span class="s1">&#39;__time&#39;</span><span class="p">])</span>
+                    <span class="n">P_diff</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">aux</span><span class="p">,</span>
+                                              <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
+                                              <span class="n">columns</span><span class="o">=</span><span class="n">P_diff</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+            <span class="n">aux</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">P_tr</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)])</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_post</span><span class="p">[</span><span class="n">ceil</span><span class="p">(</span><span class="n">scdata_out</span><span class="o">.</span><span class="n">T1_outcome</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="n">treated_unit</span><span class="p">],</span> <span class="p">[</span><span class="n">time</span><span class="p">]],</span>
+                                                 <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;treated_unit&#39;</span><span class="p">,</span> <span class="s1">&#39;__time&#39;</span><span class="p">])</span>
+            <span class="n">P_tr</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">aux</span><span class="p">,</span>
+                                    <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
+                                    <span class="n">columns</span><span class="o">=</span><span class="n">P_tr</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">tr_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">A_stacked</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">A_tr</span><span class="p">)</span>
+            <span class="n">B_stacked</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">B_tr</span><span class="p">)</span>
+            <span class="n">C_stacked</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">C_tr</span><span class="p">)</span>
+            <span class="n">P_stacked</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">P_tr</span><span class="p">)</span>
+            <span class="n">Pd_stacked</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">P_diff</span><span class="p">)</span>
+            <span class="n">Y_donors_stacked</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">Y_donors_tr</span><span class="p">)</span>
+
+            <span class="n">J_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">J</span><span class="p">}</span>
+            <span class="n">K_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">K</span><span class="p">}</span>
+            <span class="n">KM_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">KM</span><span class="p">}</span>
+            <span class="n">M_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">M</span><span class="p">}</span>
+            <span class="n">period_pre_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_pre</span><span class="p">}</span>
+            <span class="n">period_post_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_post</span><span class="p">}</span>
+            <span class="n">T0_features_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">T0_features</span><span class="p">}</span>
+            <span class="n">T1_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">T1_outcome</span><span class="p">}</span>
+            <span class="n">out_in_features_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">out_in_features</span><span class="p">}</span>
+            <span class="n">constant_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">glob_cons</span><span class="p">}</span>
+            <span class="n">cointegrated_data_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">cointegrated_data</span><span class="p">}</span>
+            <span class="n">donors_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">donors_units</span><span class="p">}</span>
+            <span class="n">anticipation_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">anticipation_tr</span><span class="p">}</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">A_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">A_stacked</span><span class="p">,</span> <span class="n">A_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">B_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">B_stacked</span><span class="p">,</span> <span class="n">B_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">C_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">C_stacked</span><span class="p">,</span> <span class="n">C_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">P_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">P_stacked</span><span class="p">,</span> <span class="n">P_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">Pd_stacked</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">Pd_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Pd_stacked</span><span class="p">,</span> <span class="n">P_diff</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">Y_donors_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_donors_stacked</span><span class="p">,</span> <span class="n">Y_donors_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="n">J_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">J</span>
+            <span class="n">K_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">K</span>
+            <span class="n">KM_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">KM</span>
+            <span class="n">M_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">M</span>
+            <span class="n">period_pre_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_pre</span>
+            <span class="n">period_post_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_post</span>
+            <span class="n">T0_features_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">T0_features</span>
+            <span class="n">T1_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">T1_outcome</span>
+            <span class="n">out_in_features_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">out_in_features</span>
+            <span class="n">constant_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">glob_cons</span>
+            <span class="n">cointegrated_data_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">cointegrated_data</span>
+            <span class="n">donors_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">donors_units</span>
+            <span class="n">anticipation_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">anticipation_tr</span>
+
+        <span class="n">tr_count</span> <span class="o">=</span> <span class="n">tr_count</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="n">B_stacked</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">A_stacked</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">C_stacked</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">A_stacked</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">B_stacked</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">C_stacked</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">P_stacked</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">Pd_stacked</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">Pd_stacked</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Y_donors_stacked</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Rearrange P so that order of columns coincides with (B,C)</span>
+    <span class="n">bcols</span> <span class="o">=</span> <span class="n">B_stacked</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">ccols</span> <span class="o">=</span> <span class="n">C_stacked</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">P_stacked</span> <span class="o">=</span> <span class="n">P_stacked</span><span class="p">[</span><span class="n">bcols</span> <span class="o">+</span> <span class="n">ccols</span><span class="p">]</span>
+
+    <span class="c1"># number of treated units and number of covariates used for adjustment</span>
+    <span class="n">iota</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">)</span>
+    <span class="n">KMI</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">C_stacked</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">scdata_multi_output</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A_stacked</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="n">B_stacked</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="n">C_stacked</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="n">P_stacked</span><span class="p">,</span> <span class="n">P_diff</span><span class="o">=</span><span class="n">Pd_stacked</span><span class="p">,</span>
+                               <span class="n">Y_df</span><span class="o">=</span><span class="n">Y_df</span><span class="p">,</span> <span class="n">Y_donors</span><span class="o">=</span><span class="n">Y_donors_stacked</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J_dict</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="n">K_dict</span><span class="p">,</span>
+                               <span class="n">KM</span><span class="o">=</span><span class="n">KM_dict</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">M_dict</span><span class="p">,</span> <span class="n">iota</span><span class="o">=</span><span class="n">iota</span><span class="p">,</span> <span class="n">KMI</span><span class="o">=</span><span class="n">KMI</span><span class="p">,</span>
+                               <span class="n">cointegrated_data</span><span class="o">=</span><span class="n">cointegrated_data_dict</span><span class="p">,</span>
+                               <span class="n">period_pre</span><span class="o">=</span><span class="n">period_pre_dict</span><span class="p">,</span> <span class="n">period_post</span><span class="o">=</span><span class="n">period_post_dict</span><span class="p">,</span>
+                               <span class="n">T0_features</span><span class="o">=</span><span class="n">T0_features_dict</span><span class="p">,</span> <span class="n">T1_outcome</span><span class="o">=</span><span class="n">T1_dict</span><span class="p">,</span>
+                               <span class="n">outcome_var</span><span class="o">=</span><span class="n">outcome_var</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+                               <span class="n">glob_cons</span><span class="o">=</span><span class="n">constant_dict</span><span class="p">,</span> <span class="n">out_in_features</span><span class="o">=</span><span class="n">out_in_features_dict</span><span class="p">,</span>
+                               <span class="n">donors_dict</span><span class="o">=</span><span class="n">donors_dict</span><span class="p">,</span> <span class="n">treated_units</span><span class="o">=</span><span class="n">treated_units</span><span class="p">,</span>
+                               <span class="n">effect</span><span class="o">=</span><span class="n">effect</span><span class="p">,</span> <span class="n">units_est</span><span class="o">=</span><span class="n">units_est</span><span class="p">,</span> <span class="n">anticipation</span><span class="o">=</span><span class="n">anticipation_dict</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">scdata_multi_output</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">P_diff</span><span class="p">,</span> <span class="n">Y_df</span><span class="p">,</span> <span class="n">Y_donors</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">KM</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">iota</span><span class="p">,</span> <span class="n">KMI</span><span class="p">,</span>
+                 <span class="n">cointegrated_data</span><span class="p">,</span> <span class="n">period_pre</span><span class="p">,</span> <span class="n">period_post</span><span class="p">,</span> <span class="n">T0_features</span><span class="p">,</span>
+                 <span class="n">T1_outcome</span><span class="p">,</span> <span class="n">outcome_var</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">glob_cons</span><span class="p">,</span> <span class="n">out_in_features</span><span class="p">,</span>
+                 <span class="n">donors_dict</span><span class="p">,</span> <span class="n">treated_units</span><span class="p">,</span> <span class="n">effect</span><span class="p">,</span> <span class="n">units_est</span><span class="p">,</span> <span class="n">anticipation</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">A</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">=</span> <span class="n">B</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">=</span> <span class="n">C</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">P</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P_diff</span> <span class="o">=</span> <span class="n">P_diff</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_df</span> <span class="o">=</span> <span class="n">Y_df</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_donors</span> <span class="o">=</span> <span class="n">Y_donors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">J</span> <span class="o">=</span> <span class="n">J</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">KM</span> <span class="o">=</span> <span class="n">KM</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M</span> <span class="o">=</span> <span class="n">M</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iota</span> <span class="o">=</span> <span class="n">iota</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">KMI</span> <span class="o">=</span> <span class="n">KMI</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cointegrated_data</span> <span class="o">=</span> <span class="n">cointegrated_data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period_pre</span> <span class="o">=</span> <span class="n">period_pre</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period_post</span> <span class="o">=</span> <span class="n">period_post</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T0_features</span> <span class="o">=</span> <span class="n">T0_features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T1_outcome</span> <span class="o">=</span> <span class="n">T1_outcome</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outcome_var</span> <span class="o">=</span> <span class="n">outcome_var</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">glob_cons</span> <span class="o">=</span> <span class="n">glob_cons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_in_features</span> <span class="o">=</span> <span class="n">out_in_features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">donors_dict</span> <span class="o">=</span> <span class="n">donors_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">treated_units</span> <span class="o">=</span> <span class="n">treated_units</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">effect</span> <span class="o">=</span> <span class="n">effect</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">units_est</span> <span class="o">=</span> <span class="n">units_est</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">anticipation</span> <span class="o">=</span> <span class="n">anticipation</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">scpi_pkg.scdataMulti</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+    </div>
+  </body>
+</html>

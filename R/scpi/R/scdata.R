@@ -7,7 +7,8 @@
 #'
 #' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 #'
-#' Companion commands are: \link{scest} for point estimation, \link{scpi} for inference procedures, and \link{scplot} for plots.
+#' Companion commands are: \link{scdataMulti} for data preparation in the multiple treated units case with staggered adoption, 
+#' \link{scest} for point estimation, \link{scpi} for inference procedures, \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
 #' 
 #' Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
 #' 
@@ -33,7 +34,6 @@
 #' @param constant a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}.
 #' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}.  See the \strong{Details} section for more.
 #' @param anticipation a scalar that indicates the number of periods of potential anticipation effects. Default is 0.
-#' @param report.missing a logical which prints the location of missing values if present. The default value is \code{FALSE}.
 #' @param verbose if \code{TRUE} prints additional information in the console.
 #'
 #' @return
@@ -55,9 +55,12 @@
 #' \item{\code{period.post}, a numeric vector with the post-treatment period}
 #' \item{\code{T0.features}, a numeric vector with the number of periods used in estimation for each feature}
 #' \item{\code{T1.outcome}, the number of post-treatment periods}
-#' \item{\code{glob.cons}, for internal use only}
-#' \item{\code{out.in.features}, for internal use only}}}
-#'
+#' \item{\code{outcome.var}, a character with the name of the outcome variable}
+#' \item{\code{features}, a character vector with the name of the features}
+#' \item{\code{constant}, for internal use only}
+#' \item{\code{out.in.features}, for internal use only}
+#' \item{\code{effect}, for internal use only}
+#' \item{\code{treated.units}, list containing the IDs of all treated units}}}
 #'
 #' @details
 #'
@@ -83,33 +86,33 @@
 #' cointegrated system. In practice, this implies that when dealing with the pseudo-true
 #' residuals \eqn{\mathbf{u}}, the first-difference of \eqn{\mathbf{B}} are used rather than the levels.}
 #' }
-#' 
+#'
 #' @author
 #' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
-#' 
+#'
 #' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
-#' 
+#'
 #' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
-#' 
+#'
 #' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
-#' 
+#'
 #'
 #' @references
 #'\itemize{
 #' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
-#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. 
+#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 #' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
 #'}
 #'
-#' @seealso \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}
+#' @seealso \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
 #'
 #' @examples
-#' 
+#'
 #' data <- scpi_germany
-#' 
+#'
 #' df <- scdata(df = data, id.var = "country", time.var = "year", 
 #'              outcome.var = "gdp", period.pre = (1960:1990), 
 #'              period.post = (1991:2003), unit.tr = "West Germany",
@@ -118,20 +121,19 @@
 #'
 #' @export
 
-scdata <- function(df, 
-                   id.var, 
-                   time.var, 
-                   outcome.var, 
-                   period.pre, 
+scdata <- function(df,
+                   id.var,
+                   time.var,
+                   outcome.var,
+                   period.pre,
                    period.post,
-                   unit.tr, 
-                   unit.co, 
-                   features = NULL, 
+                   unit.tr,
+                   unit.co,
+                   features = NULL,
                    cov.adj = NULL,
                    cointegrated.data = FALSE,
                    anticipation = 0,
-                   constant = FALSE, 
-                   report.missing = FALSE, 
+                   constant = FALSE,
                    verbose = TRUE) {
 
   ############################################################################
@@ -246,7 +248,7 @@ scdata <- function(df,
       stop("You should specify the name of the feature each covariate adjustment refers to!
            (eg. cov.adj = list('feature1' = c('cov1','cov2'), 'feature2' = c('constant','cov1')))")
     }
-
+    
     if (!all(names(cov.adj) %in% features)) {
       stop(paste(c("When specifying covariate adjustment separately for each feature make sure
          that there is a one-to-one match between equation names and feature names.")))
@@ -310,6 +312,10 @@ scdata <- function(df,
   }
   
   # Consider eventual anticipation effect
+  if (!is.numeric(anticipation)) {
+    stop("The object 'anticipation' has to be an integer!")
+  }
+  
   if (anticipation > 0) {
     t0 <- length(period.pre); d <- anticipation
     period.post <- c(period.pre[(t0-d+1):t0], period.post)
@@ -329,14 +335,13 @@ scdata <- function(df,
   var.names[var.names == id.var]   <- "ID"
   names(data) <- var.names
 
-
   ############################################################################
   ############################################################################
   ### Data preparation
-    
+
   # Make the panel balanced
   data.bal <- as.data.frame(tidyr::complete(data, .data[["ID"]],.data[["Time"]]))
-  
+
   # Identify rows corresponding to treatment unit
   rows.tr.pre <- which(data.bal[, "ID"]   %in% c(unit.tr) &
                          data.bal[, "Time"] %in% period.pre)
@@ -355,21 +360,18 @@ scdata <- function(df,
   A           <- as.matrix(c(as.matrix(data.bal[rows.tr.pre, features]))) # Stack features
   colnames(A) <- unit.tr
 
-
   ### Estimation Data
   # Actual Pre-treatment Series
   Y.pre           <- as.matrix(data.bal[rows.tr.pre, outcome.var])
-  rownames(Y.pre) <- as.character(data.bal[rows.tr.pre, "Time"])
+  rownames(Y.pre) <- paste(unit.tr,as.character(data.bal[rows.tr.pre, "Time"]),sep=".")
   colnames(Y.pre) <- outcome.var
-
-  ## Create A
 
   # Create B
   sel <- data.bal[rows.co.pre, c(features, "ID", "Time")] # Select rows and columns
 
   # Stack all features one on top of the other
 
-  aux <- reshape(sel,
+  aux <- stats::reshape(sel,
                  direction = "long",
                  varying   = list(names(sel)[1:length(features)]),
                  idvar     = c("ID", "Time"),
@@ -377,7 +379,7 @@ scdata <- function(df,
                  times     = features)
 
   # make the df wide so that countries are one next to the other
-  aux <- reshape(aux,
+  aux <- stats::reshape(aux,
                  direction = "wide",
                  idvar     = c("Time", "feature"),
                  timevar   = "ID")
@@ -387,24 +389,25 @@ scdata <- function(df,
   B           <- as.matrix(aux[, !(colnames(aux) %in% c("Time", "feature"))])
 
   B.names     <- stringr::str_remove(colnames(B), features[1])
-  B.names     <- stringr::str_remove(B.names,".")
+  B.names     <- paste(unit.tr, stringr::str_remove(B.names,"."), sep = ".")
   colnames(B) <- B.names
   B.names     <- sort(B.names)
   B           <- B[,B.names]
 
   ## Create matrix with outcome for the donors
   sel <- data.bal[rows.co.pre, c(outcome.var, "ID", "Time")] # Select rows and columns
-  aux <- reshape(sel,
+  aux <- stats::reshape(sel,
                  direction = "wide",
                  idvar     = "Time",
                  timevar   = "ID")
   Y.donors <- as.matrix(aux)
-  Y.donors <- Y.donors[, colnames(Y.donors) != "Time"]
-  
+  Y.donors <- Y.donors[, colnames(Y.donors) != "Time", drop=FALSE]
+
   Y.names     <- stringr::str_remove(colnames(Y.donors), outcome.var)
   Y.names     <- stringr::str_remove(Y.names,".")
-  colnames(Y.donors) <- Y.names
-  rownames(Y.donors) <- as.character(aux[,'Time'])
+
+  colnames(Y.donors) <- paste(unit.tr, Y.names, sep = ".")
+  rownames(Y.donors) <- paste(unit.tr, as.character(aux[,'Time']), sep = ".")
   Y.donors    <- Y.donors[ , B.names]  # Re-order according to B
 
   ## Create C
@@ -441,11 +444,11 @@ scdata <- function(df,
 
       # Feature specific covariate adjustment
     } else if (length(cov.adj) > 1) {
-
+      
       for (m in seq_len(length(features))) {
         C.m          <- NULL                # Create empty block
         feature.covs <- cov.adj[[m]]        # select feature-specific list
-
+        
         # Check that constant/time trend are required by the user
         if ("constant" %in% feature.covs) {
           feature.covs <- feature.covs[feature.covs != "constant"]
@@ -494,55 +497,55 @@ scdata <- function(df,
       if (is.null(cc) == TRUE) {
         colnames.C[[j]] <- NULL
       } else {
-        colnames.C[[j]] <- paste(j, cc, sep = ".")
+        colnames.C[[j]] <- paste(unit.tr, j, cc, sep = ".")
       }
     }
 
     colnames(C) <- unlist(colnames.C)
 
   }
-
+  
   ############################################################################
   ##############################################################################
   ### Prediction Data
-
+  
   ## Actual post-treatment series
   Y.post <- as.matrix(data.bal[rows.tr.post, outcome.var])
-  rownames(Y.post) <- as.character(data.bal[rows.tr.post, "Time"])
+  rownames(Y.post) <- paste(unit.tr, as.character(data.bal[rows.tr.post, "Time"]), sep = ".")
   colnames(Y.post) <- outcome.var
 
   ## Prediction Matrix
   # Select series of donors
   aux    <- data.bal[rows.co.post, c(outcome.var, "ID", "Time")] # Select rows and columns
-
+  
   # make the df wide so that countries are one next to the other
-  aux <- reshape(aux,
+  aux <- stats::reshape(aux,
                  direction = "wide",
                  idvar     = "Time",
                  timevar   = "ID")
-
+  
   P <- as.matrix(aux[, names(aux) != "Time"])
-  rownames(P) <- as.character(aux[,'Time'])
+  rownames(P) <- paste(unit.tr, as.character(aux[,'Time']), sep = ".")
 
   P.names     <- stringr::str_remove(colnames(P), outcome.var)
   P.names     <- stringr::str_remove(P.names,".")
-  colnames(P) <- P.names
-  P           <- P[,B.names]  # Re-order as the matrix B
+  colnames(P) <- paste(unit.tr, P.names, sep = ".")
+  P           <- P[,B.names, drop = F]  # Re-order as the matrix B
   
   # If the outcome variable is within the specified features then we need to
   # augment P with the corresponding (eventual) covariates used for adjustment,
   # If instead the outcome variable is not within the specified features
   # P is composed by the outcome variable of the donors only
-
+  
   if (out.in.features == TRUE) {
     # Check that global constant is required by the user
     if (constant == TRUE) {
       P           <- cbind(P, rep(1, length(rows.tr.post)))
-      colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = FALSE]), "0.constant")
+      colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = FALSE]), paste(unit.tr,"0.constant", sep = "."))
     }
-
+    
     # Add covariates used for adjustment in outcome variable equation (if present)
-
+    
     if (is.null(cov.adj[[1]]) == FALSE) {
       covs.adj <- unlist(cov.adj[[1]])
 
@@ -550,42 +553,65 @@ scdata <- function(df,
       if ("constant" %in% covs.adj) {
         covs.adj <- covs.adj[covs.adj != "constant"]
         P        <- cbind(P, rep(1, length(rows.tr.post)))
-        colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = FALSE]), "1.constant")
+        colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = FALSE]), paste(unit.tr,"1.constant", sep = "."))
       }
 
       if ("trend" %in% covs.adj) {
         covs.adj    <- covs.adj[covs.adj != "trend"]
         time.trend  <- period.post - period.pre[1] + 1  # It takes into account scattered data
         P           <- cbind(P, time.trend)
-        colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = FALSE]), "1.trend")
+        colnames(P) <- c(colnames(P[, 1:(dim(P)[2] - 1), drop = FALSE]), paste(unit.tr,"1.trend", sep = "."))
       }
 
       rows.P <- which(data.bal[, "ID"] == unit.co[1] & data.bal[, "Time"] %in% period.post)
 
       P <- cbind(P, as.matrix(data.bal[rows.P, covs.adj]))
       if (length(covs.adj > 0)) {
-        colnames(P) <- c(colnames(P[,1 : (dim(P)[2]-length(covs.adj)), drop = FALSE]), paste(1, covs.adj, sep = "."))
+        colnames(P) <- c(colnames(P[,1 : (dim(P)[2]-length(covs.adj)), drop = FALSE]), paste(unit.tr,1, covs.adj, sep = "."))
       }
     }
-  }
-
+  } 
+  
   T1 <- length(period.post)
 
-
+  
   ############################################################################
   ############################################################################
   # Proceed cleaning missing data in the pre-treatment period
-
-  X           <- cbind(A, B, C)
-  rownames(X) <- paste(feature.vec, as.character(time.vec), sep = ".")
+  # Check if there are annoying donors with ALL missing values in the pre-treatment period
+  empty.cols <- colSums(is.na(B)) == nrow(B)
+  
+  if (sum(empty.cols) > 0) {
+    names <- strsplit(colnames(B[,empty.cols]), "\\.")
+    removed.cols <- unlist(lapply(names, "[[", 2))
+    warn.text <- paste(c("The following donors have no observations in the pre-treatment period, hence they have been removed!",
+                         removed.cols), collapse = " ")
+    if (verbose == TRUE) {
+      warning(warn.text)
+    }
+    dropped.co <- unit.co %in% removed.cols
+    unit.co.eff <- unit.co[!dropped.co]
+    
+    B <- B[ , !dropped.co, drop = TRUE]
+    
+  } else {
+    unit.co.eff <- unit.co
+  }
+  
+  X <- cbind(A, B, C)
+  
+  rownames(X) <- paste(unit.tr, feature.vec, as.character(time.vec), sep = ".")
   select      <- rowSums(is.na(X)) == 0
-  X.na        <- X[select, ]
-
+  X.na        <- X[select, , drop = FALSE]
+  if (nrow(X.na) == 0) {
+    stop("Current specification has too many missing values and no observations are left!")
+  }
+  
   j1   <- dim(as.matrix(A))[2]  # Columns of A
   j2   <- j1 + dim(B)[2]        # Columns of B
   j3   <- j2
   if (is.null(C) == FALSE) j3   <- j2 + dim(C)[2]        # Columns of C
-
+  
   A.na           <- X.na[, 1:j1, drop = FALSE]
   B.na           <- X.na[, (j1+1):j2, drop = FALSE]
   if (is.null(C) == TRUE) {
@@ -595,132 +621,29 @@ scdata <- function(df,
   }
   feature.na.vec <- feature.vec[select]
   time.na.vec    <- time.vec[select]
-
+  
   if (constant == TRUE) {
     C.na <- cbind(rep(1, dim(B.na)[1]), C.na)
+    rownames(C.na) <- rownames(B.na)
     if (dim(C.na)[2] == 1){
-      colnames(C.na) <- c("0.constant")
+      colnames(C.na) <- paste(unit.tr, "0.constant", sep = ".")
     } else {
-      colnames(C.na) <- c("0.constant", colnames(C.na[,2:(dim(C.na)[2]), drop = FALSE]))
+      colnames(C.na) <- c(paste(unit.tr, "0.constant", sep = "."), colnames(C.na[,2:(dim(C.na)[2]), drop = FALSE]))
     }
   }
-  
+
   # Store effective number of observations per feature
   xx <- as.data.frame(table(feature.na.vec))
   T0.features        <- c(xx$Freq)
   names(T0.features) <- xx$feature.na.vec
   T0.features        <- T0.features[match(names(T0.features), features)]
-
-
-  ############################################################################
-  ############################################################################
-  # Throw warnings for missing values
-  if (verbose) {
-    suggest <- 1 # Logical that controls messages with instructions
-    
-    # Report missing values in pre-treatment period
-    if ((report.missing == TRUE) & (length(A.na) != length(A))) {
-      
-      warning("Missing values detected in the pre-treatment period!\n", immediate. = TRUE, call. = FALSE)
-      
-      # Report missing values in A
-      if (sum(is.na(A)) != 0) {
-        missing.A           <- data.frame("Feature" = feature.vec, "time" = time.vec)[is.na(A), ]
-        
-        cat("Missing values detected in the following feature(s) of the treated unit:\n")
-        print(missing.A, quote = FALSE, row.names = FALSE, right = FALSE)
-        cat("\n")
-        
-      } else {
-        cat("The feature(s) of the treated unit do not contain missing values.")
-      }
-      
-      # Report missing values in B
-      
-      if (sum(is.na(B)) != 0) {
-        donor.missing    <- rowSums(is.na(B))
-        row.missing.B    <- donor.missing != 0
-        missing.B        <- data.frame("Feature" = feature.vec,
-                                       "time"    = time.vec,
-                                       "Num missing donors" = donor.missing)[row.missing.B, , drop = FALSE]
-        
-        cat("Missing values detected in the following feature(s) of the donor pool:\n")
-        print(missing.B, quote = FALSE, row.names = FALSE, right = FALSE)
-        cat("\n")
-        
-      } else {
-        print("The feature(s) of the control units do not contain missing values.")
-      }
-      
-      # Report missing values in C
-      
-      if (is.null(cov.adj) == FALSE) {
-        if (sum(is.na(C)) != 0) {
-          covs.used        <- all.covs[!all.covs %in% c("constant","trend")]
-          CC.vec           <- data.frame( "Covariate" = rep(covs.used, each = length(period.pre)),
-                                          "time"     = rep(period.pre, length(covs.used)),
-                                          "Aux"      = c(as.matrix(data.bal[rows.C, covs.used])))
-          missing.C        <- CC.vec[is.na(CC.vec[, 3]), (1:2)]
-          
-          cat("Missing values detected in the following covariate(s) used for adjustment:\n")
-          print(missing.C, quote = FALSE, row.names = FALSE, right = FALSE)
-          cat("\n")
-          
-        } else {
-          print("The covariate(s) used for adjustment do not contain missing values.")
-        }
-      }
-      
-    } else if ((report.missing == FALSE) & (length(A.na) != length(A))) {
-      
-      warning("Missing values detected in the pre-treatment period!\n", immediate. = TRUE, call. = FALSE)
-      cat("If you want to see where the missing values are located re-run the command \n")
-      cat("with the option report.missing = TRUE.\n")
-      
-      suggest <- 0
-    }
-    
-    
-    # Report missing values in post-treatment period
-    if (sum(is.na(P)) != 0) {
-      warning("Missing values detected in the post-treatment period for some of the donors! Point estimate and prediction interval
-          will not be computed for some of the required periods if the estimated weight is non-zero!\n", immediate. = TRUE, call. = FALSE)
-      
-      if (report.missing == TRUE) {
-        missing.P <- period.post[rowSums(is.na(P)) != 0]
-        
-        cat(paste(c("Missing values detected in the data for post-treatment prediction in the following periods:\n",
-                    missing.P), collapse = " "))
-        
-      } else if (suggest == 1) {
-        cat("If you want to see where the missing values are located re-run the command \n")
-        cat("with the option report.missing = TRUE.\n")
-      }
-    }
-    
-    if (sum(is.na(Y.post)) != 0) {
-      warning("Missing values detected in the post-treatment period for the treatment unit! Point estimate and prediction interval
-          will not be computed for some of the required periods!\n", immediate. = TRUE, call. = FALSE)
-      
-      if (report.missing == TRUE) {
-        missing.Y <- period.post[is.na(Y.post) != 0]
-        
-        cat(paste(c("Missing values detected in the data for post-treatment prediction in the following periods:\n",
-                    missing.Y), collapse = " "))
-        
-      } else if (suggest == 1) {
-        cat("If you want to see where the missing values are located re-run the command \n")
-        cat("with the option report.missing = TRUE.\n")
-      }
-    }
-  }  
-
+  
   ############################################################################
   ############################################################################
   # Store objects
 
   # Size of donor pool
-  J  <- length(unit.co)
+  J  <- length(unit.co.eff)
 
   # Total number of covariates used for adjustment
   if (is.null(C.na) == FALSE) {
@@ -748,30 +671,40 @@ scdata <- function(df,
     zeros        <- matrix(0, nrow = nrow(P), ncol = sum(K[-1]))
     P            <- cbind(P, zeros)
   }
-  
+
   if (constant == TRUE) {
     K <- K + 1
   }
 
+  if (out.in.features == FALSE) C.na <- NULL
 
+  colnames(P) <- c(colnames(B.na), colnames(C.na))
+  
   specs <- list(J = J,
                 K = K,
                 KM = KM,
                 M = M,
+                I = 1,
                 cointegrated.data = cointegrated.data,
                 period.pre = period.pre,
                 period.post = period.post,
                 T0.features = T0.features,
                 T1.outcome = T1,
+                outcome.var = outcome.var,
                 features = features,
-                glob.cons = constant,
-                out.in.features = out.in.features)
+                constant = constant,
+                out.in.features = out.in.features,
+                treated.units = unit.tr,
+                donors.units = unit.co.eff,
+                effect = "unit-time",
+                units.est = unit.tr)
 
 
   df.sc <-     list(A = A.na,
                     B = B.na,
                     C = C.na,
                     P = P,
+               P.diff = NULL, 
                 Y.pre = Y.pre,
                Y.post = Y.post,
              Y.donors = Y.donors,

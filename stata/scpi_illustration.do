@@ -1,18 +1,27 @@
 *****************************************************************************************
 ** SCPI Stata Package
-** Do-file for Empirical Illustration 
+** Do-file for Empirical Illustration - Single Treated Unit
 ** Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik 
 *****************************************************************************************
 ** hlp2winpdf, cdn(scdata) replace
+** hlp2winpdf, cdn(scdatamulti) replace
 ** hlp2winpdf, cdn(scest) replace
 ** hlp2winpdf, cdn(scpi) replace
 ** hlp2winpdf, cdn(scplot) replace
+** hlp2winpdf, cdn(scplotmulti) replace
+  
 *****************************************************************************************
 ** net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/stata) replace
 *****************************************************************************************
 clear all
 set more off
 set linesize 80
+
+*****************************************************************************************
+*****************************************************************************************
+** SINGLE TREATED UNIT
+*****************************************************************************************
+*****************************************************************************************
 
 *****************************************************************************************
 ** load data
@@ -55,7 +64,6 @@ scest, dfname("python_scdata") p(2) direc("<=") q(`Qridge') lb("-inf") // equiva
 scest, dfname("python_scdata") name(ols)
 scest, dfname("python_scdata") p(0) lb("-inf") 	// equivalent
 
-
 *****************************************************************************************
 ** SC - Inference with simplex, misspecified model
 *****************************************************************************************
@@ -82,13 +90,6 @@ scdata gdp trade, dfname("python_scdata") id(country) outcome(gdp) time(year) //
 scdata gdp infrate, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
 				  treatment(status) cointegrated covadj("constant, trend; constant")
 
-
 erase "python_scdata.obj"
 erase "__scest__output.obj"
 erase "__scpi__output.obj"
-
-
-
-
-
-

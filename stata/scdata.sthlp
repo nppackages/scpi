@@ -1,10 +1,10 @@
 {smcl}
-{* *!version 0.2.1 2022-03-01}{...}
+{* *!version 0.3 2022-03-07}{...}
 {viewerjumpto "Syntax" "scdata##syntax"}{...}
 {viewerjumpto "Description" "scdata##description"}{...}
 {viewerjumpto "Options" "scdata##options"}{...}
 {viewerjumpto "Examples" "scdata##examples"}{...}
-{viewerjumpto "Stored results" "scest##stored_results"}{...}
+{viewerjumpto "Stored results" "scdata##stored_results"}{...}
 {viewerjumpto "References" "scdata##references"}{...}
 {viewerjumpto "Authors" "scdata##authors"}{...}
 
@@ -64,15 +64,15 @@ references therein.{p_end}
 
 {p 4 8}{cmd:treatment(}{it:treatmentvar}{cmd:)} specifies the treatment indicator.{p_end}
 
-{dlgtab:Estimand}
+{dlgtab:Estimator}
 
-{p 4 8}{cmd:covadj(}{it:#}{cmd:)} specifies the variable to be used for adjustment for each feature. If the user wants
-     to specify the same set of covariates for all features, a string should be provided according to the following format: {opt covadj("['cov1', 'cov2']")}. 
-     If instead a different set of covariates per feature has to be specified, then the following format should be used {opt covadj("[['cov1', 'cov2'],['cov1','cov3']]")}. 
-     Note that in this latter case the number of sub-lists must be equal to the number of {it:features}. Moreover, the order of the 
-     sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates for the first 
+{p 4 8}{cmd:covadj(}{it:string}{cmd:)} specifies the variables to be used for adjustment for each feature. If the user wants
+     to specify the same set of covariates for all features, a string should be provided according to the following format: {opt covadj("cov1, cov2")}. 
+     If instead a different set of covariates per feature has to be specified, then the following format should be used {opt covadj("cov1, cov2; cov1, cov3")}. 
+     Note that in this latter case the number of sub-lists delimited by ";" must be equal to the number of {it:features}. Moreover, the order of the 
+     sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates used for adjustment for the first 
      feature, and so on. Finally, the user can specify 'constant' and 'trend' as covariates even if they are not 
-     present in the loaded dataset.
+     present in the loaded dataset, the former includes a constant, whilst the latter a linear deterministic trend.
 
 {p 4 8}{cmd:anticipation(}{it:#}{cmd:)} specifies the number of periods of potential anticipation effects. Default is {cmd:anticipation(0)}.{p_end}
 

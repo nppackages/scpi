@@ -18,7 +18,6 @@ scdata(
   cointegrated.data = FALSE,
   anticipation = 0,
   constant = FALSE,
-  report.missing = FALSE,
   verbose = TRUE
 )
 }
@@ -54,8 +53,6 @@ default is \code{features = outcome.var}.}
 
 \item{constant}{a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}.}
 
-\item{report.missing}{a logical which prints the location of missing values if present. The default value is \code{FALSE}.}
-
 \item{verbose}{if \code{TRUE} prints additional information in the console.}
 }
 \value{
@@ -77,8 +74,12 @@ The command returns an object of class 'scpi_data' containing the following
 \item{\code{period.post}, a numeric vector with the post-treatment period}
 \item{\code{T0.features}, a numeric vector with the number of periods used in estimation for each feature}
 \item{\code{T1.outcome}, the number of post-treatment periods}
-\item{\code{glob.cons}, for internal use only}
-\item{\code{out.in.features}, for internal use only}}}
+\item{\code{outcome.var}, a character with the name of the outcome variable}
+\item{\code{features}, a character vector with the name of the features}
+\item{\code{constant}, for internal use only}
+\item{\code{out.in.features}, for internal use only}
+\item{\code{effect}, for internal use only}
+\item{\code{treated.units}, list containing the IDs of all treated units}}}
 }
 \description{
 The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}} to implement estimation and inference procedures for Synthetic Control (SC) methods.
@@ -88,7 +89,8 @@ follow the terminology proposed in \href{https://cattaneo.princeton.edu/papers/C
 
 Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 
-Companion commands are: \link{scest} for point estimation, \link{scpi} for inference procedures, and \link{scplot} for plots.
+Companion commands are: \link{scdataMulti} for data preparation in the multiple treated units case with staggered adoption,
+\link{scest} for point estimation, \link{scpi} for inference procedures, \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
 
 Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
 
@@ -133,14 +135,14 @@ df <- scdata(df = data, id.var = "country", time.var = "year",
 \itemize{
 \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 \emph{Journal of Economic Literature}, 59(2), 391-425.}
-\item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R.
+\item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
 }
 }
 \seealso{
-\code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}
+\code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
 }
 \author{
 Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.

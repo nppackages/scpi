@@ -1,0 +1,345 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Prediction Intervals for Synthetic Control (scpi.scpi) &#8212; scpi-pkg 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Plots for Synthetic Control (scplot.scplot)" href="scplot.html" />
+    <link rel="prev" title="Point estimation for Synthetic Control (scest.scest)" href="scest.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="scplot.html" title="Plots for Synthetic Control (scplot.scplot)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="scest.html" title="Point estimation for Synthetic Control (scest.scest)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Prediction Intervals for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scpi.scpi</span></code>)</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="prediction-intervals-for-synthetic-control-scpi-scpi">
+<h1>Prediction Intervals for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scpi.scpi</span></code>)<a class="headerlink" href="#prediction-intervals-for-synthetic-control-scpi-scpi" title="Permalink to this heading">¶</a></h1>
+<p>This page describes the function <code class="docutils literal notranslate"><span class="pre">scpi</span></code> to implement point estimation and inference procedures for synthetic control methods
+using least squares, lasso, ridge, or simplex-type constraints. Uncertainty is quantified using prediction intervals according to
+<a class="reference external" href="https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf">Cattaneo, Feng, and Titiunik (2021)</a>.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="scpi_pkg.scpi.scpi">
+<span class="sig-prename descclassname"><span class="pre">scpi_pkg.scpi.</span></span><span class="sig-name descname"><span class="pre">scpi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_constr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'separate'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">P</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_missp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HC1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_lags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_design</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_lags</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_design</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lgapp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'generalized'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_dict_est</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_dict_inf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pass_stata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scpi_pkg/scpi.html#scpi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scpi_pkg.scpi.scpi" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>scdata_output</em>) – a class scdata_output object, obtained by calling scdata</p></li>
+<li><p><strong>w_constr</strong> (<em>dict</em>) – a dictionary specifying the constraint set the estimated weights of the donors must belong to.
+w_constr can contain up to five objects:
+1. p, a scalar indicating the norm to be used (p should be one of “no norm”, “L1”, and “L2”)
+2. dir, a string indicating whether the constraint on the norm is an equality (“==”) or inequality (“&lt;=”)
+3. Q, a scalar defining the value of the constraint on the norm
+4. lb, a scalar defining the lower bound on the weights. It can be either 0 or -numpy.inf.
+5. name, a character selecting one of the default proposals.</p></li>
+<li><p><strong>V</strong> (<em>numpy.array</em><em>, </em><em>default numpy.identity</em>) – an array specifying the weighting matrix to be used when minimizing the sum of squared residuals.
+The default is the identity matrix, so equal weight is given to all observations.</p></li>
+<li><p><strong>P</strong> (<em>numpy.array</em><em>, </em><em>default None</em>) – a T_1 x (J+K_1) array containing the design matrix to be used to obtain the predicted.
+post-intervention outcome of the synthetic control unit. T_1 is the number of post-treatment periods,
+J is the size of the donor pool, and K_1 is the number of covariates used for adjustment in
+the outcome equation.</p></li>
+<li><p><strong>u_missp</strong> (<em>bool</em><em>, </em><em>default True</em>) – a logical indicating if misspecification should be taken into account when dealing with u.</p></li>
+<li><p><strong>u_sigma</strong> (<em>str</em><em>, </em><em>default &quot;HC1&quot;</em>) – a string specifying the type of variance-covariance estimator to be used when estimating
+the conditional variance of u. Available choices are HC0, HC1, HC2, and HC3.</p></li>
+<li><p><strong>u_order</strong> (<em>int</em><em>, </em><em>default 1</em>) – an integer that sets the order of the polynomial in B when predicting moments of u.
+If there is risk of over-fitting the command automatically sets u_order = 0.</p></li>
+<li><p><strong>u_lags</strong> (<em>int</em><em>, </em><em>default 0</em>) – an integer that sets the number of lags of B when predicting moments of u. If there is risk of over-fitting the
+command automatically sets u_lags=0.</p></li>
+<li><p><strong>u_design</strong> (<em>numpy.array</em><em>, </em><em>default None</em>) – an array with the same number of rows of A and B and whose columns specify the design matrix
+to be used when modeling the estimated pseudo-true residuals u.</p></li>
+<li><p><strong>u_alpha</strong> (<em>float</em><em>, </em><em>default 0.05</em>) – a float specifying the confidence level for in-sample uncertainty, i.e. 1 - u_alpha is the confidence level.</p></li>
+<li><p><strong>e_method</strong> (<em>str</em><em>, </em><em>default &quot;all&quot;</em>) – a string selecting the method to be used in quantifying out-of-sample uncertainty among:
+“gaussian” which uses conditional subgaussian bounds; “ls” which specifies a location-scale model for u; “qreg”
+which employs a quantile regressions to get the conditional bounds; “all” uses each one of the previous methods.</p></li>
+<li><p><strong>e_order</strong> (<em>int</em><em>, </em><em>default 1</em>) – an integer that sets the order of the polynomial in B when predicting moments of e.
+If there is risk of over-fitting the command automatically sets e_order=0.</p></li>
+<li><p><strong>e_lags</strong> (<em>int</em><em>, </em><em>default 0</em>) – a scalar that sets the number of lags of B when predicting moments of e. If there is risk of over-fitting the
+command automatically sets e_lags=0.</p></li>
+<li><p><strong>e_design</strong> (<em>numpy.array</em><em>, </em><em>default None</em>) – an array with the same number of rows of A and B and whose columns specify the design matrix
+to be used when modeling the estimated out-of-sample residuals e.</p></li>
+<li><p><strong>e_alpha</strong> (<em>float</em><em>, </em><em>default 0.05</em>) – an float specifying the confidence level for out-of-sample uncertainty, i.e. 1- e_alpha is the confidence level.</p></li>
+<li><p><strong>sims</strong> (<em>int</em><em>, </em><em>default 200</em>) – an integer providing the number of simulations to be used in quantifying in-sample uncertainty.</p></li>
+<li><p><strong>rho</strong> (<em>float/str</em><em>, </em><em>default 'type-1'</em>) – a float specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
+rho = ‘type-1’, then the tuning parameter is computed based on optimization inequalities. Other options are
+‘type-2’, and ‘type-3’. See the software article for more information.</p></li>
+<li><p><strong>rho_max</strong> (<em>float</em><em>, </em><em>default 1</em>) – a float indicating the maximum value attainable by the tuning parameter rho.</p></li>
+<li><p><strong>lgapp</strong> (<em>str</em><em>, </em><em>default &quot;generalized&quot;</em>) – selects the way local geometry is approximated in simulation. The options are “generalized”
+and “linear”. The first one accommodates for possibly non-linear constraints, whilst the second one is valid
+with linear constraints only.</p></li>
+<li><p><strong>cores</strong> (<em>integer</em><em>, </em><em>default multiprocessing.cpu_count</em><em>(</em><em>) </em><em>- 1</em>) – number of cores to be used by the command. The default is half the cores available.</p></li>
+<li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>default False</em>) – a logical specifying whether scplot should be called and a plot saved in the current working directory.
+For more options see scplot.</p></li>
+<li><p><strong>w_bounds</strong> (<em>numpy.array</em>) – a T1 x 2 array with the user-provided bounds on beta. If w_bounds is provided, then
+the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the
+upper bound by filling the other column with NAs.</p></li>
+<li><p><strong>e_bounds</strong> (<em>numpy.array</em>) – a T1 x 2 array with the user-provided bounds on e. If e_bounds is provided, then
+the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or
+the upper bound by filling the other column with NAs.</p></li>
+<li><p><strong>opt_dict_est</strong> (<em>dict</em>) – a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
+The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based
+optimization (‘SLSQP’). In case a lasso-type constraint is implemented, cvxpy is used for optimization.
+More information on the stopping criteria can be obtained reading the official documentation at
+<a class="reference external" href="https://www.cvxpy.org/">https://www.cvxpy.org/</a>. The default values are ‘maxeval = 5000’, ‘xtol_rel = 1e-8’, ‘xtol_abs = 1e-8’,
+‘ftol_rel = 1e-4’, ‘ftol_abs = 1e-4’, ‘tol_eq = 1e-8’, and ‘tol_ineq = 1e-8’.</p></li>
+<li><p><strong>opt_dict_inf</strong> (<em>dict</em>) – same as above but for inference purposes. The default values are ‘maxeval = 5000’, ‘xtol_rel = 1e-8’,
+‘xtol_abs = 1e-8’, ‘ftol_rel = 1e-4’, ‘ftol_abs = 1e-4’, ‘tol_eq = 1e-8’, and ‘tol_ineq = 1e-8’.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – if True prints additional information in the console.</p></li>
+<li><p><strong>pass_stat</strong> (<em>bool</em>) – for internal use only.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>The function returns an object of class <a href="#id1"><span class="problematic" id="id2">`</span></a>scpi_output’ containing the following objects</p></li>
+<li><p><strong>w</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the weights of the donors.</p></li>
+<li><p><strong>r</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the values of the covariates used for adjustment.</p></li>
+<li><p><strong>b</strong> (<em>pandas.DataFrame</em>) – a dataframe containing w and r.</p></li>
+<li><p><strong>Y_pre_fit</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the estimated pre-treatment outcome for the SC unit.</p></li>
+<li><p><strong>Y_post_fit</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the estimated post-treatment outcome for the SC unit.</p></li>
+<li><p><strong>A_hat</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the predicted values of the features of the treated unit.</p></li>
+<li><p><strong>res</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the residuals A - A_hat.</p></li>
+<li><p><strong>V</strong> (<em>numpy.array</em>) – an array containing the weighting matrix used in estimation.</p></li>
+<li><p><strong>w_constr</strong> (<em>dictionary</em>) – a dictionary containing the specifics of the constraint set used on the weights.</p></li>
+<li><p><strong>A</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the treated unit.</p></li>
+<li><p><strong>B</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the control units.</p></li>
+<li><p><strong>C</strong> (<em>pandas.DataFrame</em>) – a dataframe containing covariates for adjustment.</p></li>
+<li><p><strong>P</strong> (<em>pandas.DataFrame</em>) – a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.</p></li>
+<li><p><strong>Y_pre</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre-treatment outcome of the treated unit.</p></li>
+<li><p><strong>Y_post</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the post-treatment outcome of the treated unit.</p></li>
+<li><p><strong>Y_donors</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre-treatment outcome of the control units.</p></li>
+<li><p><strong>J</strong> (<em>int</em>) – the number of control units</p></li>
+<li><p><strong>K</strong> (<em>array</em>) – a numeric array with the number of covariates used for adjustment for each feature</p></li>
+<li><p><strong>KM</strong> (<em>int</em>) – the total number of covariates used for adjustment</p></li>
+<li><p><strong>M</strong> (<em>int</em>) – number of features</p></li>
+<li><p><strong>period_pre</strong> (<em>array</em>) – a numeric array with the pre-treatment period</p></li>
+<li><p><strong>period_post</strong> (<em>array</em>) – a numeric array with the post-treatment period</p></li>
+<li><p><strong>T0_features</strong> (<em>array</em>) – a numeric array with the number of periods used in estimation for each feature</p></li>
+<li><p><strong>T1_outcome</strong> (<em>int</em>) – the number of post-treatment periods</p></li>
+<li><p><strong>glob_cons</strong> (<em>bool</em>) – for internal use only</p></li>
+<li><p><strong>out_in_features</strong> (<em>bool</em>) – for internal use only</p></li>
+<li><p><strong>cointegrated_data</strong> (<em>bool</em>) – logical indicating whether the data has been treated as cointegrated.</p></li>
+<li><p><strong>CI_in_sample</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the prediction intervals taking only in-sample uncertainty in to account.</p></li>
+<li><p><strong>CI_all_gaussian</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.</p></li>
+<li><p><strong>CI_all_ls</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.</p></li>
+<li><p><strong>CI_all_qreg</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the prediction intervals taking out-of-sample uncertainty in to account.</p></li>
+<li><p><strong>bounds</strong> (<em>dict</em>) – a dictionary containing all the estimated bounds.</p></li>
+<li><p><strong>Sigma</strong> (<em>numpy.array</em>) – an array containing the estimated variance-covariance Sigma.</p></li>
+<li><p><strong>u_mean</strong> (<em>numpy.array</em>) – an array containing the estimated conditional mean of the the pseudo-residuals u.</p></li>
+<li><p><strong>u_var</strong> (<em>numpy.array</em>) – an array containing the estimated conditional variance-covariance of the pseudo-residuals u.</p></li>
+<li><p><strong>e_mean</strong> (<em>numpy.array</em>) – an array containing the estimated conditional mean of the out-of-sample error e.</p></li>
+<li><p><strong>e_var</strong> (<em>numpy.array</em>) – an array containing the estimated conditional variance of the out-of-sample error e.</p></li>
+<li><p><strong>u_missp</strong> (<em>bool</em>) – a logical indicating whether the model has been treated as misspecified or not.</p></li>
+<li><p><strong>u_lags</strong> (<em>int</em>) – an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.</p></li>
+<li><p><strong>u_order</strong> (<em>int</em>) – an integer containing the order of the polynomial in B used in predicting moments of the pseudo-residuals u.</p></li>
+<li><p><strong>u_sigma</strong> (<em>str</em>) – a string indicating the estimator used for Sigma.</p></li>
+<li><p><strong>u_user</strong> (<em>bool</em>) – a logical indicating whether the design matrix to predict moments of u was user-provided.</p></li>
+<li><p><strong>u_alpha</strong> (<em>float</em>) – a float specifying the confidence level used for in-sample uncertainty, i.e. 1-u_alpha is the confidence level.</p></li>
+<li><p><strong>u_T</strong> (<em>int</em>) – an integer indicating the number of observations used to estimate (conditional) moments of the pseudo-residuals.</p></li>
+<li><p><strong>u_params</strong> (<em>int</em>) – an integer indicating the number of parameters used to estimate (conditional) moments of the pseudo-residuals.</p></li>
+<li><p><strong>u_D</strong> (<em>array</em>) – the design matrix used to predict moments of the pseudo-residuals.</p></li>
+<li><p><strong>e_method</strong> (<em>str</em>) – a string indicating the specification used to predict moments of the out-of-sample error e.</p></li>
+<li><p><strong>e_lags</strong> (<em>int</em>) – an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.</p></li>
+<li><p><strong>e_order</strong> (<em>int</em>) – an integer containing the number of lags in B used in predicting moments of the pseudo-residuals u.</p></li>
+<li><p><strong>e_user</strong> (<em>bool</em>) – a logical indicating whether the design matrix to predict moments of e was user-provided.</p></li>
+<li><p><strong>e_T</strong> (<em>int</em>) – an integer indicating the number of observations used to estimate (conditional) moments of the out-of-sample
+error.</p></li>
+<li><p><strong>e_params</strong> (<em>int</em>) – an integer indicating the number of parameters used to estimate (conditional) moments of the out-of-sample
+error.</p></li>
+<li><p><strong>e_D</strong> (<em>array</em>) – the design matrix used to predict moments of the out-of-sample error.</p></li>
+<li><p><strong>e_alpha</strong> (<em>float</em>) – a float indicating the confidence level used for out-of-sample uncertainty, i.e. 1-e_alpha is the confidence
+level.</p></li>
+<li><p><strong>rho</strong> (<em>str/float</em>) – an integer specifying the estimated regularizing parameter that imposes sparsity on
+the estimated vector of weights.</p></li>
+<li><p><strong>Q_star</strong> (<em>dict</em>) – a dictionary containing the regularized constraint on the norm of the weights.</p></li>
+<li><p><strong>epskappa</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the estimates for epsilon_kappa.</p></li>
+<li><p><strong>sims</strong> (<em>int</em>) – an integer indicating the number of simulations.</p></li>
+<li><p><strong>failed_sims</strong> (<em>numpy.array</em>) – an array containing the number of failed simulations per post-treatment period to estimate
+lower and upper bounds.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
+Aspects,” Journal of Economic Literature, 59, 391-425.</p>
+<p>Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control
+Methods,” Journal of the American Statistical Association, 116, 1865-1880.</p>
+<p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
+Synthetic Control Estimators”.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">scdata</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scdataMulti</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scest</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">splot</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplotMulti</span></code></p>
+</div>
+</dd></dl>
+
+</section>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading">¶</a></h2>
+<p><strong>Python</strong>: <a class="reference external" href="https://www.cvxpy.org/">cvxpy</a>,</p>
+<blockquote>
+<div><p><a class="reference external" href="https://docs.dask.org/en/stable/">dask</a>,</p>
+<p><a class="reference external" href="https://nlopt.readthedocs.io/en/latest/">nlopt</a>,</p>
+<p><a class="reference external" href="https://numpy.org/">numpy</a>,</p>
+<p><a class="reference external" href="https://pandas.pydata.org/">pandas</a>,</p>
+<p><a class="reference external" href="https://plotnine.readthedocs.io/en/stable/">plotnine</a>,</p>
+<p><a class="reference external" href="https://scikit-learn.org/stable/">scikit-learn</a>,</p>
+<p><a class="reference external" href="https://scipy.org/">scipy</a>,</p>
+<p><a class="reference external" href="https://www.statsmodels.org/stable/index.html">statsmodels</a></p>
+</div></blockquote>
+<p><strong>scpi_pkg</strong>: scest, scplot</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
+<p>This example shows how to prepare the data and estimate prediction intervals for synthetic control methods. The raw data can be downloaded
+<a class="reference external" href="https://raw.githubusercontent.com/nppackages/scpi/main/Python/scpi_germany.csv">here</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span>
+<span class="kn">from</span> <span class="nn">scpi_pkg.scdata</span> <span class="kn">import</span> <span class="n">scdata</span>
+<span class="kn">from</span> <span class="nn">scpi_pkg.scpi</span> <span class="kn">import</span> <span class="n">scpi</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;scpi_germany.csv&quot;</span><span class="p">)</span>
+
+<span class="n">id_var</span> <span class="o">=</span> <span class="s1">&#39;country&#39;</span>
+<span class="n">outcome_var</span> <span class="o">=</span> <span class="s1">&#39;gdp&#39;</span>
+<span class="n">time_var</span> <span class="o">=</span> <span class="s1">&#39;year&#39;</span>
+<span class="n">features</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">cov_adj</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">period_pre</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1960</span><span class="p">,</span> <span class="mi">1991</span><span class="p">)</span>
+<span class="n">period_post</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1991</span><span class="p">,</span> <span class="mi">2004</span><span class="p">)</span>
+<span class="n">unit_tr</span> <span class="o">=</span> <span class="s1">&#39;West Germany&#39;</span>
+<span class="n">unit_co</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">id_var</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span>
+<span class="n">unit_co</span> <span class="o">=</span> <span class="p">[</span><span class="n">cou</span> <span class="k">for</span> <span class="n">cou</span> <span class="ow">in</span> <span class="n">unit_co</span> <span class="k">if</span> <span class="n">cou</span> <span class="o">!=</span> <span class="s1">&#39;West Germany&#39;</span><span class="p">]</span>
+<span class="n">constant</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">report_missing</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">cointegrated_data</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">data_prep</span> <span class="o">=</span> <span class="n">scdata</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">id_var</span><span class="o">=</span><span class="n">id_var</span><span class="p">,</span> <span class="n">time_var</span><span class="o">=</span><span class="n">time_var</span><span class="p">,</span>
+                <span class="n">outcome_var</span><span class="o">=</span><span class="n">outcome_var</span><span class="p">,</span> <span class="n">period_pre</span><span class="o">=</span><span class="n">period_pre</span><span class="p">,</span>
+                <span class="n">period_post</span><span class="o">=</span><span class="n">period_post</span><span class="p">,</span> <span class="n">unit_tr</span><span class="o">=</span><span class="n">unit_tr</span><span class="p">,</span>
+                <span class="n">unit_co</span><span class="o">=</span><span class="n">unit_co</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span> <span class="n">cov_adj</span><span class="o">=</span><span class="n">cov_adj</span><span class="p">,</span>
+                <span class="n">cointegrated_data</span><span class="o">=</span><span class="n">cointegrated_data</span><span class="p">,</span> <span class="n">constant</span><span class="o">=</span><span class="n">constant</span><span class="p">,</span>
+                <span class="n">report_missing</span><span class="o">=</span><span class="n">report_missing</span><span class="p">)</span>
+
+<span class="c1"># Set options for inference</span>
+<span class="n">w_constr</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;simplex&#39;</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+<span class="n">u_missp</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">u_sigma</span> <span class="o">=</span> <span class="s2">&quot;HC1&quot;</span>
+<span class="n">u_order</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">u_lags</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">e_method</span> <span class="o">=</span> <span class="s2">&quot;qreg&quot;</span>
+<span class="n">e_order</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">e_lags</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">e_alpha</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">u_alpha</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">sims</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">cores</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">pi_si</span> <span class="o">=</span> <span class="n">scpi</span><span class="p">(</span><span class="n">data_prep</span><span class="p">,</span> <span class="n">sims</span><span class="o">=</span><span class="n">sims</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">u_order</span><span class="o">=</span><span class="n">u_order</span><span class="p">,</span> <span class="n">u_lags</span><span class="o">=</span><span class="n">u_lags</span><span class="p">,</span>
+            <span class="n">e_order</span><span class="o">=</span><span class="n">e_order</span><span class="p">,</span> <span class="n">e_lags</span><span class="o">=</span><span class="n">e_lags</span><span class="p">,</span> <span class="n">e_method</span><span class="o">=</span><span class="n">e_method</span><span class="p">,</span> <span class="n">u_missp</span><span class="o">=</span><span class="n">u_missp</span><span class="p">,</span>
+            <span class="n">u_sigma</span><span class="o">=</span><span class="n">u_sigma</span><span class="p">,</span> <span class="n">cores</span><span class="o">=</span><span class="n">cores</span><span class="p">,</span> <span class="n">e_alpha</span><span class="o">=</span><span class="n">e_alpha</span><span class="p">,</span> <span class="n">u_alpha</span><span class="o">=</span><span class="n">u_alpha</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pi_si</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Prediction Intervals for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scpi.scpi</span></code>)</a><ul>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="scest.html"
+                          title="previous chapter">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="scplot.html"
+                          title="next chapter">Plots for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scplot.scplot</span></code>)</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/scpi.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="scplot.html" title="Plots for Synthetic Control (scplot.scplot)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="scest.html" title="Point estimation for Synthetic Control (scest.scest)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Prediction Intervals for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scpi.scpi</span></code>)</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+    </div>
+  </body>
+</html>

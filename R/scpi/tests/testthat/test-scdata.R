@@ -17,7 +17,6 @@ test.data <- function(df = NULL,
                       cointegrated.data = FALSE,
                       anticipation = 0,
                       constant = TRUE, 
-                      report.missing = FALSE,
                       mv = F) {
   
   
@@ -27,7 +26,7 @@ test.data <- function(df = NULL,
   out  <-   scdata(df = df, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
                    period.pre = period.pre, period.post = period.post,
                    unit.tr = unit.tr, unit.co = unit.co, cov.adj = cov.adj, features = features,
-                   constant = constant,  report.missing = report.missing, cointegrated.data = cointegrated.data)
+                   constant = constant,  cointegrated.data = cointegrated.data)
   
   return(out) 
 }

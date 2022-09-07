@@ -1,9 +1,9 @@
-#' @title scpi: A package to compute Synthetic Control Prediction Intervals
+#' @title scpi: A package to compute Synthetic Control Prediction Intervals with Multiple Treated Units and Staggered Adoption
 #'
-#' @description The package implements estimation, inference procedures, and produces plots for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type 
-#' constraints. Uncertainty is quantified using prediction intervals according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}.
+#' @description The package implements estimation, inference procedures, and produces plots for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type 
+#' constraints. Uncertainty is quantified using prediction intervals according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 #' 
-#' Included functions are: \link{scdata} for data preparation, \link{scest} for point estimation, \link{scpi} for inference procedures, and \link{scplot} for plots.
+#' Included functions are: \link{scdata} and \link{scdataMulti} for data preparation, \link{scest} for point estimation, \link{scpi} for inference procedures, and \link{scplot} and \link{scplotMulti} for plots.
 #' 
 #' \code{print()} and \code{summary()} methods are available for \code{\link{scest}} and \code{\link{scpi}}.
 #'
@@ -28,7 +28,7 @@
 #' \itemize{
 #' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
-#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. 
+#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 #' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
@@ -37,12 +37,13 @@
 #' 
 #' @importFrom dplyr lag
 #' @importFrom dplyr left_join
-#' @importFrom ECOSolveR ECOS_csolve
 #' @importFrom fastDummies dummy_cols
 #' @importFrom magrittr %>%
 #' @importFrom Matrix bdiag
+#' @importFrom MASS ginv
 #' @importFrom methods is
 #' @importFrom purrr map
+#' @importFrom reshape2 melt
 #' @importFrom Qtools rrq
 #' @importFrom stringr str_remove
 #' @importFrom stringr str_split

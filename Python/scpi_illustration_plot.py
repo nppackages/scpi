@@ -1,6 +1,6 @@
 ################################################################################
 # SCPI Python Package
-# Script for Visualization
+# Script for Visualization - Single Treated Unit
 # Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik
 ################################################################################
 
@@ -10,18 +10,26 @@ import pandas
 import numpy
 import random
 import os
+from copy import deepcopy
 from plotnine import ggplot, ggsave, aes, geom_point, geom_errorbar, geom_vline, geom_line, theme, theme_bw
-from plotnine import element_blank, labs, guide_legend, scale_color_manual, ggtitle
+from plotnine import element_blank, labs, guide_legend, scale_color_manual, ggtitle, facet_wrap, geom_ribbon
 from warnings import filterwarnings
 from scpi_pkg.scdata import scdata
+from scpi_pkg.scdataMulti import scdataMulti
+from scpi_pkg.scest import scest
 from scpi_pkg.scpi import scpi
 from scpi_pkg.scplot import scplot
+from scpi_pkg.scplotMulti import scplotMulti
 
-os.chdir('YOUR_PATH_HERE')
 
 ########################################
 # Load database
+os.chdir('YOUR_PATH_HERE')
 data = pandas.read_csv("scpi_germany.csv")
+
+##############################################################################
+# SINGLE TREATED UNIT
+##############################################################################
 
 ########################################
 # Set options for data preparation
@@ -36,15 +44,13 @@ unit_tr = 'West Germany'
 unit_co = list(set(data[id_var].to_list()))
 unit_co = [cou for cou in unit_co if cou != 'West Germany']
 constant = True
-report_missing = False
 cointegrated_data = True
 
 data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
                    outcome_var=outcome_var, period_pre=period_pre,
                    period_post=period_post, unit_tr=unit_tr,
                    unit_co=unit_co, features=features, cov_adj=cov_adj,
-                   cointegrated_data=cointegrated_data, constant=constant,
-                   report_missing=report_missing)
+                   cointegrated_data=cointegrated_data, constant=constant)
 
 ####################################
 # Set options for inference
@@ -53,7 +59,7 @@ u_missp = True
 u_sigma = "HC1"
 u_order = 1
 u_lags = 0
-e_method = "qreg"
+e_method = "gaussian"
 e_order = 1
 e_lags = 0
 e_alpha = 0.05
@@ -76,8 +82,8 @@ ggsave(filename='germany_unc.png', plot=plot)
 ####################################
 # SC - manually reproduce plot
 
-sc_l = result.CI_all_qreg.iloc[:, [0]].to_numpy(dtype='float64')
-sc_r = result.CI_all_qreg.iloc[:, [1]].to_numpy(dtype='float64')
+sc_l = result.CI_all_gaussian.iloc[:, [0]].to_numpy()
+sc_r = result.CI_all_gaussian.iloc[:, [1]].to_numpy()
 
 # Store data for treated unit
 time = numpy.concatenate([period_pre, period_post])
@@ -93,8 +99,8 @@ sc_l_na = pandas.DataFrame(numpy.array([numpy.nan] * len(time)))
 sc_r_na = pandas.DataFrame(numpy.array([numpy.nan] * len(time)))
 
 # Check if some periods have missing point estimate/missing CI
-not_miss_plot = [t in y_sc_df.index.tolist() for t in time]
-not_miss_ci = [t in result.CI_all_qreg.index.tolist() for t in time]
+not_miss_plot = [t in y_sc_df.index.get_level_values(1).tolist() for t in time]
+not_miss_ci = [t in result.CI_all_gaussian.index.get_level_values(1).tolist() for t in time]
 
 y_sc_na.loc[not_miss_plot, ] = y_sc_df.iloc[:, [0]].to_numpy()
 sc_l_na.loc[not_miss_ci, ] = sc_l
@@ -112,8 +118,8 @@ data_points['tr'] = ['Treated'] * len(y_sc_na)
 data_points['sc'] = ['Synthetic Control'] * len(y_sc_na)
 
 T0 = period_pre[len(period_pre) - 1]
-col_dots_t = 'gray'
-col_line_t = 'gray'
+col_dots_t = 'black'
+col_line_t = 'black'
 col_dots_s = 'blue'
 col_line_s = 'blue'
 

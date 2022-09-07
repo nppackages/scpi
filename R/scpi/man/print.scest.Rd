@@ -7,7 +7,7 @@
 \method{print}{scest}(x, ...)
 }
 \arguments{
-\item{x}{Class "scest" object, obtained by calling \code{\link{scest}}.}
+\item{x}{Class "scpi_scest" or "scpi_scest_multi" object, obtained by calling \code{\link{scest}}.}
 
 \item{...}{Other arguments.}
 }

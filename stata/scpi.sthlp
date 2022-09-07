@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 0.2.1 2022-03-01}{...}
+{* *!version 0.3 2022-03-07}{...}
 {viewerjumpto "Syntax" "scpi##syntax"}{...}
 {viewerjumpto "Description" "scpi##description"}{...}
 {viewerjumpto "Options" "scpi##options"}{...}
@@ -22,6 +22,7 @@
 {cmd:direc(}{it:string}{cmd:)}
 {cmd:Q(}{it:#}{cmd:)}  
 {cmd:lb(}{it:#}{cmd:)}  
+{cmd:V(}{it:string}{cmd:)}
 {cmd:name(}{it:string}{cmd:)}
 {cmd:u_missp)}
 {cmd:u_sigma(}{it:string}{cmd:)}
@@ -33,6 +34,7 @@
 {cmd:e_order(}{it:#}{cmd:)}
 {cmd:e_lags(}{it:#}{cmd:)}
 {cmd:e_alpha(}{it:#}{cmd:)}
+{cmd:lgapp(}{it:string}{cmd:)}
 {cmd:rho(}{it:#}{cmd:)}
 {cmd:rho_max(}{it:#}{cmd:)}
 {cmd:opt_est(}{it:string}{cmd:)}
@@ -67,10 +69,11 @@ references therein.{p_end}
 
 {p 4 8}{cmd:dfname(}{it:string}{cmd:)} specifies the name of the Python object containing the processed data created with {help scdata:scdata}.{p_end}
 
-{dlgtab:Constraint}
+{dlgtab:Loss Function and Constraints}
 
-{p 2 4} These options let the user specify the type of constraint to be imposed to estimate the SC weights. The user controls the lower bound on the weights (option {opt lb}), the norm of the weights to
-be constrained (option {opt p}), the direction of the constraint on the norm (option {opt dir}), and the size of the constraint on the norm (option {opt q}). Alternatively,
+{p 2 4} These options let the user specify the type of constraint to be imposed to estimate the SC weights and the loss function. The user controls the lower bound on the weights (option {opt lb}),
+the norm of the weights to be constrained (option {opt p}), the direction of the constraint on the norm (option {opt dir}), the size of the constraint on the norm (option {opt q}), and
+the shape of the wieghting matrix in the loss function (option {opt V}). Alternatively,
 some popular constraints can be selected through the option {opt name}. A detailed description of the popular constraints implemented can be found in 
 {browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":Cattaneo, Feng, Palomba and Titiunik (2022)}. {p_end}
 
@@ -92,6 +95,9 @@ some popular constraints can be selected through the option {opt name}. A detail
 {p 8 12}{opt lasso} weights are estimated using a Lasso-type penalization{p_end}
 {p 8 12}{opt ridge} weights are estimated using a Ridge-type penalization.{p_end}
 {p 8 12}{opt ols} weights are estimated without constraints using least squares{p_end}
+
+{p 4 8}{cmd:V(}{it:string}{cmd:)} specifies the weighting matrix to be used in the loss function. The default is the identity matrix (option {cmd:V("separate")}), so equal weight is given to all observations. The other possibility is to 
+	specify {cmd:V("pooled")} for the pooled fit.{p_end}
 
 {dlgtab:In-sample Uncertainty}
 
@@ -127,6 +133,8 @@ If there is risk of over-fitting the option is automatically set to 0 (see u_ord
 
 {dlgtab:Regularization}
 
+{p 4 8}{cmd:lgapp(}{it:string}{cmd:)} selects the way local geometry is approximated in simulation. The options are "generalized"
+        and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid with linear constraints only.{p_end}
 {p 4 8}{cmd:rho(}{it:#}{cmd:)} specifies the regularizing parameter that imposes sparsity on the estimated vector of weights. If unspecified, the tuning parameter is computed 
 based on optimization inequalities.{p_end}
 {p 4 8}{cmd:rho_max(}{it:#}{cmd:)} specifies the maximum value attainable by the tuning parameter {opt rho}. {p_end}
@@ -167,17 +175,15 @@ marker stored_results}{...}
 
 {synoptset 25 tabbed}{...}
 {p2col 5 20 24 2: Scalars}{p_end}
-{synopt:{cmd:e(M)}}number of features{p_end}
-{synopt:{cmd:e(KM)}}number of covariates used for adjustment{p_end}
-{synopt:{cmd:e(J)}}number of donors{p_end}
-{synopt:{cmd:e(T1)}}number of post-treatment periods{p_end}
-{synopt:{cmd:e(q)}}size of the constraint on the norm{p_end}
-{synopt:{cmd:e(rho)}}post-estimation regularization parameter{p_end}
+{synopt:{cmd:e(KMI)}}number of covariates used for adjustment{p_end}
+{synopt:{cmd:e(I)}}number of treated units{p_end}
 
 {p2col 5 20 24 2: Macros}{p_end}
-{synopt:{cmd:e(features)}}name of features{p_end}
 {synopt:{cmd:e(outcomevar)}}name of outcome variable{p_end}
+{synopt:{cmd:e(features)}}name of features{p_end}
 {synopt:{cmd:e(constant)}}logical indicating the presence of a common constant across features{p_end}
+{synopt:{cmd:e(anticipation)}}logical indicating the extent of anticipation effects{p_end}
+{synopt:{cmd:e(donors)}}donor units for each treated unit{p_end}
 {synopt:{cmd:e(cointegrated_data)}}logical indicating cointegration{p_end}
 {synopt:{cmd:e(p)}}type of norm of the weights used in constrained estimation{p_end}
 {synopt:{cmd:e(dir)}}direction of the constraint on the norm of the weights{p_end}
@@ -193,19 +199,26 @@ marker stored_results}{...}
 {synopt:{cmd:e(e_alpha)}}confidence level for out-of-sample uncertainty{p_end}
 
 {p2col 5 20 24 2: Matrices}{p_end}
-{synopt:{cmd:e(T0)}}number of pre-treatment periods per feature{p_end}
 {synopt:{cmd:e(A)}}pre-treatment features of the treated unit{p_end}
 {synopt:{cmd:e(B)}}pre-treatment features of the control units{p_end}
 {synopt:{cmd:e(C)}}covariates used for adjustment{p_end}
+{synopt:{cmd:e(P)}}covariates used to predict the out-of-sample series for the synthetic unit{p_end}
 {synopt:{cmd:e(pred)}}predicted values of the features of the treated unit{p_end}
 {synopt:{cmd:e(res)}}residuals {cmd:e(A)} - {cmd:e(pred)}{p_end}
 {synopt:{cmd:e(w)}}weights of the controls{p_end}
 {synopt:{cmd:e(r)}}coefficients of the covariates used for adjustment{p_end}
 {synopt:{cmd:e(beta)}}stacked version of {cmd:e(w)} and {cmd:e(r)}{p_end}
-{synopt:{cmd:e(Y_post)}}post-treatment outcome of the treated unit{p_end}
-{synopt:{cmd:e(Y_post_fit)}}estimated post-treatment outcome of the treated unit{p_end}
-{synopt:{cmd:e(Y_pre)}}pre-treatment outcome of the treated unit{p_end}
+{synopt:{cmd:e(Y_pre)}}pre-treatment outcome of the treated unit (only returned if one treated unit){p_end}
+{synopt:{cmd:e(Y_post)}}post-treatment outcome of the treated unit (only returned if one treated unit){p_end}
 {synopt:{cmd:e(Y_pre_fit)}}estimate pre-treatment outcome of the treated unit{p_end}
+{synopt:{cmd:e(Y_post_fit)}}estimated post-treatment outcome of the treated unit{p_end}
+{synopt:{cmd:e(T0)}}number of pre-treatment periods per feature for each treated unit{p_end}
+{synopt:{cmd:e(M)}}number of features for each treated unit{p_end}
+{synopt:{cmd:e(KM)}}number of covariates used for adjustment for each treated unit{p_end}
+{synopt:{cmd:e(J)}}number of donors for each treated unit{p_end}
+{synopt:{cmd:e(T1)}}number of post-treatment periods for each treated unit{p_end}
+{synopt:{cmd:e(Qstar)}}regularized constraint on the norm{p_end}
+{synopt:{cmd:e(rho)}}estimated regularizing parameter that imposes sparsity on the estimated vector of weights{p_end}
 {synopt:{cmd:e(CI_in_sample)}}prediction intervals taking only in-sample uncertainty into account{p_end}
 {synopt:{cmd:e(CI_all_gaussian)}}prediction intervals taking in- and out-of-sample uncertainty into account{p_end}
 {synopt:{cmd:e(CI_all_ls)}}prediction intervals taking in- and out-of-sample uncertainty into account{p_end}

@@ -7,7 +7,7 @@
 scpi(
   data,
   w.constr = NULL,
-  V = NULL,
+  V = "separate",
   P = NULL,
   u.missp = TRUE,
   u.sigma = "HC1",
@@ -23,6 +23,7 @@ scpi(
   sims = 200,
   rho = NULL,
   rho.max = NULL,
+  lgapp = "generalized",
   cores = NULL,
   plot = FALSE,
   plot.name = NULL,
@@ -35,7 +36,7 @@ scpi(
 )
 }
 \arguments{
-\item{data}{a class `scpi_data' object, obtained by calling \code{\link{scdata}}.}
+\item{data}{a class 'scpi_data' object, obtained by calling \code{\link{scdata}}.}
 
 \item{w.constr}{a list specifying the constraint set the estimated weights of the donors must belong to.
 \code{w.constr} can contain up to five elements:
@@ -51,7 +52,7 @@ See the \strong{Details} section for more.
 \item{V}{a weighting matrix to be used when minimizing
 \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}}
 
-\item{P}{a \eqn{T_1\times (J+K_1)} matrix containing the design matrix to be used to obtain the predicted.
+\item{P}{a \eqn{I\cdot T_1\times I\cdot (J+KM)} matrix containing the design matrix to be used to obtain the predicted.
 post-intervention outcome of the synthetic control unit. \eqn{T_1} is the number of post-treatment periods,
 \eqn{J} is the size of the donor pool, and \eqn{K_1} is the number of covariates used for adjustment in the outcome equation.}
 
@@ -98,17 +99,21 @@ with their own value for \code{rho}. Other options are described in the \strong{
 
 \item{rho.max}{a scalar indicating the maximum value attainable by the tuning parameter \code{rho}.}
 
+\item{lgapp}{selects the way local geometry is approximated in simulation. The options are "generalized"
+and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid
+with linear constraints only.}
+
 \item{cores}{number of cores to be used by the command. The default is the number of cores available minus one.}
 
 \item{plot}{a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working directory. For more options see \code{\link{scplot}}.}
 
 \item{plot.name}{a string containing the name of the plot (the format is by default .png). For more options see \code{\link{scplot}}.}
 
-\item{w.bounds}{a \eqn{T_1\times 2} matrix with the user-provided bounds on \eqn{\beta}. If \code{w.bounds} is provided, then
+\item{w.bounds}{a \eqn{N_1\cdot T_1\times 2} matrix with the user-provided bounds on \eqn{\beta}. If \code{w.bounds} is provided, then
 the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 by filling the other column with \code{NA}s.}
 
-\item{e.bounds}{a \eqn{T_1\times 2} matrix with the user-provided bounds on \eqn{(\widehat{\mathbf{w}},\widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
+\item{e.bounds}{a \eqn{N_1\cdot T_1\times 2} matrix with the user-provided bounds on \eqn{(\widehat{\mathbf{w}},\widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
 the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 by filling the other column with \code{NA}s.}
 
@@ -134,14 +139,20 @@ The function returns an object of class 'scpi_scpi' containing three lists. The 
 \itemize{
 \item{\code{J}, the number of control units}
 \item{\code{K}, a numeric vector with the number of covariates used for adjustment for each feature}
-\item{\code{KM}, the total number of covariates used for adjustment}
 \item{\code{M}, number of features}
+\item{\code{KM}, the total number of covariates used for adjustment}
+\item{\code{KMI}, the total number of covariates used for adjustment}
+\item{\code{I}, number of treated units}
 \item{\code{period.pre}, a numeric vector with the pre-treatment period}
 \item{\code{period.post}, a numeric vector with the post-treatment period}
 \item{\code{T0.features}, a numeric vector with the number of periods used in estimation for each feature}
 \item{\code{T1.outcome}, the number of post-treatment periods}
-\item{\code{glob.cons}, for internal use only}
-\item{\code{out.in.features}, for internal use only}}}
+\item{\code{constant}, for internal use only}
+\item{\code{effect}, for internal use only}
+\item{\code{anticipation}, number of periods of potential anticipation effects}
+\item{\code{out.in.features}, for internal use only}
+\item{\code{treated.units}, list containing the IDs of all treated units}
+\item{\code{donors.list}, list containing the IDs of the donors of each treated unit}}}
 
 The second list is labeled 'est.results' containing all the results from \code{\link{scest}}.
 \item{w}{a matrix containing the estimated weights of the donors.}
@@ -153,12 +164,14 @@ The second list is labeled 'est.results' containing all the results from \code{\
 \item{res}{a matrix containing the residuals \eqn{\mathbf{A}-\widehat{\mathbf{A}}}.}
 \item{V}{a matrix containing the weighting matrix used in estimation.}
 \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
+\item{S}{for internal use only.}
 
 The third list is labeled 'inference.results' and contains all the inference-related results.
 \item{CI.in.sample}{a matrix containing the prediction intervals taking only in-sample uncertainty in to account.}
 \item{CI.all.gaussian}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with sub-Gaussian bounds.}
 \item{CI.all.ls}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with a location-scale model.}
 \item{CI.all.qreg}{a matrix containing the prediction intervals estimating out-of-sample uncertainty with quantile regressions.}
+\item{bounds}{a list containing the estimated bounds (in-sample and out-of-sample uncertainty).}
 \item{Sigma}{a matrix containing the estimated (conditional) variance-covariance \eqn{\boldsymbol{\Sigma}}.}
 \item{u.mean}{a matrix containing the estimated (conditional) mean of the pseudo-residuals \eqn{\mathbf{u}}.}
 \item{u.var}{a matrix containing the estimated (conditional) variance-covariance of the pseudo-residuals \eqn{\mathbf{u}}.}
@@ -182,18 +195,21 @@ The third list is labeled 'inference.results' and contains all the inference-rel
 \item{e.alpha}{a scalar determining the confidence level used for out-of-sample uncertainty, i.e. 1-\code{e.alpha} is the confidence level.}
 \item{e.D}{the design matrix used to predict moments of \eqn{\mathbf{u}},}
 \item{rho}{an integer specifying the estimated regularizing parameter that imposes sparsity on the estimated vector of weights.}
+\item{Q.star}{a list containing the regularized constraint on the norm.}
+\item{epskappa}{a vector containing the estimates for \eqn{\epsilon_{\kappa}}.}
 \item{sims}{an integer indicating the number of simulations used in quantifying in-sample uncertainty.}
 \item{failed.sims}{a matrix containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.}
 }
 \description{
-The command implements estimation and inference procedures for Synthetic Control (SC) methods using least square, lasso, ridge, or simplex-type constraints. Uncertainty is quantified using prediction
-intervals according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R. (2021)}. \code{\link{scpi}} returns the estimated
+The command implements estimation and inference procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints. Uncertainty is quantified using prediction
+intervals according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}. \code{\link{scpi}} returns the estimated
 post-treatment series for the synthetic unit through the command \code{\link{scest}} and quantifies in-sample and out-of-sample uncertainty to provide confidence intervals
 for each point estimate.
 
 Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 
-Companion commands are: \link{scdata} for data preparation, \link{scest} for point estimation, and \link{scplot} for plots.
+Companion commands are:  \link{scdata} and \link{scdataMulti} for data preparation in the single and multiple treated unit(s) cases, respectively,
+\link{scest} for point estimation, \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
 
 Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
 
@@ -202,6 +218,7 @@ Related Stata, R, and Python packages useful for inference in SC designs are des
 For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
 }
 \details{
+Information is provided for the simple case in which \eqn{N_1=1} if not specified otherwise.
 \itemize{
 \item{\strong{Estimation of Weights.} \code{w.constr} specifies the constraint set on the weights. First, the element
 \code{p} allows the user to choose between imposing a constraint on either the L1 (\code{p = "L1"})
@@ -229,7 +246,7 @@ list(name = "lasso", Q = 2)}).}
 
 \item{If \code{name == "ridge"}, then
 \deqn{||\mathbf{w}||_2 \leq Q,}
-where \code{Q} is a tuning parameter that is by default computed as
+where \eqn{Q} is a tuning parameter that is by default computed as
 \deqn{(J+KM) \widehat{\sigma}_u^{2}/||\widehat{\mathbf{w}}_{OLS}||_{2}^{2}}
 where \eqn{J} is the number of donors and \eqn{KM} is the total number of covariates used for adjustment.
 The user can provide \code{Q} as an element of the list (eg. \code{w.constr =
@@ -237,8 +254,22 @@ list(name = "ridge", Q = 1)}).}
 
 \item{If \code{name == "ols"}, then the problem is unconstrained and the vector of weights
 is estimated via ordinary least squares.}
-}
-}
+
+\item{If \code{name == "L1-L2"}, then
+\deqn{||\mathbf{w}||_1 = 1,\:\:\: ||\mathbf{w}||_2 \leq Q,}
+where \eqn{Q} is a tuning parameter computed as in the "ridge" case.}
+}}
+
+\item{\strong{Weighting Matrix with Multiple Treated Units.}
+\itemize{
+\item{if \code{V <- "separate"}, then \eqn{\mathbf{V} = \mathbf{I}} and the minimized objective function is
+\deqn{\sum_{i=1}^{N_1} \sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{{i \prime }} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{{i \prime}} \mathbf{r}_{l}^{i}\right)^{2},}
+which optimizes the separate fit for each treated unit.}
+\item{if \code{V <- "pooled"}, then \eqn{\mathbf{V} = \mathbf{1}\mathbf{1}'\otimes \mathbf{I}} and the minimized objective function is
+\deqn{\sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(\frac{1}{N_1^2} \sum_{i=1}^{N_1}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{i \prime} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{i\prime} \mathbf{r}_{l}^{i}\right)\right)^{2},}
+which optimizes the pooled fit for the average of the treated units.}
+}}
+
 \item{\strong{Regularization.} \code{rho} is estimated through the formula
 \deqn{\varrho = \mathcal{C}\frac{\log (T_0)^c}{T_0^{1/2}}}
 where \eqn{\mathcal{C} = \widehat{\sigma}_u / \min_j \widehat{\sigma}_{b_j}} if \code{rho = 'type-1'},
@@ -252,7 +283,7 @@ where \eqn{\mathcal{C} = \widehat{\sigma}_u / \min_j \widehat{\sigma}_{b_j}} if 
 \item{\strong{In-sample uncertainty.} To quantify in-sample uncertainty it is necessary to model the pseudo-residuals \eqn{\mathbf{u}}.
 First of all, estimation of the first moment of \eqn{\mathbf{u}} can be controlled through
 the option \code{u.missp}. When \code{u.missp = FALSE}, then \eqn{\mathbf{E}[u\: |\: \mathbf{D}_u]=0}. If instead \code{u.missp = TRUE},
-then \eqn{\mathbf{E}[u\: |\: \mathbf{D}_u]} is estimated using a linear regression of
+then \eqn{\mathbf{E}[\mathbf{u}\: |\: \mathbf{D}_u]} is estimated using a linear regression of
 \eqn{\widehat{\mathbf{u}}} on \eqn{\mathbf{D}_u}. The default set of variables in \eqn{\mathbf{D}_u} is composed of \eqn{\mathbf{B}},
 \eqn{\mathbf{C}} and, if required, it is augmented with lags (\code{u.lags}) and polynomials (\code{u.order}) of \eqn{\mathbf{B}}.
 The option \code{u.design} allows the user to provide an ad-hoc set of variables to form \eqn{\mathbf{D}_u}.
@@ -270,8 +301,8 @@ model; "qreg" uses conditional quantile regression of the residuals \eqn{\mathbf
 \item{\strong{Residual Estimation Over-fitting.} To estimate conditional moments of \eqn{\mathbf{u}} and \eqn{e_t}
 we rely on two design matrices, \eqn{\mathbf{D}_u} and \eqn{\mathbf{D}_e} (see above). Let \eqn{d_u} and \eqn{d_e} be the number of
 columns in \eqn{\mathbf{D}_u} and \eqn{\mathbf{D}_e}, respectively. Assuming no missing values and balanced features, the
-number of observation used to estimate moments of \eqn{\mathbf{u}} is \eqn{T_0\cdot M}, whilst for moments of \eqn{e_t} is \eqn{T_0}.
-Our rule of thumb to avoid over-fitting is to check if \eqn{T_0\cdot M \geq d_u + 20} or \eqn{T_0 \geq d_e + 20}. If the
+number of observation used to estimate moments of \eqn{\mathbf{u}} is \eqn{N_1\cdot T_0\cdot M}, whilst for moments of \eqn{e_t} is \eqn{T_0}.
+Our rule of thumb to avoid over-fitting is to check if \eqn{N_1\cdot T_0\cdot M \geq d_u + 10} or \eqn{T_0 \geq d_e + 10}. If the
 former condition is not satisfied we automatically set \code{u.order = u.lags = 0}, if instead the latter is not met
 we automatically set \code{e.order = e.lags = 0}.}
 
@@ -303,14 +334,14 @@ result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1),
 \itemize{
 \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 \emph{Journal of Economic Literature}, 59(2), 391-425.}
-\item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., & Titiunik, R.
+\item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
 }
 }
 \seealso{
-\code{\link{scdata}}, \code{\link{scest}}, \code{\link{scplot}}
+\code{\link{scdata}}, \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
 }
 \author{
 Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
