@@ -28,7 +28,7 @@
 
 print.scpi <- function(x, ...) {
   
-  if (class(x) == "scpi") {
+  if (methods::is(x, "scpi")) {
     
     args <- list(...)
     if (is.null(args[['already.est']])) {print_est <- TRUE} else {print_est <- FALSE}

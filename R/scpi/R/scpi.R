@@ -324,13 +324,13 @@ scpi  <- function(data,
                   verbose      = TRUE) {
 
 
-  if (!(class(data)[1] %in% c("scpi_data", "scpi_data_multi"))) {
+  if ( (methods::is(data, "scpi_data") | methods::is(data, "scpi_data_multi")) == FALSE ) {
     stop("data should be the object returned by running scdata or scdata_multi!")
   }
   
-  if (class(data)[1] == 'scpi_data') {
+  if (methods::is(data, 'scpi_data') == TRUE) {
     class.type <- 'scpi_data'
-  } else if (class(data)[1] == 'scpi_data_multi') {
+  } else if (methods::is(data, 'scpi_data_multi') == TRUE) {
     class.type <- 'scpi_data_multi'
   }
   
