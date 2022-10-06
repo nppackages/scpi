@@ -69,8 +69,9 @@ Working paper.
 
 ### Technical and Methodological
 
-- Cattaneo, Feng, Palomba and Titiunik (2022): Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption.<br>
-Working paper (coming soon).
+- Cattaneo, Feng, Palomba and Titiunik (2022): [Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_wp.pdf).<br>
+Working paper (coming soon).<br>
+[Supplemental](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_wp--Supplement.pdf)<br>
 
 - Cattaneo, Feng and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf).<br>
 _Journal of the American Statistical Association_ 116(536): 1865-1880.<br>
