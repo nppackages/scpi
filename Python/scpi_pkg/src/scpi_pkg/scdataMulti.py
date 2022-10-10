@@ -9,6 +9,8 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import pandas
+pandas.options.mode.chained_assignment = None
+import pandas
 import numpy
 from math import ceil
 from copy import deepcopy
@@ -75,8 +77,8 @@ def scdataMulti(df,
         present in the loaded dataframe.
 
     post_est : int, default None
-        an integer specifying the number of post-treatment periods
-        for which treatment effects have to be estimated for each treated unit.
+        an integer specifying the number of post-treatment periods for which treatment effects have to be estimated for each treated unit. If
+        effect = "unit" it indicates the number of periods over which the average post-treatment effect is computed.
 
     units_est : list, default None
         a list specifying the treated units for which treatment effects have to be estimated.
@@ -95,8 +97,9 @@ def scdataMulti(df,
 
     effect : str, default "unit-time"
         a string indicating the type of treatment effect to be estimated. Options are: 'unit-time', which estimates
-        treatment effects for each treated unit-time combination; 'unit', which estimates the treatment effect for
-        each unit by averaging post-treatment features over time.
+        treatment effects for each treated unit- post treatment period combination; 'unit', which estimates the
+        treatment effect for each unit by averaging post-treatment features over time; 'time', which estimates the
+        average treatment effect on the treated at various horizons.
 
     anticipation : int/dict, default 0
         a scalar that indicates the number of periods of potential anticipation effects. If the user wants to specify
@@ -215,8 +218,8 @@ def scdataMulti(df,
         if not isinstance(cov_adj, dict):
             raise Exception("The object 'cov_adj' should be a dictionary!")
 
-    if effect not in ["unit", "unit-time"]:
-        raise Exception("The object 'effect' should be either 'unit' or 'unit-time'!")
+    if effect not in ["unit", "unit-time", "time"]:
+        raise Exception("The object 'effect' should be either 'unit', 'time', or 'unit-time'!")
 
     # Check variables are in dataframe (id and time can be either variables or indices)
     if (id_var not in var_names) and (id_var not in indexes):
@@ -410,11 +413,12 @@ def scdataMulti(df,
 
         if post_est is not None:
             T1_last = treated_unit_T0 + post_est
-            treated_donors = data[numpy.invert(data['__ID'].isin(treated_post)) &
-                                              (data['__time'] < T1_last)]
+            treated_donors = data[(data['__ID'].isin(treated_post)) &
+                                  (data['__time'] < T1_last)]
             tr_donors_count = treated_donors[['__ID', '__Treatment']].groupby('__ID').sum()
             tr_donors_units = tr_donors_count[tr_donors_count['__Treatment'] == 0].index.values.tolist()
-            donors_units = donors_units + tr_donors_units
+            donors_units.extend(tr_donors_units)
+            donors_units = (list(set(donors_units)))
             donors_units.sort()
 
         # subset dataset selecting treated units and proper donors
@@ -458,6 +462,13 @@ def scdataMulti(df,
 
         Y_donors_tr = scdata_out.Y_donors
         P_tr = scdata_out.P
+
+        if effect == "time":
+            time = P_tr.index.get_level_values('__time').tolist()
+            time = [t - min(time) + 1 for t in time]
+            P_tr = pandas.DataFrame(P_tr.values,
+                                    index=time,
+                                    columns=P_tr.columns)
 
         if not (effect == "unit" and cointegrated_data_tr is True):
             P_diff = None
@@ -519,7 +530,10 @@ def scdataMulti(df,
             A_stacked = pandas.concat([A_stacked, A_tr], axis=0)
             B_stacked = pandas.concat([B_stacked, B_tr], axis=0)
             C_stacked = pandas.concat([C_stacked, C_tr], axis=0)
-            P_stacked = pandas.concat([P_stacked, P_tr], axis=0)
+            if effect == "time":
+                P_stacked = pandas.concat([P_stacked, P_tr], axis=1, join='inner')  # stack horizontally
+            else:
+                P_stacked = pandas.concat([P_stacked, P_tr], axis=0)  # stack diagonally
             if Pd_stacked is not None:
                 Pd_stacked = pandas.concat([Pd_stacked, P_diff], axis=0)
             Y_donors_stacked = pandas.concat([Y_donors_stacked, Y_donors_tr], axis=0)
@@ -554,6 +568,9 @@ def scdataMulti(df,
     bcols = B_stacked.columns.tolist()
     ccols = C_stacked.columns.tolist()
     P_stacked = P_stacked[bcols + ccols]
+
+    if effect == "time":
+        P_stacked = P_stacked / len(treated_units)
 
     # number of treated units and number of covariates used for adjustment
     iota = len(treated_units)

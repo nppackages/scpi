@@ -20,13 +20,13 @@ replace status = 1 if country == "Italy" & year >= 1994
 
 ** Prepare data
 scdatamulti gdp, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
-				 treatment(status) cointegrated(True) pypinocheck
+				 treatment(status) cointegrated(True)
 
 ** SC - Inference 
 set seed 8894
-scpi, dfname("python_scdata") name(simplex) u_missp sims(100) e_method(gaussian) pypinocheck
+scpi, dfname("python_scdata") name(simplex) u_missp sims(100) e_method(gaussian)
 
-scplotmulti , savedata("scplot_data") joint pypinocheck
+scplotmulti , savedata("scplot_data") joint
 
 use "scplot_data.dta", clear
 

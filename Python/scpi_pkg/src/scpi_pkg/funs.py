@@ -7,12 +7,17 @@ Created on Mon Aug 16 09:58:31 2021
 # Temporary code to suppress pandas FutureWarning
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+from statsmodels.tools.sm_exceptions import IterationLimitWarning
+warnings.filterwarnings("ignore", category=IterationLimitWarning)
 warnings.filterwarnings(action='ignore', message='All-NaN slice encountered')
 warnings.filterwarnings(action='ignore', message='Mean of empty slice')
 
+import pandas
+pandas.options.mode.chained_assignment = None
 import numpy
 import pandas
-import nlopt
+import ecos
 import os
 import cvxpy
 import shutil
@@ -20,6 +25,9 @@ import statsmodels.api as sm
 from math import sqrt, log, ceil, floor
 from copy import deepcopy
 from sklearn.preprocessing import PolynomialFeatures
+from scipy import sparse
+from scipy.linalg import sqrtm, eigh
+
 
 def complete_cases(x):
     return numpy.all(numpy.invert(numpy.isnan(x)), axis=1)
@@ -31,80 +39,206 @@ def crossprod(x, y=None):
     else:
         return x.T @ y
 
+def ECOS_get_n_slacks(p, dire, Jtot, iota):
 
-# Auxiliary functions for estimation
-def obj_fun_est(x, grad, Z, V, A):
-    Gram = Z.T.dot(V).dot(Z)
-    a = 2 * numpy.array(A).T @ numpy.array(V) @ numpy.array(Z)
+    ns = 1  # simplex, ols
 
-    if grad.size > 0:
-        grad[:] = 2 * Gram.dot(x) - a
+    if p == "L1" and dire == "<=":  # lasso
+        ns = Jtot + ns
 
-    f = x.T.dot(Gram).dot(x) - a.dot(x)
+    elif p == "L2" and dire == "<=":  # ridge
+        ns = iota + ns
 
-    return f[0]
+    elif p == "L1-L2":  # L1-L2
+        ns = iota + ns
 
+    return ns
 
-def norm_co_est(x, grad, p, J, KM, QQ, dire):
-    if p == 1:
-        if grad.size > 0 and dire == "==":
-            grad[:] = [1] * J + [0] * KM
-        elif grad.size > 0:
-            aux = [1 if xi > 0 else -1 for xi in x[0:J]]
-            grad[:] = numpy.append(aux, [0] * KM)
-        co = numpy.sum(abs(x[0:J])) - QQ
-    else:
-        if grad.size > 0:
-            grad[:] = numpy.append(2 * x[0:J], [0] * KM)
-        co = numpy.sum(x[0:J]**2) - QQ**2
+def ECOS_get_dims(Jtot, J, KMI, p, dire, iota, red):
 
-    return co
+    if p == "L1" and dire == "==":  # simplex
+        dims = {'l': Jtot + 1, 'q': [Jtot + KMI + 2 - red]}
 
+    elif p == "L1" and dire == "<=":  # lasso
+        dims = {'l': iota + 2 * Jtot + 1, 'q': [Jtot + KMI + 2 - red]}
 
-def norm_co_est_multi(result, x, grad, p, J, KM, Dtot, iota, QQ, dire):
+    elif p == "L2" and dire == "<=":  # ridge
+        dims = {'l': iota + 1, 'q': [j + 2 for j in J] + [Jtot + KMI + 2 - red]}
+
+    elif p == "L1-L2":  # L1-L2
+        dims = {'l': Jtot + iota + 1, 'q': [j + 2 for j in J] + [Jtot + KMI + 2 - red]}
+
+    elif p == "no norm":  # ols
+        dims = {'l': 1, 'q': [Jtot + KMI + 2 - red]}
+
+    return dims
+
+def blockdiag(iota, Jtot, J, KMI, ns, slack=False):
+
+    mat = numpy.zeros([iota, Jtot + KMI + ns])
+
     j_lb = 0
+    j_ub = J[0]
+
+    if slack is True:
+        j_lb = j_lb + Jtot + KMI
+        j_ub = j_ub + Jtot + KMI
 
     for i in range(iota):
-        j_ub = j_lb + J[i]
-        if p == 1:
-            if grad.size > 0 and dire == "==":
-                grad[i, :] = [0] * j_lb + [1] * J[i] + [0] * (Dtot - J[i] - j_lb)
-            elif grad.size > 0:
-                grad[i, :] = [0] * j_lb + [1 if xi > 0 else -1 for xi in x[j_lb:j_ub]] + [0] * (Dtot - J[i] - j_lb)
-            result[i] = numpy.sum(abs(x[j_lb:j_ub])) - QQ[i]
-        else:
-            if grad.size > 0:
-                grad[i, :] = [0] * j_lb + (2 * x[j_lb:j_ub]).tolist() + [0] * (Dtot - J[i] - j_lb)
-            result[i] = numpy.sum(x[j_lb:j_ub]**2) - QQ[i]**2
-        j_lb = j_ub
+        if i > 0:
+            j_lb = j_ub + 1
+            j_ub = j_lb + J[i]
+
+        mat[i, j_lb:j_ub] = 1
+
+    return mat
 
 
-# Auxiliary functions for inference
+def blockdiagRidge(Jtot, J, KMI, iota):
 
-def obj_fun_min(x, grad, xt, beta):
-    f = -numpy.sum(xt * (x - beta))
-    if grad.size > 0:
-        grad[:] = -xt
-    return f
+    mat = numpy.zeros((Jtot + 2 * iota, Jtot + KMI + iota + 1))
+
+    i_lb = 0 + 2
+    i_ub = J[0] + 2
+    j_lb = 0
+    j_ub = J[0]
+
+    for i in range(iota):
+        if i > 0:
+            j_lb = j_ub
+            j_ub = j_lb + J[i]
+            i_lb = i_ub + 2
+            i_ub = i_lb + J[i]
+
+        mat[(i_lb - 2):i_lb, Jtot + KMI + i] = [-1, 1]
+        mat[i_lb:i_ub, j_lb:j_ub] = numpy.diag([-2] * J[i])
+
+    return mat
+
+def ECOS_get_A(J, Jtot, KMI, iota, p, dire, ns):
+
+    if (p == "L1" and dire == "==") or (p == "L1-L2"):  # simplex, L1-L2
+        A = blockdiag(iota, Jtot, J, KMI, ns)
+
+    elif p == "L1" and dire == "<=":  # lasso
+        A = numpy.zeros((1, Jtot + KMI + ns))
+
+    elif p == "L2" and dire == "<=":  # ridge
+        A = numpy.zeros((1, Jtot + KMI + ns))
+
+    elif p == "no norm":  # ols
+        A = numpy.zeros((1, Jtot + KMI + ns))
+
+    return sparse.csc_matrix(A)
 
 
-def obj_fun_max(x, grad, xt, beta):
-    f = numpy.sum(xt * (x - beta))
-    if grad.size > 0:
-        grad[:] = xt
-    return f
+def ECOS_get_c(xt, ns):
+
+    C = numpy.zeros(len(xt) + ns, dtype=numpy.float32)
+    C[0:len(xt)] = xt
+
+    return C
 
 
-# Loss function constraint
-def single_ineq(x, grad, beta, Q, G):
-    a = -2 * G - 2 * beta.T.dot(Q)
-    d = 2 * G.dot(beta) + beta.dot(Q.dot(beta))
-    f = x.T.dot(Q).dot(x) + a.dot(x) + d
-    if grad.size > 0:
-        grad[:] = 2 * Q.dot(x) + a
+def ECOS_get_b(Q1, p, dire):
 
-    return f
+    if (p == "L1" and dire == "==") or (p == "L1-L2"):  # simplex, L1-L2
+        b = numpy.array(Q1, dtype=numpy.float32)
 
+    else:
+        b = numpy.zeros(1, dtype=numpy.float32)
+
+    return b
+
+
+def ECOS_get_G(Jtot, KMI, J, iota, a, Q, p, dire, ns, red):
+
+    if p == "L1" and dire == "==":
+
+        G = numpy.concatenate((numpy.reshape(numpy.append(a, 1), (1, len(a) + ns)),                                    # linear part of QF
+                               numpy.concatenate((-numpy.diag([1] * Jtot), numpy.zeros((Jtot, KMI + ns))), axis=1),    # lower bounds on w
+                               numpy.array([[0] * (Jtot + KMI) + [-1]]),                                               # SOC definition (||sqrt(Q)beta|| <= t)
+                               numpy.array([[0] * (Jtot + KMI) + [1]]),
+                               -2 * numpy.concatenate((Q, numpy.zeros((Jtot + KMI - red, 1))), axis=1)),
+                              axis=0)
+
+    elif p == "L1" and dire == "<=":  # x= (beta, z, t)
+
+        G = numpy.concatenate((numpy.reshape(numpy.concatenate((a, numpy.zeros(ns - 1), numpy.array([1]))),          # linear part of QF
+                                             (1, len(a) + ns)),
+                               numpy.concatenate((numpy.diag([1] * Jtot), numpy.zeros((Jtot, KMI)),                  # lower bounds on w
+                                                  numpy.diag([1] * Jtot), numpy.zeros((Jtot, 1))), axis=1),
+                               numpy.concatenate((-numpy.diag([1] * Jtot), numpy.zeros((Jtot, KMI)),                 # lower bounds on w
+                                                  numpy.diag([1] * Jtot), numpy.zeros((Jtot, 1))), axis=1),
+                               -blockdiag(iota, Jtot, J, KMI, ns, True),                                             # norm-inequality constraint
+                               numpy.array([[0] * (Jtot + KMI + Jtot) + [-1]]),                                      # SOC definition (||sqrt(Q)beta|| <= t)
+                               numpy.array([[0] * (Jtot + KMI + Jtot) + [1]]),
+                               -2 * numpy.concatenate((Q, numpy.zeros((Jtot + KMI - red, Jtot + 1))), axis=1)),
+                              axis=0)
+
+    elif p == "L2" and dire == "<=":  # x= (beta, s, t)
+
+        G = numpy.concatenate((numpy.reshape(numpy.concatenate((a, numpy.zeros(iota), numpy.array([1]))),          # linear part of QF
+                                             (1, len(a) + ns)),
+                               numpy.concatenate((numpy.zeros((iota, Jtot + KMI)), numpy.diag([1] * iota),         # s <= Q1^2
+                                                  numpy.zeros((iota, 1))), axis=1),
+                               blockdiagRidge(Jtot, J, KMI, iota),                                                 # SOC definition (||w|| <= s)
+                               numpy.array([[0] * (Jtot + KMI + iota) + [-1]]),                                    # SOC definition (||sqrt(Q)beta|| <= t)
+                               numpy.array([[0] * (Jtot + KMI + iota) + [1]]),
+                               -2 * numpy.concatenate((Q, numpy.zeros((Jtot + KMI - red, ns))), axis=1)),
+                              axis=0)
+
+    elif p == "L1-L2":  # x= (beta, s, t)
+
+        G = numpy.concatenate((numpy.reshape(numpy.concatenate((a, numpy.zeros(iota), numpy.array([1]))),              # linear part of QF
+                                             (1, len(a) + ns)),
+                               numpy.concatenate((-numpy.diag([1] * Jtot), numpy.zeros((Jtot, KMI + ns))), axis=1),    # lower bounds on w
+                               numpy.concatenate((numpy.zeros((iota, Jtot + KMI)), numpy.diag([1] * iota),             # s <= Q1^2
+                                                  numpy.zeros((iota, 1))), axis=1),
+                               blockdiagRidge(Jtot, J, KMI, iota),                                                     # SOC definition (||w|| <= s)
+                               numpy.array([[0] * (Jtot + KMI + iota) + [-1]]),                                        # SOC definition (||sqrt(Q)beta|| <= t)
+                               numpy.array([[0] * (Jtot + KMI + iota) + [1]]),
+                               -2 * numpy.concatenate((Q, numpy.zeros((Jtot + KMI - red, ns))), axis=1)),
+                              axis=0)
+
+    elif p == "no norm":
+
+        G = numpy.concatenate((numpy.reshape(numpy.append(a, 1), (1, len(a) + ns)),                                    # linear part of QF
+                               numpy.array([[0] * (Jtot + KMI) + [-1]]),                                               # SOC definition (||sqrt(Q)beta|| <= t)
+                               numpy.array([[0] * (Jtot + KMI) + [1]]),
+                               -2 * numpy.concatenate((Q, numpy.zeros((Jtot + KMI - red, 1))), axis=1)),
+                              axis=0)
+
+    return sparse.csc_matrix(numpy.real(G))
+
+def ECOS_get_h(d, lb, J, Jtot, KMI, iota, p, dire, Q1, Q2, red):
+
+    if p == "L1" and dire == "==":
+        h = [-d] + [-ll for ll in lb] + [1] + [1] + [0] * (Jtot + KMI - red)
+
+    elif p == "L1" and dire == "<=":
+        h = [-d] + [0] * (2 * Jtot) + Q1 + [1] + [1] + [0] * (Jtot + KMI - red)
+
+    elif p == "L2" and dire == "<=":
+
+        aux = []
+        for i in range(iota):
+            aux = aux + [1, 1] + [0] * J[i]
+
+        h = [-d] + [q**2 for q in Q1] + aux + [1] + [1] + [0] * (Jtot + KMI - red)
+
+    elif p == "L1-L2":
+
+        aux = []
+        for i in range(iota):
+            aux = aux + [1, 1] + [0] * J[i]
+
+        h = [-d] + [-lL for lL in lb] + [q**2 for q in Q2] + aux + [1] + [1] + [0] * (Jtot + KMI - red)
+
+    elif p == "no norm":
+        h = [-d] + [1] + [1] + [0] * (Jtot + KMI - red)
+
+    return numpy.array(h, dtype=numpy.float32)
 
 def w_constr_prep(cons, names, A, Z, V, J, KM):
     # Default method to estimate weights as in Abadie et al. (2010)
@@ -142,12 +276,13 @@ def w_constr_prep(cons, names, A, Z, V, J, KM):
 
     elif cons['name'] == 'ridge':
 
-        features = A.index.get_level_values(1).unique().tolist()
+        features = A.index.get_level_values(0).unique().tolist()
         Qfeat = []
+
         for feat in features:
-            Af = A.iloc[A.index.get_level_values(1) == feat]
-            Zf = Z.iloc[Z.index.get_level_values(1) == feat]
-            Vf = V.iloc[V.index.get_level_values(1) == feat, V.index.get_level_values(1) == feat]
+            Af = A.loc[(feat,), ]
+            Zf = Z.loc[(feat,), ]
+            Vf = V.iloc[V.index.get_level_values(0) == feat, V.index.get_level_values(0) == feat]
 
             if len(Af) >= 5:
                 try:
@@ -159,7 +294,7 @@ def w_constr_prep(cons, names, A, Z, V, J, KM):
         if len(Qfeat) == 0:
             Qest, lambd = shrinkage_EST("ridge", A, Z, V, J, KM)
 
-        Qest = min(Qfeat)
+        Qest = max(numpy.nanmin(Qfeat), .5)
 
         if 'Q' not in names:
             cons['Q'] = Qest
@@ -171,16 +306,36 @@ def w_constr_prep(cons, names, A, Z, V, J, KM):
                 'name': 'ridge',
                 'lambda': lambd}
 
-    elif cons['name'] == 'L1/L2':
-        Qest, lambd = shrinkage_EST("ridge", A, Z, V, J, KM)
+    elif cons['name'] == 'L1-L2':
+
+        features = A.index.get_level_values(0).unique().tolist()
+        Qfeat = []
+
+        for feat in features:
+            Af = deepcopy(A.loc[(feat,), ])
+            Zf = deepcopy(Z.loc[(feat,), ])
+            Vf = deepcopy(V.iloc[V.index.get_level_values(0) == feat, V.index.get_level_values(0) == feat])
+
+            if len(Af) >= 5:
+                try:
+                    Qest, lambd = shrinkage_EST("ridge", Af, Zf, Vf, J, KM)
+                    Qfeat.append(Qest)
+                except:
+                    pass
+
+        if len(Qfeat) == 0:
+            Qest, lambd = shrinkage_EST("ridge", A, Z, V, J, KM)
+
+        Qest = max(numpy.nanmin(Qfeat), .5)
+
         if 'Q2' not in names:
             cons['Q'] = Qest
-        cons = {'lb': -numpy.inf,
-                'p': 'L1/L2',
+        cons = {'lb': 0,
+                'p': 'L1-L2',
                 'dir': '==/<=',
                 'Q': 1,
                 'Q2': cons['Q'],
-                'name': 'L1/L2',
+                'name': 'L1-L2',
                 'lambda': lambd}
 
     else:
@@ -196,13 +351,28 @@ def w_constr_prep(cons, names, A, Z, V, J, KM):
     return cons
 
 
-def shrinkage_EST(method, A, Z, V, J, KM):
+def shrinkage_EST(method, A, ZZ, V, J, KM):
+
+    Z = deepcopy(ZZ)
     lamb = None
     if method == "lasso":
         Q = 1
 
     if method == "ridge":
 
+        Z_columns = [c.split('_') for c in Z.columns.tolist()]
+        selZ = []
+        for z in Z_columns:
+            if len(z) <= 2:
+                selZ.append(True)
+            else:
+                if z[2] == "constant":
+                    selZ.append(False)
+                else:
+                    selZ.append(True)
+        Z = Z.loc[:, selZ]
+        Z['constant'] = 1
+        deltak = len(Z_columns) - sum(selZ) - 1
         wls = sm.WLS(A, Z, weights=numpy.diag(V)).fit()
         sig = wls.scale
         L2 = sum(wls.params**2)
@@ -210,18 +380,19 @@ def shrinkage_EST(method, A, Z, V, J, KM):
         Q = sqrt(L2) / (1 + lamb)                   # convert lambda into Q
 
         if len(Z) <= len(Z.columns) + 10:
-            lasso_cols = b_est(A=A, Z=Z, J=J, KM=KM, V=V, opt_dict=None,
+            lasso_cols = b_est(A=A, Z=Z, J=J, KM=(KM - deltak), V=V,
                                w_constr={'dir': "<=", 'lb': -numpy.inf, 'Q': 1, 'p': "L1"})
             active_cols = abs(lasso_cols) > 1e-8
+            sumac = active_cols.sum()
             active_cols = active_cols[:, 0].tolist()
 
-            if active_cols.sum() >= max(len(A) - 10, 2):
+            if sumac >= max(len(A) - 10, 2):
                 lasso_colsdf = pandas.DataFrame(abs(lasso_cols))
                 active_cols = lasso_colsdf.rank(ascending=False) <= max(len(A) - 10, 2)
-                active_cols = active_cols[0].tolist()
+                active_cols = active_cols[0].values.tolist()
 
             Z_sel = Z.loc[:, active_cols]
-            wls = sm.WLS(A, Z, weights=numpy.diag(V)).fit()
+            wls = sm.WLS(A, Z_sel, weights=numpy.diag(V)).fit()
             sig = wls.scale
             L2 = sum(wls.params**2)
             lamb = sig * (J + KM) / L2
@@ -230,7 +401,7 @@ def shrinkage_EST(method, A, Z, V, J, KM):
     return Q, lamb
 
 
-def b_est(A, Z, J, KM, w_constr, V, opt_dict):
+def b_est(A, Z, J, KM, w_constr, V):
 
     lb = w_constr['lb']
     dire = w_constr['dir']
@@ -242,163 +413,109 @@ def b_est(A, Z, J, KM, w_constr, V, opt_dict):
         pp = 1
     elif p == "L2":
         pp = 2
-    elif p == "L1/L2":
+    elif p == "L1-L2":
         pp = None
 
     Zarr = numpy.array(Z)
 
-    opt_dict = prepareOptions(opt_dict, "scest")
+    x = cvxpy.Variable((J + KM, 1))
 
-    use_cvxpy = useCVXPY(w_constr)
+    Aarr = numpy.array(A)
 
-    if use_cvxpy is True:
-        x = cvxpy.Variable((J + KM, 1))
+    objective = cvxpy.Minimize(cvxpy.quad_form(Aarr - Zarr @ x, V))
 
-        Aarr = numpy.array(A)
+    if p == "no norm":
+        constraints = []
 
-        objective = cvxpy.Minimize(cvxpy.quad_form(Aarr - Zarr @ x, V))
-        constraints = [cvxpy.norm1(x[0:J]) <= w_constr['Q'], x[0:J] >= lb]
-        prob = cvxpy.Problem(objective, constraints)
-        prob.solve()
-
-        b = x.value
-        alert = prob.status != 'optimal'
-
-    else:
-
-        if pp == 1 and lb == -numpy.inf:
-            opt = nlopt.opt(nlopt.LD_MMA, J + KM)
-        else:
-            opt = nlopt.opt(nlopt.LD_SLSQP, J + KM)
-
-        opt.set_min_objective(lambda x, grad: obj_fun_est(x, grad, Zarr, V, A))
-
+    elif p == "L1":
         if dire == "==":
-            opt.add_equality_constraint(lambda x, grad: norm_co_est(x, grad,
-                                        pp, J, KM, w_constr['Q'], dire),
-                                        opt_dict['tol_eq'])
-
+            constraints = [cvxpy.sum(x[0:J]) == w_constr['Q'], x[0:J] >= lb]
         elif dire == "<=":
-            opt.add_inequality_constraint(lambda x, grad: norm_co_est(x,
-                                          grad, pp, J, KM, w_constr['Q'],
-                                          dire), opt_dict['tol_ineq'])
+            constraints = [cvxpy.norm1(x[0:J]) <= w_constr['Q'], x[0:J] >= lb]
 
-        elif dire == "==/<=":
-            opt_dict['ftol_rel'] = 1e-32
-            opt_dict['ftol_abs'] = 1e-32
-            opt.add_equality_constraint(lambda x, grad: norm_co_est(x, grad,
-                                        1, J, KM, w_constr['Q'], "=="),
-                                        opt_dict['tol_eq'])
-            opt.add_inequality_constraint(lambda x, grad: norm_co_est(x,
-                                          grad, 2, J, KM, w_constr['Q2'],
-                                          "<="), opt_dict['tol_ineq'])
+    elif p == "L2":
+        if dire == "==":
+            constraints = [cvxpy.sum_squares(x[0:J]) == cvxpy.power(w_constr['Q'], 2)]
+        elif dire == "<=":
+            constraints = [cvxpy.sum_squares(x[0:J]) <= cvxpy.power(w_constr['Q'], 2)]
 
-        opt.set_lower_bounds([lb] * J + [-numpy.inf] * KM)
-        opt.set_ftol_rel(opt_dict['ftol_rel'])
-        opt.set_ftol_abs(opt_dict['ftol_abs'])
-        opt.set_maxeval(opt_dict['maxeval'])
-        b = opt.optimize([0] * (J + KM))
+    elif p == "L1-L2":
+        constraints = [cvxpy.sum(x[0:J]) == w_constr['Q'], x[0:J] >= lb,
+                       cvxpy.sum_squares(x[0:J]) <= cvxpy.power(w_constr['Q2'], 2)]
 
-        last_res = opt.last_optimize_result()
-        alert = last_res < 0 or last_res >= 5
-        if alert is True:
-            raise Exception("Estimation algorithm not converged! The algorithm returned the value: " +
-                            str(opt.last_optimize_result()) + ". To check to what errors it corresponds" +
-                            "go to 'https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#return-values'.")
+    prob = cvxpy.Problem(objective, constraints)
+    prob.solve()
+
+    b = x.value
+    alert = prob.status != 'optimal'
+
+    if alert is True:
+        raise Exception("Estimation algorithm not converged! The algorithm returned the value: " +
+                        str(prob.status) + ". To check to what errors it corresponds" +
+                        "go to 'https://www.cvxpy.org/tutorial/intro/index.html'.")
 
     return b
 
-def b_est_multi(A, Z, J, KM, iota, w_constr, V, opt_dict):
+def b_est_multi(A, Z, J, KM, iota, w_constr, V):
 
     lb = w_constr[0]['lb']
     dire = w_constr[0]['dir']
     p = w_constr[0]['p']
     QQ = [co['Q'] for co in w_constr]
-    if w_constr[0]['name'] == "L1/L2":
+
+    if w_constr[0]['name'] == "L1-L2":
         QQ2 = [co['Q2'] for co in w_constr]
 
-    if p == "no norm":
-        pp = 0
-    elif p == "L1":
-        pp = 1
-    elif p == "L2":
-        pp = 2
-    elif p == "L1/L2":
-        pp = None
-
     Zarr = numpy.array(Z)
-    opt_dict = prepareOptions(opt_dict, "scest")
-    use_cvxpy = useCVXPY(w_constr[0])
     Jtot = sum(J.values())
     KMI = sum(KM.values())
     Jval = [v for v in J.values()]
-    KMval = [v for v in KM.values()]
 
-    if use_cvxpy is True:
-        x = cvxpy.Variable((Jtot + KMI, 1))
+    x = cvxpy.Variable((Jtot + KMI, 1))
 
-        Aarr = numpy.array(A)
-        Zarr = numpy.array(Z)
-        Varr = numpy.array(V)
+    Aarr = numpy.array(A)
+    Zarr = numpy.array(Z)
+    Varr = numpy.array(V)
 
-        objective = cvxpy.Minimize(cvxpy.quad_form(Aarr - Zarr @ x, Varr))
+    objective = cvxpy.Minimize(cvxpy.quad_form(Aarr - Zarr @ x, Varr))
+
+    if lb != -numpy.inf:
         constraints = [x[0:Jtot] >= lb]
-
-        j_lb = 0
-        for i in range(iota):
-            j_ub = j_lb + Jval[i] + 1
-            constraints.append(cvxpy.norm1(x[j_lb:j_ub]) <= QQ[i])
-            j_lb = j_ub
-
-        prob = cvxpy.Problem(objective, constraints)
-        prob.solve()
-
-        b = x.value
-        alert = prob.status != 'optimal'
-
     else:
-        Dtot = Jtot + KMI
-        if pp == 1 and lb == -numpy.inf:
-            opt = nlopt.opt(nlopt.LD_MMA, Dtot)
-        else:
-            opt = nlopt.opt(nlopt.LD_SLSQP, Dtot)
+        constraints = []
 
-        opt.set_min_objective(lambda x, grad: obj_fun_est(x, grad, Zarr, V, A))
+    j_lb = 0
+    for i in range(iota):
+        j_ub = j_lb + Jval[i]
 
-        if dire == "==":
-            opt.add_equality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                         grad, pp, Jval, KMval, Dtot, iota, QQ, dire),
-                                         [opt_dict['tol_eq']] * iota)
+        if p == "L1":
+            if dire == "==":
+                constraints.append(cvxpy.sum(x[j_lb:j_ub]) == QQ[i])
+            elif dire == "<=":
+                constraints.append(cvxpy.norm1(x[j_lb:j_ub]) <= QQ[i])
 
-        elif dire == "<=":
-            opt.add_inequality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                           grad, pp, Jval, KMval, Dtot, iota, QQ, dire),
-                                           [opt_dict['tol_ineq']] * iota)
+        elif p == "L2":
+            if dire == "==":
+                constraints.append(cvxpy.sum_squares(x[j_lb:j_ub]) == cvxpy.power(QQ[i], 2))
+            elif dire == "<=":
+                constraints.append(cvxpy.sum_squares(x[j_lb:j_ub]) <= cvxpy.power(QQ[i], 2))
 
-        elif dire == "==/<=":
-            opt.add_equality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                         grad, 1, Jval, KMval, Dtot, iota, QQ, "=="),
-                                         [opt_dict['tol_eq']] * iota)
+        elif p == "L1-L2":
+            constraints.append(cvxpy.sum(x[j_lb:j_ub]) == QQ[i])
+            constraints.append(cvxpy.sum_squares(x[j_lb:j_ub]) <= QQ2[i] ** 2)
 
-            opt.add_inequality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                           grad, 2, Jval, KMval, Dtot, iota, QQ2, "<="),
-                                           [opt_dict['tol_ineq']] * iota)
+        j_lb = j_ub
 
-        opt.set_lower_bounds([lb] * Jtot + [-numpy.inf] * KMI)
-        opt.set_xtol_rel(opt_dict['xtol_rel'])
-        opt.set_xtol_abs(opt_dict['xtol_abs'])
-        opt.set_ftol_rel(opt_dict['ftol_rel'])
-        opt.set_ftol_abs(opt_dict['ftol_abs'])
-        opt.set_maxeval(opt_dict['maxeval'])
+    prob = cvxpy.Problem(objective, constraints)
+    prob.solve()
 
-        b = opt.optimize([0] * Dtot)
+    b = x.value
+    alert = prob.status != 'optimal'
 
-        last_res = opt.last_optimize_result()
-        alert = last_res < 0 or last_res >= 5
-        if alert is True:
-            raise Exception("Estimation algorithm not converged! The algorithm returned the value: " +
-                            str(opt.last_optimize_result()) + ". To check to what errors it corresponds" +
-                            "go to 'https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#return-values'.")
+    if alert is True:
+        raise Exception("Estimation algorithm not converged! The algorithm returned the value: " +
+                        str(prob.status) + ". To check to what errors it corresponds" +
+                        "go to 'https://www.cvxpy.org/tutorial/intro/index.html'.")
 
     return b
 
@@ -496,16 +613,26 @@ def u_des_prep(B, C, u_order, u_lags, coig_data, T0_tot, M, constant, index,
 
 
 def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, index,
-               index_w, coig_data, T0, T1, constant, e_design, outcome_var, P_diff_pre):
+               index_w, coig_data, T0, T1, constant, e_design, outcome_var, P_diff_pre,
+               effect, iota):
 
+    P, selp = trendRemove(P)
+    C, selc = trendRemove(C)
+    index = numpy.array(index)[numpy.array(selp)].tolist()
     Z = pandas.concat([B, C], axis=1)
+
+    if P_diff_pre is not None:
+        P_diff_pre, auxx = trendRemove(P_diff_pre)
 
     if out_feat is False:
         e_res = sc_pred.Y_pre - sc_pred.Y_pre_fit
 
         if coig_data is True:
             e_des_0 = Y_donors.loc[:, index_w] - Y_donors.loc[:, index_w].shift(1)
-            P_first = P.iloc[[0], :J] - Y_donors.iloc[[len(Y_donors) - 1], :].values
+            if effect == "time":
+                P_first = (P.iloc[[0], :J] * iota - Y_donors.iloc[[len(Y_donors) - 1], :].values) / iota
+            else:
+                P_first = P.iloc[[0], :J] - Y_donors.iloc[[len(Y_donors) - 1], :].values
             P_diff = P.iloc[:, :J].diff()
             P_diff.iloc[0, :] = P_first
             e_des_1 = P_diff.loc[:, index_w]
@@ -531,7 +658,10 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
                 e_des_0 = pandas.concat([B_diff, C], axis=1).loc[:, index]
 
                 # Remove last observation of first feature from first period of P
-                P_first = P.iloc[[0], :J] - B.iloc[T0 - 1, :].values
+                if effect == "time":
+                    P_first = (P.iloc[[0], :J] * iota - B.iloc[T0 - 1, :].values) / iota
+                else:
+                    P_first = P.iloc[[0], :J] - B.iloc[T0 - 1, :].values
                 P_diff = P.iloc[:, :J].diff()
                 P_diff.iloc[0, :] = P_first
                 e_des_1 = pandas.concat([P_diff.loc[:, index_w],
@@ -662,7 +792,7 @@ def df_EST(w_constr, w, B, J, KM):
     elif (w_constr['name'] == "simplex") or ((w_constr['p'] == "L1") and (w_constr['dir'] == "==")):
         df = sum(abs(w.iloc[:, 0].values) >= 1e-6) - 1
 
-    elif (w_constr['name'] == "ridge") or (w_constr['name'] == "L1/L2") or (w_constr["p"] == "L2"):
+    elif (w_constr['name'] == "ridge") or (w_constr['name'] == "L1-L2") or (w_constr["p"] == "L2"):
         d = numpy.linalg.svd(B)[1]
         d = d[d > 0]
         df = sum(d**2 / (d**2 + w_constr['lambda']))
@@ -714,12 +844,18 @@ def cond_pred(y, x, xpreds, method, tau=None):
     return pred
 
 
-def scpi_in_simul(i, x0, beta, Sigma_root, Q, P, J, Jtot, KM, KMI, iota, w_lb_est,
-                  w_ub_est, p, p_int, QQ, QQ2, dire, lb, cores, opt_dict, use_cvxpy):
+def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, dimred, P, J, Jtot, KM, KMI, iota, w_lb_est,
+                  w_ub_est, p, p_int, QQ, QQ2, dire, lb, cores):
 
     zeta = numpy.random.normal(loc=0, scale=1, size=len(beta))
     G = Sigma_root.dot(zeta)
     Dtot = Jtot + KMI
+
+    a = -2 * G - 2 * beta.T.dot(Q)
+    d = 2 * G.dot(beta) + beta.dot(Q.dot(beta))
+
+    dataEcos['G'] = ECOS_get_G(Jtot, KMI, J, iota, a, Qreg, p, dire, ns, dimred)
+    dataEcos['h'] = ECOS_get_h(d, lb, J, Jtot, KMI, iota, p, dire, QQ, QQ2, dimred)
 
     res_ub = []
     res_lb = []
@@ -727,160 +863,46 @@ def scpi_in_simul(i, x0, beta, Sigma_root, Q, P, J, Jtot, KM, KMI, iota, w_lb_es
     for hor in range(0, len(P)):
         pt = numpy.array(P.iloc[hor, :])
 
+        # minimization
         if w_lb_est is True:
+            dataEcos['c'] = ECOS_get_c(-pt, ns)
 
-            if use_cvxpy is True:
-                x = cvxpy.Variable(Jtot + KMI)
-                a = -2 * G - 2 * beta.T.dot(Q)
-                d = 2 * G.dot(beta) + beta.dot(Q.dot(beta))
+            solution = ecos.solve(c=dataEcos['c'],
+                                  G=dataEcos['G'],
+                                  h=dataEcos['h'],
+                                  dims=dataEcos['dims'],
+                                  A=dataEcos['A'],
+                                  b=dataEcos['b'],
+                                  verbose=False)
 
-                objective = cvxpy.Minimize(-cvxpy.sum(cvxpy.multiply(pt, x - beta)))
-                constraints = [cvxpy.quad_form(x, Q) + cvxpy.sum(cvxpy.multiply(a, x)) + d <= 0]
-
-                if lb[0] > -numpy.inf:
-                    constraints = constraints.append(x[0:Jtot] >= lb)
-
-                j_lb = 0
-                for i in range(iota):
-                    j_ub = j_lb + J[i]
-                    constraints.append(cvxpy.norm1(x[j_lb:j_ub]) <= QQ[i])
-                    j_lb = j_ub
-
-                prob = cvxpy.Problem(objective, constraints)
-                sol = prob.solve()
-
-                alert = prob.status not in ['optimal', 'optimal_inaccurate']
-
-                if alert is True:
-                    res_lb.append(numpy.nan)
-                else:
-                    res_lb.append(sol)
-
+            if solution['info']['infostring'] in ['Optimal solution found', 'Close to optimal solution found']:
+                xx = solution['x'][0:(Jtot + KMI)]
+                sol = sum(pt * (beta - xx))
+                res_lb.append(sol)
             else:
-                opt = nlopt.opt(nlopt.LD_SLSQP, Jtot + KMI)
-                opt.set_min_objective(lambda x, grad: obj_fun_min(x, grad, pt, beta))
-
-                # add loss function constraint
-                opt.add_inequality_constraint(lambda x, grad: single_ineq(x, grad, beta, Q, G), opt_dict['tol_ineq'])
-
-                if dire == "==":  # equality constraint on norm
-                    opt.add_equality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                                 grad, p_int, J, KM, Dtot, iota, QQ, dire),
-                                                 [opt_dict['tol_eq']] * iota)
-
-                elif dire == "<=":  # inequality constraint on norm
-                    opt.add_inequality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                                   grad, p_int, J, KM, Dtot, iota, QQ, dire),
-                                                   [opt_dict['tol_ineq']] * iota)
-
-                elif dire == "==/<=":
-                    opt.add_equality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                                 grad, 1, J, KM, Dtot, iota, QQ, "=="),
-                                                 [opt_dict['tol_eq']] * iota)
-                    opt.add_inequality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                                   grad, 2, J, KM, Dtot, iota, QQ2, "<="),
-                                                   [opt_dict['tol_ineq']] * iota)
-
-                opt.set_lower_bounds(lb + [-numpy.inf] * KMI)
-                opt.set_xtol_rel(opt_dict['xtol_rel'])
-                opt.set_xtol_abs(opt_dict['xtol_abs'])
-                opt.set_ftol_abs(opt_dict['ftol_abs'])
-                opt.set_maxeval(opt_dict['maxeval'])
-
-                try:
-                    x = opt.optimize(x0)
-                    alert = opt.last_optimize_result() < 0 or opt.last_optimize_result() >= 5
-                except nlopt.RoundoffLimited:
-                    try:
-                        x = opt.optimize(x0)
-                        alert = opt.last_optimize_result() < 0 or opt.last_optimize_result() >= 5
-                    except nlopt.RoundoffLimited:
-                        alert = True
-
-                if alert is True:
-                    res_lb.append(numpy.nan)
-                else:
-                    res_lb.append(opt.last_optimum_value())
+                res_lb.append(numpy.nan)
 
         else:
             res_lb.append(numpy.nan)
 
+        # maximization
         if w_ub_est is True:
+            dataEcos['c'] = ECOS_get_c(pt, ns)
 
-            if use_cvxpy is True:
-                x = cvxpy.Variable(Jtot + KMI)
-                a = -2 * G - 2 * beta.T.dot(Q)
-                d = 2 * G.dot(beta) + beta.dot(Q.dot(beta))
+            solution = ecos.solve(c=dataEcos['c'],
+                                  G=dataEcos['G'],
+                                  h=dataEcos['h'],
+                                  dims=dataEcos['dims'],
+                                  A=dataEcos['A'],
+                                  b=dataEcos['b'],
+                                  verbose=False)
 
-                objective = cvxpy.Minimize(-cvxpy.sum(cvxpy.multiply(pt, x - beta)))
-                constraints = [cvxpy.quad_form(x, Q) + cvxpy.sum(cvxpy.multiply(a, x)) + d <= 0]
-
-                if lb[0] > -numpy.inf:
-                    constraints = constraints.append(x[0:Jtot] >= lb)
-
-                j_lb = 0
-                for i in range(iota):
-                    j_ub = j_lb + J[i]
-                    constraints.append(cvxpy.norm1(x[j_lb:j_ub]) <= QQ[i])
-                    j_lb = j_ub
-
-                prob = cvxpy.Problem(objective, constraints)
-                sol = prob.solve()
-
-                alert = prob.status not in ['optimal', 'optimal_inaccurate']
-
-                if alert is True:
-                    res_ub.append(numpy.nan)
-                else:
-                    res_ub.append(-sol)
-
+            if solution['info']['infostring'] in ['Optimal solution found', 'Close to optimal solution found']:
+                xx = solution['x'][0:(Jtot + KMI)]
+                sol = sum(pt * (beta - xx))
+                res_ub.append(sol)
             else:
-
-                opt = nlopt.opt(nlopt.LD_SLSQP, Jtot + KMI)
-
-                opt.set_min_objective(lambda x, grad: obj_fun_max(x, grad, pt, beta))
-
-                # add loss function constraint
-                opt.add_inequality_constraint(lambda x, grad: single_ineq(x, grad, beta, Q, G), opt_dict['tol_ineq'])
-
-                if dire == "==":  # equality constraint on norm
-                    opt.add_equality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                                 grad, p_int, J, KM, Dtot, iota, QQ, dire),
-                                                 [opt_dict['tol_eq']] * iota)
-
-                elif dire == "<=":  # inequality constraint on norm
-                    opt.add_inequality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                                   grad, p_int, J, KM, Dtot, iota, QQ, dire),
-                                                   [opt_dict['tol_ineq']] * iota)
-
-                elif dire == "==/<=":
-                    opt.add_equality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                                 grad, 1, J, KM, Dtot, iota, QQ, "=="),
-                                                 [opt_dict['tol_eq']] * iota)
-                    opt.add_inequality_mconstraint(lambda result, x, grad: norm_co_est_multi(result, x,
-                                                   grad, 2, J, KM, Dtot, iota, QQ2, "<="),
-                                                   [opt_dict['tol_ineq']] * iota)
-
-                opt.set_lower_bounds(lb + [-numpy.inf] * KMI)
-                opt.set_xtol_rel(opt_dict['xtol_rel'])
-                opt.set_xtol_abs(opt_dict['xtol_abs'])
-                opt.set_ftol_abs(opt_dict['ftol_abs'])
-                opt.set_maxeval(opt_dict['maxeval'])
-
-                try:
-                    x = opt.optimize(x0)
-                    alert = opt.last_optimize_result() < 0 or opt.last_optimize_result() >= 5
-                except nlopt.RoundoffLimited:
-                    try:
-                        x = opt.optimize(x0)
-                        alert = opt.last_optimize_result() < 0 or opt.last_optimize_result() >= 5
-                    except nlopt.RoundoffLimited:
-                        alert = True
-
-                if alert is True:
-                    res_ub.append(numpy.nan)
-                else:
-                    res_ub.append(-opt.last_optimum_value())
+                res_ub.append(numpy.nan)
 
         else:
             res_ub.append(numpy.nan)
@@ -891,14 +913,12 @@ def scpi_in_simul(i, x0, beta, Sigma_root, Q, P, J, Jtot, KM, KMI, iota, w_lb_es
 
 
 def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
-            w_ub_est, p, p_int, QQ, QQ2, dire, lb, cores, opt_dict, pass_stata, verbose):
+            w_ub_est, p, p_int, QQ, QQ2, dire, lb, cores, pass_stata, verbose):
 
     # Progress bar
-    iters = round(sims / 10)
+    iters = ceil(sims / 10)
     perc = 0
 
-    opt_dict = prepareOptions(opt_dict, "scpi")
-    use_cvxpy = useCVXPY({'Q': QQ, 'dir': dire, 'p': p})
     Jtot = sum(J.values())
     KMI = sum(KM.values())
     Jval = [v for v in J.values()]
@@ -906,30 +926,30 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
     Qval = [v for v in QQ.values()]
     Q2val = [v for v in QQ2.values()]
 
-    # Algorithm initial value is lower bound unless -Inf
-    x0 = numpy.array(lb)
-    infx0 = [numpy.isinf(x) for x in x0]
-    x0[infx0] = 0
-    x0 = numpy.append(x0, [0] * KMI)
+    dataEcos = {}
+    ns = ECOS_get_n_slacks(p, dire, Jtot, iota)
+
+    Qreg = matRegularize(Q)
+    dimred = numpy.shape(Q)[0] - numpy.shape(Qreg)[0]
+
+    regul = True
+    if dimred == 0:
+        regul = False
+        Qreg = sqrtm(Q)
+
+    dataEcos['dims'] = ECOS_get_dims(Jtot, Jval, KMI, p, dire, iota, dimred)
+    dataEcos['A'] = ECOS_get_A(Jval, Jtot, KMI, iota, p, dire, ns)
+    dataEcos['b'] = ECOS_get_b(Qval, p, dire)
 
     sims_res = []
 
     if cores == 1:
         for i in range(sims):
             rem = (i + 1) % iters
-            if rem == 0:
-                perc = perc + 10
-                if pass_stata is False and verbose:
-                    if any('SPYDER' in name for name in os.environ) and pass_stata is False:
-                        print(str(i + 1) + "/" + str(sims) +
-                              " iterations completed (" + str(perc) + "%)", end="\n")
-                    else:
-                        print('\x1b[1A\x1b[2K')
-                        print(str(i + 1) + "/" + str(sims) +
-                              " iterations completed (" + str(perc) + "%)", end="\r")
+            perc = printIter(i, rem, perc, pass_stata, verbose, sims)
 
-            res = scpi_in_simul(i, x0, beta, Sigma_root, Q, P, Jval, Jtot, KMval, KMI, iota, w_lb_est,
-                                w_ub_est, p, p_int, Qval, Q2val, dire, lb, cores, opt_dict, use_cvxpy)
+            res = scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, dimred, P, Jval, Jtot, KMval, KMI, iota,
+                                w_lb_est, w_ub_est, p, p_int, Qval, Q2val, dire, lb, cores)
             sims_res.append(res)
 
         vsig = numpy.array(sims_res)
@@ -943,8 +963,8 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
         config.set(scheduler='multiprocessing')
         client = Client(n_workers=cores)
         for i in range(sims):
-            res = delayed(scpi_in_simul)(i, x0, beta, Sigma_root, Q, P, Jval, Jtot, KMval, KMI, iota, w_lb_est,
-                                         w_ub_est, p, p_int, Qval, Q2val, dire, lb, cores, opt_dict, use_cvxpy)
+            res = delayed(scpi_in_simul)(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, dimred, P, Jval, Jtot, KMval, KMI, iota, w_lb_est,
+                                         w_ub_est, p, p_int, Qval, Q2val, dire, lb, cores)
             sims_res.append(res)
 
         vs = compute(sims_res)
@@ -960,45 +980,7 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
 
     return vsig
 
-
-def prepareOptions(opt_dict, prompt):
-
-    opt_names = []
-    opt_values = []
-
-    if opt_dict is not None:
-        for name, value in opt_dict.items():
-            opt_names.append(name)
-            opt_values.append(value)
-    else:
-        opt_dict = {}
-
-    if 'xtol_rel' not in opt_names:
-        opt_dict['xtol_rel'] = 1e-8
-    if 'xtol_abs' not in opt_names:
-        opt_dict['xtol_abs'] = 1e-8
-    if 'maxeval' not in opt_names:
-        opt_dict['maxeval'] = 5000
-    if 'tol_eq' not in opt_names:
-        opt_dict['tol_eq'] = 1e-8
-    if 'tol_ineq' not in opt_names:
-        opt_dict['tol_ineq'] = 1e-8
-
-    if prompt == "scest":
-        if 'ftol_rel' not in opt_names:
-            opt_dict['ftol_rel'] = 1e-8
-        if 'ftol_abs' not in opt_names:
-            opt_dict['ftol_abs'] = 1e-8
-    else:
-        if 'ftol_rel' not in opt_names:
-            opt_dict['ftol_rel'] = 1e-4
-        if 'ftol_abs' not in opt_names:
-            opt_dict['ftol_abs'] = 1e-4
-
-    return opt_dict
-
-
-def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est):
+def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
     e_1 = e_2 = None
     idx = preds.index
     y = deepcopy(numpy.array(y))[:, 0]
@@ -1011,13 +993,30 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est):
             x_more = numpy.vstack((preds, x))
             fit = cond_pred(y=y, x=x, xpreds=x_more, method='lm')
             e_mean = fit[:len(preds)]
+            if effect == "time":
+                e_mean = pandas.DataFrame(data=e_mean, index=idx)
+                e_mean = e_mean.mean(level='__time').values[:, 0]
+
             y_fit = fit[len(preds):]
             y_var = numpy.log((y - y_fit)**2)
             var_pred = cond_pred(y=y_var, x=x, xpreds=x_more, method='lm')
-            e_sig2 = numpy.exp(var_pred[:len(preds)])
+            if effect == "time":
+                var_pred = pandas.DataFrame(data=var_pred[:len(preds)], index=idx)
+                var_pred = var_pred.mean(level='__time').values[:, 0]
+            else:
+                var_pred = var_pred[:len(preds)]
+            e_sig2 = numpy.exp(var_pred)
 
             q_pred = cond_pred(y=y - y_fit, x=x, xpreds=x_more, method='qreg', tau=[0.25, 0.75])
-            IQ_pred = q_pred[:len(preds), 1] - q_pred[:len(preds), 0]
+            if effect == "time":
+                q3_pred = pandas.DataFrame(data=q_pred[:len(preds), 1], index=idx)
+                q1_pred = pandas.DataFrame(data=q_pred[:len(preds), 0], index=idx)
+                q3_pred = q3_pred.mean(level='__time').values[:, 0]
+                q1_pred = q1_pred.mean(level='__time').values[:, 0]
+            else:
+                q3_pred = q_pred[:len(preds), 1]
+                q1_pred = q_pred[:len(preds), 0]
+            IQ_pred = q3_pred - q1_pred
             IQ_pred = numpy.absolute(IQ_pred)
             e_sig = numpy.c_[numpy.sqrt(e_sig2), IQ_pred / 1.34].min(axis=1)
 
@@ -1036,15 +1035,34 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est):
             x_more = numpy.vstack((preds, x))
             fit = cond_pred(y=y, x=x, xpreds=x_more, method='lm')
             e_mean = fit[:len(preds)]
+            if effect == "time":
+                e_mean = pandas.DataFrame(data=e_mean, index=idx)
+                e_mean = e_mean.mean(level='__time').values[:, 0]
+
             y_fit = fit[len(preds):]
             y_var = numpy.log((y - y_fit)**2)
             var_pred = cond_pred(y=y_var, x=x, xpreds=x_more, method='lm')
-            q_pred = cond_pred(y=y - y_fit, x=x, xpreds=preds, method='qreg', tau=[0.25, 0.75])
-            IQ_pred = q_pred[:len(preds), 1] - q_pred[:len(preds), 0]
+            res_var = var_pred[len(preds):]
+            if effect == "time":
+                var_pred = pandas.DataFrame(data=var_pred[:len(preds)], index=idx)
+                var_pred = var_pred.mean(level='__time').values[:, 0]
+            else:
+                var_pred = var_pred[:len(preds)]
+
+            q_pred = cond_pred(y=y - y_fit, x=x, xpreds=x_more, method='qreg', tau=[0.25, 0.75])
+            if effect == "time":
+                q3_pred = pandas.DataFrame(data=q_pred[:len(preds), 1], index=idx)
+                q1_pred = pandas.DataFrame(data=q_pred[:len(preds), 0], index=idx)
+                q3_pred = q3_pred.mean(level='__time').values[:, 0]
+                q1_pred = q1_pred.mean(level='__time').values[:, 0]
+            else:
+                q3_pred = q_pred[:len(preds), 1]
+                q1_pred = q_pred[:len(preds), 0]
+            IQ_pred = q3_pred - q1_pred
             IQ_pred = numpy.absolute(IQ_pred)
             e_sig = numpy.sqrt(numpy.exp(var_pred[:len(preds)]))
             e_sig = numpy.c_[e_sig, IQ_pred / 1.34].min(axis=1)
-            y_st = (y - y_fit) / numpy.sqrt(numpy.exp(var_pred[len(preds):]))
+            y_st = (y - y_fit) / numpy.sqrt(numpy.exp(res_var))
 
             lb = e_mean + e_sig * numpy.quantile(y_st, q=alpha)
             ub = e_mean + e_sig * numpy.quantile(y_st, q=(1 - alpha))
@@ -1058,8 +1076,20 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est):
         elif e_method == 'qreg':
             e_pred = cond_pred(y=y, x=x, xpreds=preds,
                                method='qreg', tau=[alpha, 1 - alpha])
-            lb = e_pred[:, [0]]
-            ub = e_pred[:, [1]]
+            if effect == "time":
+                e_pred_lb = pandas.DataFrame(data=e_pred[:, 0], index=idx)
+                e_pred_ub = pandas.DataFrame(data=e_pred[:, 1], index=idx)
+                e_pred_lb = e_pred_lb.mean(level='__time').values[:, 0]
+                e_pred_ub = e_pred_ub.mean(level='__time').values[:, 0]
+            else:
+                e_pred_lb = e_pred[:, [0]]
+                e_pred_ub = e_pred[:, [1]]
+
+            lb = e_pred_lb
+            ub = e_pred_ub
+
+        if effect == "time":
+            idx = idx.unique('__time')
 
         lb = pandas.DataFrame(lb, index=idx)
         ub = pandas.DataFrame(ub, index=idx)
@@ -1072,14 +1102,14 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est):
 
 
 def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_des_0_na,
-                        e_des_1, w_lb_est, w_ub_est, w_bounds, w_name):
+                        e_des_1, w_lb_est, w_ub_est, w_bounds, w_name, effect):
 
     vsigLB = vsig[:, :T1_tot]
     vsigUB = vsig[:, T1_tot:]
 
     e_lb, e_ub, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                     e_method="gaussian", alpha=e_alpha / 2,
-                                    e_lb_est=True, e_ub_est=True)
+                                    e_lb_est=True, e_ub_est=True, effect=effect)
 
     jmin = 0
     w_lb_joint = []
@@ -1087,15 +1117,15 @@ def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_de
     for i in range(iota):
         jmax = T1[i] + jmin
 
-        if w_name in ['simplex', 'ridge', 'ols', 'L1-L2']:
-            lb_joint = numpy.nanquantile(numpy.nanquantile(vsigLB[:, jmin:jmax], q=0.05, axis=0),
-                                         q=(u_alpha / 2), axis=0)
-            ub_joint = numpy.nanquantile(numpy.nanquantile(vsigUB[:, jmin:jmax], q=0.95, axis=0),
-                                         q=(1 - u_alpha / 2), axis=0)
+        # if w_name in ['simplex', 'ridge', 'ols', 'L1-L2'] and effect != "time":
+        #     lb_joint = numpy.nanquantile(numpy.nanquantile(vsigLB[:, jmin:jmax], q=0.05, axis=0),
+        #                                  q=(u_alpha / 2), axis=0)
+        #     ub_joint = numpy.nanquantile(numpy.nanquantile(vsigUB[:, jmin:jmax], q=0.95, axis=0),
+        #                                  q=(1 - u_alpha / 2), axis=0)
 
-        else:
-            lb_joint = numpy.nanquantile(vsigLB[:, jmin:jmax].min(axis=0), q=(u_alpha / 2), axis=0)
-            ub_joint = numpy.nanquantile(vsigUB[:, jmin:jmax].max(axis=0), q=(1 - u_alpha / 2), axis=0)
+        # else:
+        lb_joint = numpy.nanquantile(numpy.nanmin(vsigLB[:, jmin:jmax], axis=0), q=(u_alpha / 2), axis=0)
+        ub_joint = numpy.nanquantile(numpy.nanmax(vsigUB[:, jmin:jmax], axis=0), q=(1 - u_alpha / 2), axis=0)
 
         w_lb_joint = w_lb_joint + [lb_joint] * T1[i]
         w_ub_joint = w_ub_joint + [ub_joint] * T1[i]
@@ -1107,8 +1137,8 @@ def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_de
         for i in range(iota):
             eps = eps + [sqrt(log(T1[i] + 1))] * T1[i]
 
-    e_lb_joint = numpy.array(e_lb) * numpy.array(eps)
-    e_ub_joint = numpy.array(e_ub) * numpy.array(eps)
+    e_lb_joint = numpy.multiply(numpy.array(e_lb[0].values), numpy.array(eps))
+    e_ub_joint = numpy.multiply(numpy.array(e_ub[0].values), numpy.array(eps))
 
     if w_lb_est is False:
         w_lb_joint = w_bounds[:, 0]
@@ -1121,18 +1151,28 @@ def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_de
 
     return pandas.DataFrame(ML), pandas.DataFrame(MU)
 
-def epskappaGet(P, rho_dict, beta, tr_units, joint=False):
-    P_dict = mat2dict(P)
-    beta_dict = mat2dict(beta, cols=False)
+def epskappaGet(P, rho_dict, beta, tr_units, effect, joint=False):
 
-    epskappa = []
-    for tr in tr_units:
-        pnorm = abs(P_dict[tr]).sum(axis=1)
-        epskappai = pnorm * rho_dict[tr]**2 / (2 * sqrt(numpy.sum(beta_dict[tr]**2)[0]))
-        epskappa = epskappa + epskappai.tolist()
+    if effect == "time":
+        rho_avg = sum([r for r in rho_dict.values()]) / len(rho_dict)
+        pnorm = abs(P).sum(axis=1)
+        epskappai = pnorm * rho_avg**2 / (2 * sqrt(numpy.sum(beta**2)[0]))
+        epskappa = epskappai.tolist()
 
-    if joint is True:
-        epskappa = max(epskappa)
+        if joint is True:
+            epskappa = max(epskappa)
+    else:
+        P_dict = mat2dict(P)
+        beta_dict = mat2dict(beta, cols=False)
+
+        epskappa = []
+        for tr in tr_units:
+            pnorm = abs(P_dict[tr]).sum(axis=1)
+            epskappai = pnorm * rho_dict[tr]**2 / (2 * sqrt(numpy.sum(beta_dict[tr]**2)[0]))
+            epskappa = epskappa + epskappai.tolist()
+
+        if joint is True:
+            epskappa = max(epskappa)
 
     return epskappa
 
@@ -1178,7 +1218,7 @@ def regularize_check(w, index_w, rho, verbose):
         if verbose:
             warnings.warn("Regularization paramater was too high (" + str(round(rho, 3)) + "). " +
                           "We set it so that at least one component in w is non-zero.")
-    return(index_w)
+    return index_w
 
 
 def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbose):
@@ -1219,7 +1259,7 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
         w_star = deepcopy(w)
         index_w = pandas.DataFrame([True] * len(B.columns), index=w.index)[0]
 
-    elif (w_constr['name'] == "L1/L2"):
+    elif (w_constr['name'] == "L1-L2"):
         index_w = w[0] > rho
         index_w = regularize_check(w, index_w, rho, verbose)
         w_star = deepcopy(w)
@@ -1260,7 +1300,7 @@ def localgeom2step(w, r, rho_dict, w_constr, Q, treated_units):
             rhoj_dict[tr] = rho_dict[tr]
             w_norm = numpy.sum(abs(w_dict[tr]))[0]
 
-        elif w_constr[tr]['p'] in ["L1/L2", "L2"]:
+        elif w_constr[tr]['p'] in ["L1-L2", "L2"]:
             L1 = numpy.sum(abs(w_dict[tr]))[0]
             rhoj_dict[tr] = 2 * L1 * rho_dict[tr]
             w_norm = numpy.sum(w_dict[tr]**2)[0]
@@ -1313,13 +1353,6 @@ def executionTime(T0, T1, J, iota, cores, sims, name):
 
     print(toprint)
 
-def useCVXPY(w_constr):
-    flag = False
-    if w_constr['p'] == "L1" and w_constr['dir'] == "<=":
-        flag = True
-
-    return flag
-
 def mat2dict(mat, cols=True):
     X = deepcopy(mat)
     tr_units = X.index.get_level_values('treated_unit').unique().tolist()
@@ -1347,11 +1380,52 @@ def CIrename(ci, citype):
 
     return CI
 
-def detectConstant(x, tr):
-    n = len(x)
+def detectConstant(x, tr, scale_x=1):
+    x = x * scale_x
+    n = len(x.loc[complete_cases(x), ])
     col_keep = x.sum(axis=0) != n
     col_keep = numpy.logical_and(col_keep, (x.sum(axis=0) != 0))
     x = deepcopy(x.loc[:, col_keep])
     x.insert(0, tr + "_constant", 1, allow_duplicates=True)
-
+    x = x / scale_x
     return x
+
+def trendRemove(xxx):
+    x = deepcopy(xxx)
+    sel = []
+    for c in x.columns.tolist():
+        cp = c.split('_')
+        if len(cp) < 3:
+            sel.append(True)
+        else:
+            if cp[2] == "trend":
+                sel.append(False)
+            else:
+                sel.append(True)
+    xx = x.loc[:, numpy.array(sel)]
+
+    return xx, sel
+
+def printIter(i, rem, perc, pass_stata, verbose, sims):
+    if rem == 0:
+        perc = perc + 10
+        if pass_stata is False and verbose:
+            if any('SPYDER' in name for name in os.environ) and pass_stata is False:
+                print(str(i + 1) + "/" + str(sims) +
+                      " iterations completed (" + str(perc) + "%)", end="\n")
+            else:
+                print('\x1b[1A\x1b[2K')
+                print(str(i + 1) + "/" + str(sims) +
+                      " iterations completed (" + str(perc) + "%)", end="\r")
+
+    return perc
+
+def matRegularize(mat, threshold=1e-08):
+
+    ww, vv = eigh(mat)
+    sel = ww > threshold
+    U = vv[:, sel]
+    D = numpy.diag(numpy.sqrt(ww[sel]))
+    matreg = numpy.dot(D, U.transpose())
+
+    return matreg

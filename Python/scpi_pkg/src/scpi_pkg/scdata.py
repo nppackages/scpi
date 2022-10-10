@@ -9,6 +9,8 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import pandas
+pandas.options.mode.chained_assignment = None
+import pandas
 import numpy
 import scipy.linalg
 from copy import deepcopy
@@ -387,6 +389,14 @@ def scdata(df,
     B = B_df.pivot(index=['treated_unit', 'feature', '__time'],   # index to keep fixed
                    columns='__ID',                                # dimension to wide
                    values='value')                                # values to be widen
+
+    if numpy.nan in B.index.get_level_values(0).unique().tolist():
+        unitnonan = [un for un in B.index.get_level_values(0).unique().tolist() if un is not numpy.nan]
+        idx = pandas.IndexSlice
+        B = B.loc[idx[unitnonan[0], :, :]]
+        B.insert(0, "treated_unit", unitnonan[0])
+        B.set_index('treated_unit', append=True, drop=True, inplace=True)
+        B = B.reorder_levels(['treated_unit', 'feature', '__time'])
 
     # Create list that dictates order of donors
     donor_order = B.columns.values.tolist()

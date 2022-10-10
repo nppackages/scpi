@@ -1,5 +1,5 @@
-*! Date        : 28 Jul 2022
-*! Version     : 1.0
+*! Date        : 07 Oct 2022
+*! Version     : 2.0
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Data preparation for scest or scpi
@@ -9,7 +9,8 @@ program define scdatamulti, eclass
 version 17.0           
 		
 	syntax anything [if] [in], id(varname) time(varname) outcome(varname) treatment(varname) dfname(string) ///
-							  [covadj(string) cointegrated(string) constant(string) anticipation(string) effect(string) pypinocheck]
+							  [covadj(string) cointegrated(string) constant(string) anticipation(string)    ///
+							  post_est(string) units_est(string) effect(string) pypinocheck]
 
 	local features "`anything'"  // backup copy
 
@@ -28,13 +29,21 @@ version 17.0
 	if mi("`anticipation'") {
 		local anticipation "0"
 	}
-	
+
+	if mi("`units_est'") {
+		local units_est "None"
+	}
+
+	if mi("`post_est'") {
+		local post_est "None"
+	}
+
 	if mi("`effect'") {
-		local effect = "unit-time"
+		local effect "unit-time"
 	}
 	else {
-		if !inlist("`effect'", "unit-time", "unit") {
-			di as error "The option 'effect' should be either 'unit' or 'unit-time'!"
+		if !inlist("`effect'", "unit-time", "unit", "time") {
+			di as error "The option 'effect' should be either 'unit', 'time', or 'unit-time'!"
 		}
 	}
 	
@@ -49,7 +58,7 @@ version 17.0
 	
 	qui export delimited using "__scpi__data_to_python.csv", replace
 
-	python: scdatamulti_wrapper("`features'", "`id'", "`time'", "`outcome'", "`treatment'", "`covadj'", "`anticipation'", "`cointegrated'", "`constant'", "`dfname'", "`effect'")
+	python: scdatamulti_wrapper("`features'", "`id'", "`time'", "`outcome'", "`treatment'", "`covadj'", "`anticipation'", "`cointegrated'", "`constant'", "`dfname'", "`effect'", "`post_est'", "`units_est'")
 	
 	erase "__scpi__data_to_python.csv"
 	
@@ -82,7 +91,7 @@ from scpi_pkg import version as lver
 from sfi import Scalar, Matrix, Macro
 
 
-def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, covadj, anticipation, cointegrated, constant, dfname, effect):
+def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, covadj, anticipation, cointegrated, constant, dfname, effect, post_est, units_est):
 	
 	# Create dataframe
 	df = pandas.read_csv('__scpi__data_to_python.csv')
@@ -262,11 +271,21 @@ def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, cova
 			i += 1
 	else:
 		antic_dict = int(anticipation)
-	
+
+	## Parse post_est and units_est
+	if post_est == "None":
+		post_est = None
+	else: 
+		post_est = int(post_est)
+
+	if units_est == "None":
+		units_est = None
+	else: 
+		units_est = [tr.strip() for tr in units_est.split(',')]
 
 	data_prep = scdataMulti(df=df, id_var=id_var, time_var=time_var, outcome_var=outcome_var, treatment_var=treatment,
-							features=f_dict, cov_adj=cov_dict, constant=cons_dict, anticipation=antic_dict, cointegrated_data=coint_dict, effect=effect)
-
+							features=f_dict, cov_adj=cov_dict, constant=cons_dict, anticipation=antic_dict,
+							cointegrated_data=coint_dict, effect=effect, post_est=post_est, units_est=units_est)
 
 	# Save data and store matrices in stata
 	
@@ -314,7 +333,7 @@ def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, cova
 	Matrix.setColNames("KM", klist)
 	
 	klist = []; vlist = []
-	for k,v in data_prep.KM.items():
+	for k,v in data_prep.J.items():
 		klist.append(k) 
 		vlist.append(v)
 	mat = numpy.array(vlist)

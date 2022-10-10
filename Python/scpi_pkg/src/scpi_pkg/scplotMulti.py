@@ -9,6 +9,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import pandas
+pandas.options.mode.chained_assignment = None
 import numpy
 from plotnine import ggplot, aes, geom_point, geom_errorbar, geom_vline, geom_line, geom_hline, theme, theme_bw
 from plotnine import element_blank, labs, guide_legend, scale_color_manual, ggtitle, facet_wrap, coord_flip, geom_ribbon
@@ -102,6 +103,9 @@ def scplotMulti(result,
 
     class_input = result.__class__.__name__
 
+    def ix2rn(s):
+        return str(s).replace('(', '').replace(')', '').replace("'", '')
+
     if class_input not in ['scest_multi_output', 'scpi_multi_output']:
         raise Exception("The object 'result' should be the output of scest or scpi " +
                         "when the data have been processed through scdataMulti!")
@@ -111,6 +115,8 @@ def scplotMulti(result,
 
     plot_type = result.effect
     iota = result.iota
+    if plot_type == "time":
+        iota = 1
 
     if iota > 20 and (plot_type != "unit" or ptype != "treatment") and verbose:
         warnings.warn(str(iota) + " treated units detected, therefore some graphs might be too crowded!" +
@@ -121,8 +127,10 @@ def scplotMulti(result,
     Y_pre_fit = result.Y_pre_fit
     Y_post_fit = result.Y_post_fit
     synth_mat = pandas.concat([Y_pre_fit, Y_post_fit], axis=0)
-    synth_mat.index = synth_mat.index.rename(['ID', 'Time'])
-    synth_mat.columns = ['Synthetic']
+    if plot_type != "time":
+        synth_mat.index = synth_mat.index.rename(['ID', 'Time'])
+        synth_mat.columns = ['Synthetic']
+
     Y_df = result.Y_df
     Y_df.columns = ['ID', 'Time', 'Treatment', 'Actual']
 
@@ -155,9 +163,72 @@ def scplotMulti(result,
     sel_units = [i in result.units_est for i in treated_reception['ID']]
     treated_reception = treated_reception[sel_units]
 
-    toplot = pandas.concat([Y_actual, synth_mat], axis=1)
+    if plot_type != "time":
+        toplot = pandas.concat([Y_actual, synth_mat], axis=1, join='inner')
+
+    elif plot_type == "time":
+        res_df = res_df.merge(treated_reception[['ID', 'Tdate']], on="ID")
+        Y_actual_pre = res_df[res_df['Time'] < res_df['Tdate']]
+        Y_actual_post = res_df[res_df['Time'] > res_df['Tdate']]
+        Y_actual_pre['Tdate'] = Y_actual_pre['Tdate'] + 1 / 2
+        Y_actual_post['Tdate'] = Y_actual_post['Tdate'] + 1 / 2
+        Y_actual_pre['tstd'] = Y_actual_pre['Time'] - Y_actual_pre['Tdate']
+        Y_actual_post['tstd'] = Y_actual_post['Time'] - Y_actual_post['Tdate']
+
+        names = synth_mat.index.values.tolist()
+        names = [ix2rn(n).split(',') for n in names]
+        unit = []
+        unitagg = []
+        time = []
+        for n in names:
+            if len(n) == 2:
+                unit.append(n[0])
+                time.append(n[1])
+            else:
+                unitagg.append(n[0])
+
+        synth_pre = pandas.DataFrame({'ID': unit,
+                                      'Time': time,
+                                      'Synthetic': synth_mat.iloc[0:len(unit), 0].values})
+        synth_pre = synth_pre.astype({'Time': Y_actual_pre['Time'].dtypes})
+        Y_pre = Y_actual_pre.merge(synth_pre, on=['ID', 'Time'], how='left')
+
+        max_pre = max(Y_actual_pre.groupby(['ID'])['tstd'].min()) + 1
+        min_post = min([v for v in result.T1_outcome.values()]) - 1
+
+        Y_pre_agg = Y_pre.groupby(['tstd'])[['Actual', 'Synthetic']].mean()
+        Y_pre_agg.reset_index(inplace=True)
+        Y_pre_agg.columns = ['Time', 'Actual', 'Synthetic']
+        Y_pre_agg = Y_pre_agg[Y_pre_agg['Time'] >= max_pre]
+
+        Y_post_agg = Y_actual_post.groupby(['tstd'])[['Actual']].mean()
+        Y_post_agg.reset_index(inplace=True)
+        Y_post_agg = Y_post_agg[Y_post_agg['tstd'] <= min_post]
+
+        Y_post_agg = pandas.DataFrame({'ID': unitagg,
+                                       'Actual': Y_post_agg['Actual'],
+                                       'Synthetic': synth_mat.iloc[len(unit):, 0].values,
+                                       'Time': range(0, len(unitagg))})
+
+        Y_pre_agg['Treatment'] = 0
+        Y_post_agg['Treatment'] = 1
+        Y_pre_agg['ID'] = "aggregate"
+        Y_post_agg['ID'] = "aggregate"
+
+        Y_actual = pandas.concat([Y_pre_agg, Y_post_agg], axis=0)
+        Y_actual['Tdate'] = 0
+
+        plot_type = "unit-time"
+        iota = 1
+        treated_reception = pandas.DataFrame({'ID': 'aggregate',
+                                              'Tdate': [0.5]})
+        toplot = Y_actual
+        toplot['Time'] = toplot['Time'] + 1
+
     toplot['Effect'] = toplot['Actual'] - toplot['Synthetic']
-    toplot.reset_index(drop=False, inplace=True)
+    if plot_type != "time":
+        toplot.reset_index(drop=False, inplace=True)
+
     toplot = toplot.merge(treated_reception[['ID', 'Tdate']], on='ID')
 
     if plot_type == 'unit-time' and ptype == "series":  # plot series

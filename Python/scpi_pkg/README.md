@@ -27,9 +27,11 @@ pip install scpi_pkg
 # Usage
 ```
 from from scpi_pkg.scdata import scdata
+from from scpi_pkg.scdataMulti import scdataMulti
 from scpi_pkg.scest import scest
 from scpi_pkg.scpi import scpi
 from scpi_pkg.scplot import scplot
+from scpi_pkg.scplotMulti import scplotMulti
 ```
 
 - Replication: [Germany reunification example](https://github.com/nppackages/scpi/blob/main/Python/scpi_illustration.py).

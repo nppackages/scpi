@@ -5,10 +5,12 @@ Created on Wed Aug 25 07:55:26 2021
 @author: Filippo Palomba
 """
 # Temporary code to suppress pandas FutureWarning
+
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import pandas
+pandas.options.mode.chained_assignment = None
 import numpy
 from plotnine import ggplot, aes, geom_point, geom_errorbar, geom_vline, geom_line, theme, theme_bw
 from plotnine import element_blank, labs, guide_legend, scale_color_manual, ggtitle, geom_ribbon

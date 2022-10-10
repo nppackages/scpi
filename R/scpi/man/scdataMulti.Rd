@@ -55,7 +55,8 @@ for which treatment effects have to be estimated for each treated unit.}
 \item{anticipation}{a scalar that indicates the number of periods of potential anticipation effects. Default is 0.}
 
 \item{effect}{a string indicating the type of treatment effect to be estimated. Options are: 'unit-time', which estimates treatment effects for each
-treated unit-time combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time.}
+treated unit- post treatment period combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time;
+'time', which estimates the average treatment effect on the treated at various horizons.}
 
 \item{constant}{a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}.}
 
@@ -113,7 +114,7 @@ Related Stata, R, and Python packages useful for inference in SC designs are des
 
 \href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
 
-For an introduction to synthetic control methods, see \href{https://economics.mit.edu/files/17847}{Abadie (2021)} and references therein.
+For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
 }
 \details{
 \itemize{
@@ -152,12 +153,12 @@ df.unit <- scdataMulti(datager, id.var = id.var, outcome.var = outcome.var,
 }
 \references{
 \itemize{
-\item{\href{https://economics.mit.edu/files/17847}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
+\item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 \emph{Journal of Economic Literature}, 59(2), 391-425.}
 \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
-scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
+scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
 }
 }
 \seealso{

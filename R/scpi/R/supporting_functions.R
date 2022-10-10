@@ -1,229 +1,219 @@
-###############################################################################
-### Auxiliary functions for estimation
+blockdiag <- function(I, Jtot, J, KMI, ns, slack = FALSE) {
+  mat <- matrix(0, nrow = I, ncol = Jtot + KMI + ns)
+  j.lb <- 1
+  j.ub <- J[[1]]
 
-# Quadratic loss function
-obj.fun.est <- function(x, Z, V, A, J, QQ, KM, p) {
-  f <- x %*% t(Z) %*% V %*% Z %*% x - 2 * t(A) %*% V %*% Z %*% x
-  g <- 2 * t(Z) %*% V %*% Z %*% x - 2 * t(t(A) %*% V %*% Z)
-
-  return(list("objective" = f,
-              "gradient"  = g))
-}
-
-obj.fun.est.sr <- function(x, Z, V, A, J, Q1, Q2, KMI, S) {
-  f <- x %*% t(Z) %*% V %*% Z %*% x - 2 * t(A) %*% V %*% Z %*% x
-  g <- 2 * t(Z) %*% V %*% Z %*% x - 2 * t(t(A) %*% V %*% Z)
-  
-  return(list("objective" = f,
-              "gradient"  = g))
-}
-
-obj.fun.est.multi <- function(x, Z, V, A, J, QQ, KMI, p, S) {
-  f <- x %*% t(Z) %*% V %*% Z %*% x - 2 * t(A) %*% V %*% Z %*% x
-  g <- 2 * t(Z) %*% V %*% Z %*% x - 2 * t(t(A) %*% V %*% Z)
-
-  return(list("objective" = f,
-              "gradient"  = g))
-}
-
-
-## Constraint on the norm
-
-# Single treated unit
-norm.co.est <- function(x, Z, V, A, J, QQ, KM, p) {
-
-  if (p == 1) {
-    av <- rep(1, J)
-    av[x[1:J] < 0] <- -1
-    ja <- c(av, rep(0, KM))
-    co <- sum(abs(x[1:J])) - QQ
-  } else {
-    ja <- c(2 * x[1:J], rep(0, KM))
-    co <- sum(x[1:J]^2) - QQ^2
+  if (slack == TRUE) {
+    j.lb <- j.lb + Jtot + KMI
+    j.ub <- j.ub + Jtot + KMI
   }
 
-  return(list("constraints" = co,
-              "jacobian"    = ja))
-}
+  for (i in seq_len(I)) {
+    if (i > 1){
+      j.lb <- j.ub + 1
+      j.ub <- j.lb + J[[i]] - 1
+    }
 
-# Functions for L1-L2
-
-norm.L1 <- function(x, Z, V, A, J, Q1, Q2, KMI, S) {
-  
-  av <- rep(1, J)
-  av[x[1:J] < 0] <- -1
-  ja <- c(av, rep(0, KMI))
-  co <- S %*% abs(x[1:J]) - Q1
-  
-  ja.vec <- matrix(ja, nrow = nrow(S), ncol = length(ja), byrow = TRUE)
-  ja.vec[, 1:J] <- ja.vec[, 1:J] * S
-  
-  return(list("constraints" = co,
-              "jacobian"    = ja.vec))  
-}
-
-norm.L2 <- function(x, Z, V, A, J, Q1, Q2, KMI, S) {
-  
-  ja <- c(2 * x[1:J], rep(0, KMI))
-  co <- S %*% x[1:J]^2 - Q2^2
-  
-  ja.vec <- matrix(ja, nrow = nrow(S), ncol = length(ja), byrow = TRUE)
-  ja.vec[, 1:J] <- ja.vec[, 1:J] * S
-  
-  return(list("constraints" = co,
-              "jacobian"    = ja.vec))
-}
-
-# Multiple treated units
-norm.co.est.multi <- function(x, Z, V, A, J, QQ, KMI, p, S) {
-
-  if (p == 1) {
-    av <- rep(1, J)
-    av[x[1:J] < 0] <- -1
-    ja <- c(av, rep(0, KMI))
-    co <- S %*% abs(x[1:J]) - QQ
-  } else {
-    ja <- c(2 * x[1:J], rep(0, KMI))
-    co <- S %*% x[1:J]^2 - QQ^2
+    mat[i, j.lb:j.ub] <- 1
   }
 
-  ja.vec <- matrix(ja, nrow = nrow(S), ncol = length(ja), byrow = TRUE)
-  ja.vec[, 1:J] <- ja.vec[, 1:J] * S
-  
-  return(list("constraints" = co,
-              "jacobian"    = ja.vec))
+  return(mat)
 }
 
+blockdiagRidge <- function(Jtot, J, KMI, I) {
 
-### Auxiliary functions for inference
+  mat <- matrix(0, Jtot + 2 * I, Jtot + KMI + I + 1)
 
-# Prepare objective functions
-obj.fun.min <- function(x, xt, beta, Q, G, J, KMI, QQ, p.int, S) {
-  f <- -sum(xt * (x - beta))
-  g <- -xt
+  i.lb <- 1 + 2
+  i.ub <- J[[1]] + 2
+  j.lb <- 1
+  j.ub <- J[[1]]
 
-  return(list("objective" = f,
-              "gradient"  = g))
-}
+  for (i in seq_len(I)) {
+    if (i > 1){
+      j.lb <- j.ub + 1
+      j.ub <- j.lb + J[[i]] - 1
+      i.lb <- i.ub + 1 + 2
+      i.ub <- i.lb + J[[i]] - 1
+    }
 
-obj.fun.max <- function(x, xt, beta, Q, G, J, KMI, QQ, p.int, S) {
-  f <- sum(xt * (x - beta))
-  g <- xt
-
-  return(list("objective" = f,
-              "gradient"  = g))
-}
-
-obj.fun.min.sr <- function(x, xt, beta, Q, G, J, KMI, Q1, Q2, S) {
-  f <- -sum(xt * (x - beta))
-  g <- -xt
-  
-  return(list("objective" = f,
-              "gradient"  = g))
-}
-
-obj.fun.max.sr <- function(x, xt, beta, Q, G, J, KMI, Q1, Q2, S) {
-  f <- sum(xt * (x - beta))
-  g <- xt
-  
-  return(list("objective" = f,
-              "gradient"  = g))
-}
-
-
-# Prepare inequality constraint(s): loss functions constraint + (inequality norm constraint)
-
-# Unique inequality constraint
-single.ineq <- function(x, xt, beta, Q, G, J, KMI, QQ, p.int, S) {
-  a <- -2 * G - 2 * c(t(beta) %*% Q)
-  d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-
-  co <- x %*% Q %*% x + sum(a * x) + d
-  ja <- 2 * Q %*% x + a
-
-  return(list("constraints" = co,
-              "jacobian"    = ja))
-}
-
-# Inequality constraints: loss function + L1-L2 norm
-double.ineq <- function(x, xt, beta, Q, G, J, KMI, QQ, p.int, S) {
-  # Loss function constraint
-  a <- -2 * G - 2 * c(t(beta) %*% Q)
-  d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-
-  co1 <- x %*% Q %*% x + sum(a * x) + d
-  ja1 <- 2 * Q %*% x + a
-
-  # Norm constraint
-  if (p.int == 1) {
-    co2 <- S %*% abs(x[1:J]) - QQ
-    av <- rep(1, J)
-    av[x[1:J] < 0] <- -1
-    ja <- c(av, rep(0, KMI))
-  } else {
-    co2 <- S %*% (x[1:J]^2) - QQ^2
-    ja <- c(2 * x[1:J], rep(0, KMI))
+    mat[(i.lb - 2):(i.lb - 1), Jtot+KMI+i] <- c(-1, 1)
+    mat[i.lb:i.ub, j.lb:j.ub] <- -diag(2, i.ub - i.lb + 1, j.ub - j.lb + 1)
   }
 
-  ja.vec <- matrix(ja, nrow = nrow(S), ncol = length(ja), byrow = TRUE)
-  ja.vec[, 1:J] <- ja.vec[, 1:J] * S
-  ja <- c(rbind(t(ja1), ja.vec))    # vectorize matrix row-by-row
-
-  return(list("constraints" = c(co1,co2),
-              "jacobian"    = ja))
+  return(mat)
 }
 
-# Eventual equality constraint on norm
-norm.equal <- function(x, xt, beta, Q, G, J, KMI, QQ, p.int, S) {
+ECOS_get_n_slacks <- function(w.constr, Jtot, I) {
 
-  if (p.int == 1) {
-    co <- S %*% abs(x[1:J]) - QQ
-    av <- rep(1, J)
-    av[x[1:J] < 0] <- -1
-    ja <- c(av, rep(0, KMI))
-  } else {
-    co <- S %*% (x[1:J]^2) - QQ^2
-    ja <- c(2 * x[1:J], rep(0, KMI))
+  n_slacks <- 1
+  
+  # in lasso we add one slack per component of w to handle the abs value
+  if (w.constr[["p"]] == "L1" & w.constr[["dir"]] == "<=") { # lasso
+    n_slacks <- Jtot + n_slacks
   }
-
-  ja.vec <- matrix(ja, nrow = nrow(S), ncol = length(ja), byrow = TRUE)
-  ja.vec[, 1:J] <- ja.vec[, 1:J] * S
-
-  return(list("constraints" = co,
-              "jacobian"    = ja.vec))
+  
+  # in ridge we have two hyperbolic constraints (norm and loss function)
+  if (w.constr[["p"]] == "L2" & w.constr[["dir"]] == "<=") { # ridge
+    n_slacks <- I + n_slacks
+  }
+  
+  # L1-L2 combines ridge and simplex slack variables
+  if (w.constr[["p"]] == "L1-L2") { # L1-L2
+    n_slacks <- I + n_slacks
+  }
+  
+  return(n_slacks)
 }
 
-norm.equal.sr <- function(x, xt, beta, Q, G, J, KMI, Q1, Q2, S) {
+ECOS_get_dims <- function(Jtot, J, KMI, w.constr, I, red) {
   
-  co <- S %*% abs(x[1:J]) - Q1
-  av <- rep(1, J)
-  av[x[1:J] < 0] <- -1
-  ja <- c(av, rep(0, KMI))
-
-  ja.vec <- matrix(ja, nrow = nrow(S), ncol = length(ja), byrow = TRUE)
-  ja.vec[, 1:J] <- ja.vec[, 1:J] * S
+  if (w.constr[["p"]] == "L1" & w.constr[["dir"]] == "==") { # simplex
+    dims <- list("l" = Jtot + 1, "q" = list(Jtot + KMI + 2 - red), "e" = 0)
+    
+  } else if (w.constr[["p"]] == "L1" & w.constr[["dir"]] == "<=") { # lasso
+    dims <- list("l" = 1 + 2*Jtot + I, "q" = list(Jtot + KMI + 2 - red), "e" = 0)
+    
+  } else if (w.constr[["p"]] == "L2" & w.constr[["dir"]] == "<=") { # ridge
+    dims <- list("l" = 1 + I, "q" = append(lapply(J, function(i) i+2), Jtot + KMI + 2 - red), "e" = 0)
+    
+  } else if (w.constr[["p"]] == "L1-L2") { # L1-L2
+    dims <- list("l" = 1 + I + Jtot, "q" = append(lapply(J, function(i) i+2), Jtot + KMI + 2 - red), "e" = 0)
+    
+  } else if (w.constr[["p"]] == "no norm") { # ols
+    dims <- list("l" = 1, "q" = list(Jtot + KMI + 2 - red), "e" = 0)
+    
+  }
   
-  return(list("constraints" = co,
-              "jacobian"    = ja.vec))
+  return(dims)
 }
 
-double.ineq.sr <- function(x, xt, beta, Q, G, J, KMI, Q1, Q2, S) {
-  # Loss function constraint
-  a <- -2 * G - 2 * c(t(beta) %*% Q)
-  d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-  
-  co1 <- x %*% Q %*% x + sum(a * x) + d
-  ja1 <- 2 * Q %*% x + a
-  
-  co2 <- S %*% (x[1:J]^2) - Q2^2
-  ja <- c(2 * x[1:J], rep(0, KMI))
+ECOS_get_c <- function(xt, ns) {
+  C <- c(xt, rep(0, ns))
+  return(C)
+}
 
-  ja.vec <- matrix(ja, nrow = nrow(S), ncol = length(ja), byrow = TRUE)
-  ja.vec[, 1:J] <- ja.vec[, 1:J] * S
-  ja <- c(rbind(t(ja1), ja.vec))    # vectorize matrix row-by-row
+ECOS_get_A <- function(J, Jtot, KMI, I, w.constr, ns) {
   
-  return(list("constraints" = c(co1,co2),
-              "jacobian"    = ja))
+  if ((w.constr[["p"]] == "L1" & w.constr[["dir"]] == "==") || w.constr[["p"]] == "L1-L2") { # simplex, L1-L2
+    
+    A <- blockdiag(I, Jtot, J, KMI, ns)
+    
+  } else  { # ols, lasso, ridge
+    
+    A <- matrix(NA, 0, 0)
+    
+  }
+  
+  return(methods::as(A, "sparseMatrix"))
+}
+
+ECOS_get_b <- function(Q1, Q2, w.constr) {
+  
+  if ((w.constr[["p"]] == "L1" & w.constr[["dir"]] == "==") || w.constr[["p"]] == "L1-L2") { # simplex, L1-L2
+    b <- Q1
+    
+  } else { # ols, lasso, ridge
+    b <- NULL
+  }
+  
+  return(b)
+}
+
+ECOS_get_G <- function(Jtot, KMI, J, I, a, Q, w.constr, ns, red) {
+    
+  if (w.constr[["p"]] == "L1" & w.constr[["dir"]] == "==") { # simplex
+    
+    G <- rbind(c(a, 1),                                                                  # linear part of QF
+               cbind(-diag(1,Jtot), matrix(0, Jtot, KMI), matrix(0, Jtot, ns)),          # lower bounds on w
+               c(rep(0, Jtot+KMI),-1),                                                   # SOC definition (||sqrt(Q)beta|| <= t)
+               c(rep(0, Jtot+KMI), 1),                                                   
+               cbind(-2*Q, rep(0, Jtot+KMI-red)))
+    
+  } else if (w.constr[["p"]] == "L1" & w.constr[["dir"]] == "<=") { # lasso, x = (beta, z, t)
+    
+    G <- rbind(c(a, rep(0, ns-1), 1),                                                    # linear part of QF
+               cbind(diag(1, Jtot), matrix(0, Jtot, KMI), diag(1, Jtot), rep(0, Jtot)),  # z >= -w
+               cbind(-diag(1, Jtot), matrix(0, Jtot, KMI), diag(1, Jtot), rep(0, Jtot)), # z >= w
+               -blockdiag(I, Jtot, J, KMI, ns, TRUE),                                    # norm-inequality constraint 
+               c(rep(0, Jtot+KMI+Jtot),-1),                                              # SOC definition (||sqrt(Q)beta|| <= t)
+               c(rep(0, Jtot+KMI+Jtot), 1),                                              
+               cbind(-2*Q, matrix(0, Jtot+KMI-red, Jtot + 1)))
+    
+  } else if (w.constr[["p"]] == "L2" & w.constr[["dir"]] == "<=") { # ridge, x = (beta, s, t)
+    
+    G <- rbind(c(a, rep(0, I), 1),                                                       # linear part of QF
+               cbind(matrix(0, I, Jtot+KMI), diag(1, I, I), rep(0, I)),                  # s <= Q1^2
+               blockdiagRidge(Jtot, J, KMI, I),                                          # SOC definition (||w|| <= s)
+               c(rep(0, Jtot+KMI), rep(0, I), -1),                                       # SOC definition (||sqrt(Q)beta|| <= t)
+               c(rep(0, Jtot+KMI), rep(0, I), 1),                                              
+               cbind(-2*Q, matrix(0, Jtot+KMI-red, I + 1)))
+    
+  } else if (w.constr[["p"]] == "L1-L2") { # L1-L2, x = (beta, s, t)
+
+    G <- rbind(c(a, rep(0, ns-1), 1),                                                    # linear part of QF
+               cbind(-diag(1,Jtot), matrix(0, Jtot, KMI), matrix(0, Jtot, ns)),          # lower bounds on w
+               cbind(matrix(0, I, Jtot+KMI), diag(1, I, I), rep(0, I)),                  # s <= Q2^2
+               blockdiagRidge(Jtot, J, KMI, I),                                          # SOC definition (||w||_2 <= s)
+               c(rep(0, Jtot+KMI), rep(0, I), -1),                                       # SOC definition (||sqrt(Q)beta||_2 <= t)
+               c(rep(0, Jtot+KMI), rep(0, I), 1),                                              
+               cbind(-2*Q, matrix(0, Jtot+KMI-red, I + 1)))
+    
+  } else if (w.constr[["p"]] == "no norm") { # ols
+    
+    G <- rbind(c(a, 1),                                                                  # linear part of QF
+               c(rep(0, Jtot+KMI),-1),                                                   # SOC definition (||sqrt(Q)beta|| <= t) 
+               c(rep(0, Jtot+KMI), 1),                                                  
+               cbind(-2*Q, rep(0, Jtot+KMI-red)))
+    
+  }
+  
+  return(methods::as(G, "sparseMatrix"))
+}
+
+
+ECOS_get_h <- function(d, lb, J, Jtot, KMI, I, w.constr, Q1, Q2, red) {
+  
+  if (w.constr[["p"]] == "L1" & w.constr[["dir"]] == "==") { # simplex
+    
+    h <- c(-d,                         # linear part of QF
+           -lb,                        # lower bounds of w
+           1, 1, rep(0,Jtot+KMI-red))  # SOC definition
+    
+  } else if (w.constr[["p"]] == "L1" & w.constr[["dir"]] == "<=") { # lasso
+    
+    h <- c(-d,                         # linear part of QF 
+           rep(0, 2*Jtot),             # abs(w) <= z
+           Q1,                         # norm-inequality constraints
+           1, 1, rep(0,Jtot+KMI-red))  # SOC definition
+    
+  } else if (w.constr[["p"]] == "L2" & w.constr[["dir"]] == "<=") { # ridge
+    
+    aux <- unlist(lapply(1:I, function(x) c(1,1,rep(0,J[[x]]))))
+    
+    h <- c(-d,                         # linear part of QF
+           Q1^2,                       # s <= Q1^2
+           aux,                        # SOC definition (||w|| <= s)
+           1, 1, rep(0,Jtot+KMI-red))  # SOC definition (||sqrt(Q)beta|| <= t)
+    
+  } else if (w.constr[["p"]] == "L1-L2") { # L1-L2
+    
+    aux <- unlist(lapply(1:I, function(x) c(1,1,rep(0,J[[x]]))))
+    
+    h <- c(-d,                         # linear part of QF
+           -lb,                        # lower bounds of w
+           Q2^2,                       # s <= Q2^2
+           aux,                        # SOC definition (||w||_2 <= s)
+           1, 1, rep(0,Jtot+KMI-red))  # SOC definition (||sqrt(Q)beta|| <= t)
+    
+  } else if (w.constr[["p"]] == "no norm") { # ols
+    
+    h <- c(-d,                         # linear part of QF
+           1, 1, rep(0,Jtot+KMI-red))  # SOC definition
+    
+  }
+  
+  return(h)
 }
 
 
@@ -291,7 +281,7 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
       }
 
       if (is.null(Qfeat)) Qfeat <- shrinkage.EST("ridge", A, Z, V, J, KM)$Q
-      w.constr[["Q"]]      <- min(Qfeat, na.rm=TRUE)
+      w.constr[["Q"]]      <- max(min(Qfeat, na.rm=TRUE), .5)
       w.constr[["lambda"]] <- aux$lambda
     }
 
@@ -323,11 +313,11 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
       }
       
       if (is.null(Qfeat)) Qfeat <- shrinkage.EST("ridge", A, Z, V, J, KM)$Q
-      w.constr[["Q2"]]      <- max(Qfeat, na.rm=TRUE)
+      w.constr[["Q2"]]      <-  max(min(Qfeat, na.rm=TRUE), .5)
       w.constr[["lambda"]] <- aux$lambda
     }
   
-    w.constr <- list(lb     = -Inf,
+    w.constr <- list(lb     = 0,
                      p      = "L1-L2",
                      dir    = "==/<=",
                      Q      = 1,
@@ -378,7 +368,7 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
     Q       <- sqrt(sum(wls$coef^2, na.rm = TRUE)) / (1 + lambd)            # convert lambda into Q
     
     if (is.nan(Q) | (nrow(Z) <= ncol(Z) + 10)) { # reduce dimensionality of the problem if more params than obs
-      lasso.cols <- b.est(A, Z, J, KM, list(dir = "<=", lb = -Inf, p = "L1", Q = 1), V, NULL)
+      lasso.cols <- b.est(A, Z, J, KM, list(dir = "<=", lb = -Inf, p = "L1", Q = 1), V)
       active.cols <- abs(lasso.cols) > 1e-8
       if (sum(active.cols) >= (max(nrow(A) - 10, 2)) ) {
         active.cols <-  rank(-abs(lasso.cols)) <= max(nrow(A) - 10, 2)
@@ -390,14 +380,13 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
       Q       <- sqrt(sum(wls$coef^2, na.rm = TRUE)) / (1 + lambd)            # convert lambda into Q
     }
   }
-
+  
   return(list(Q = Q, lambda = lambd))
 }
 
-
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method
-b.est <- function(A, Z, J, KM, w.constr, V, opt.list) {
+b.est <- function(A, Z, J, KM, w.constr, V) {
 
   dire <- w.constr[["dir"]]
   lb   <- w.constr[["lb"]]
@@ -410,85 +399,50 @@ b.est <- function(A, Z, J, KM, w.constr, V, opt.list) {
   if (p == "L1-L2") {
     pp <- NULL
     Q2 <- w.constr[["Q2"]]
-  }    
+  } else {
+    Q2 <- NULL
+  }
+  
+  x <- CVXR::Variable(J + KM)
 
-  opt.list <- prepareOptions(opt.list, p, dire, lb, "scest")
-  use.CVXR <- useCVXR(w.constr)
-
-  if (use.CVXR == TRUE) { # handle L1 norm + inequality constraint
-
-    x <- CVXR::Variable(J + KM)
-
-    objective   <- CVXR::Minimize(CVXR::quad_form(A - Z %*% x, V))
-    constraints <- list(CVXR::norm1(x[1:J]) <= QQ, x[1:J] >= lb)
-    prob        <- CVXR::Problem(objective, constraints)
-    sol         <- CVXR::solve(prob)
-
-    b <- sol$getValue(x)
-    alert <- sol$status != "optimal"
-
-    if (alert == TRUE) {
-      stop(paste0("Estimation algorithm not converged! The algorithm returned the value:", 
-                  sol$status, ". To check to what errors it corresponds go to 
-                 'https://cvxr.rbind.io/cvxr_examples/cvxr_gentle-intro/'."))
+  objective <- CVXR::Minimize(CVXR::quad_form(A - Z %*% x, V))
+  
+  if (p == "no norm") { # least squares
+    constraints <- list()
+    
+  } else if (p == "L1") {
+    if (dire == "==") { # simplex
+      constraints <- list(CVXR::sum_entries(x[1:J]) == QQ, x[1:J] >= lb)
+    } else if (dire == "<=") { # lasso
+      constraints <- list(CVXR::norm1(x[1:J]) <= QQ, x[1:J] >= lb)
     }
     
-  } else {    # Optimization of all other cases
-
-    if (p == "no norm") {
-      res <-   nloptr::nloptr(x0          = rep(0, (J+KM)),
-                              eval_f      = obj.fun.est,
-                              lb          = c(rep(lb,J), rep(-Inf,KM)),
-                              ub          = c(rep(Inf,J), rep(Inf,KM)),
-                              opts        = opt.list,
-                              Z = Z, V = V, A = A, J = J, QQ = QQ, KM = KM, p = pp)
-      
-    } else if (p == "L1-L2") {
-      S <- matrix(1, nrow = 1, ncol = J)
-      res <-   nloptr::nloptr(x0          = rep(0, (J+KM)),
-                              eval_f      = obj.fun.est.sr,
-                              lb          = c(rep(lb,J), rep(-Inf,KM)),
-                              ub          = c(rep(Inf,J), rep(Inf,KM)),
-                              eval_g_eq   = norm.L1, 
-                              eval_g_ineq = norm.L2, 
-                              opts        = opt.list,
-                              Z = Z, V = V, A = A, J = J, Q1 = QQ, Q2 = Q2, KMI = KM, S = S)
-      
-    } else {
-      if (dire == "==") {
-        res <-   nloptr::nloptr(x0          = rep(0, (J+KM)),
-                                eval_f      = obj.fun.est,
-                                lb          = c(rep(lb,J), rep(-Inf,KM)),
-                                ub          = c(rep(Inf,J), rep(Inf,KM)),
-                                eval_g_eq   = norm.co.est, 
-                                opts        = opt.list,
-                                Z = Z, V = V, A = A, J = J, QQ = QQ, KM = KM, p = pp)
-
-      } else if (dire == "<=") {
-        res <-   nloptr::nloptr(x0          = rep(0, (J+KM)),
-                                eval_f      = obj.fun.est,
-                                lb          = c(rep(lb,J), rep(-Inf,KM)),
-                                ub          = c(rep(Inf,J), rep(Inf,KM)),
-                                eval_g_ineq = norm.co.est,
-                                opts        = opt.list,
-                                Z = Z, V = V, A = A, J = J, QQ = QQ, KM = KM, p = pp)
-
-      }
-    } 
-
-    b         <- res$solution
-    alert     <- res$status < 0 | res$status >= 5
-
-    if (alert == TRUE) {
-      stop(paste0("Estimation algorithm not converged! The algorithm returned the value:", 
-                  res$status, ". To check to what errors it corresponds go to 
-                  'https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#return-values'."))
+  } else if (p == "L2") { # ridge
+    if (dire == "==") {
+      constraints <- list(CVXR::sum_squares(x[1:J]) == CVXR::power(QQ, 2))
+    } else if (dire == "<=") {
+      constraints <- list(CVXR::sum_squares(x[1:J]) <= CVXR::power(QQ, 2))
     }
-  }
+    
+  } else if (p == "L1-L2") {
+    constraints <- list(CVXR::sum_entries(x[1:J]) == QQ, 
+                        CVXR::power(CVXR::cvxr_norm(x[1:J], 2), 2) <= CVXR::power(Q2, 2),
+                        x[1:J] >= lb)
+  }  
+  
+  prob        <- CVXR::Problem(objective, constraints)
+  sol         <- CVXR::solve(prob)
+  
+  b <- sol$getValue(x)
+  alert <- sol$status != "optimal"
 
-  if (is.matrix(b)) {
-    b <- b[, 1, drop = TRUE]
+  if (alert == TRUE) {
+    stop(paste0("Estimation algorithm not converged! The algorithm returned the value:", 
+                sol$status, ". To check to what errors it corresponds go to 
+               'https://cvxr.rbind.io/cvxr_examples/cvxr_gentle-intro/'."))
   }
+  
+  b <- b[, 1, drop = TRUE]
   names(b) <- colnames(Z)
 
   return(b)
@@ -496,7 +450,7 @@ b.est <- function(A, Z, J, KM, w.constr, V, opt.list) {
 
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method - Multiple treated units case
-b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, opt.list, S) {
+b.est.multi <- function(A, Z, J, KMI, I, w.constr, V) {
 
   # The constraint is symmetric in the shape across treated units (J, KM, Q might change)
   dire  <- w.constr[[1]]$dir
@@ -511,91 +465,53 @@ b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, opt.list, S) {
     Q2 <- unlist(lapply(w.constr, function(x) x$Q2))
   }  
   
-  opt.list <- prepareOptions(opt.list, p, dire, lb, "scest", I)
-  use.CVXR <- useCVXR(w.constr[[1]])
-  
   Jtot <- sum(unlist(J))
   
-  if (use.CVXR == TRUE) { # handle L1 norm + inequality constraint
-    x <- CVXR::Variable(Jtot+KMI)
-    
-    objective   <- CVXR::Minimize(CVXR::quad_form(A - Z %*% x, V))
+  x <- CVXR::Variable(Jtot+KMI)
+  
+  objective   <- CVXR::Minimize(CVXR::quad_form(A - Z %*% x, V))
+  
+  if (lb != -Inf) {
     constraints <- list(x[1:Jtot] >= lb)
-    j.lb <- 1
-    for (i in seq_len(I)) {
-      j.ub <- j.lb + J[[i]] - 1 
-      constraints <- append(constraints, list(CVXR::norm1(x[j.lb:j.ub]) <= QQ[i]))
-      j.lb <- j.ub + 1
-    }
-    prob        <- CVXR::Problem(objective, constraints)
-    sol         <- CVXR::solve(prob)
+  } else {
+    constraints <- list()
+  }
+  
+  j.lb <- 1
+  for (i in seq_len(I)) {
+    j.ub <- j.lb + J[[i]] - 1
     
-    b <- sol$getValue(x)
-    alert <- sol$status != "optimal"
-    
-    if (alert == TRUE) {
-      stop(paste0("Estimation algorithm not converged! The algorithm returned the value:", 
-                  sol$status, ". To check to what errors it corresponds go to 
-                  'https://cvxr.rbind.io/cvxr_examples/cvxr_gentle-intro/'."))
-    }
-    
-  } else {    # Optimization of all other cases
-    
-    if (p == "no norm") {
-      res <-   nloptr::nloptr(x0          = rep(0, (Jtot+KMI)),
-                              eval_f      = obj.fun.est.multi,
-                              lb          = c(rep(lb,Jtot), rep(-Inf,KMI)),
-                              ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                              opts        = opt.list,
-                              Z = Z, V = V, A = A, J = Jtot, QQ = QQ, KMI = KMI, p = pp, S = S)
-      
-    } else if (p == "L1-L2") {
-      res <-   nloptr::nloptr(x0          = rep(0, (Jtot+KMI)),
-                              eval_f      = obj.fun.est.sr,
-                              lb          = c(rep(lb,Jtot), rep(-Inf,KMI)),
-                              ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                              eval_g_eq   = norm.L1, 
-                              eval_g_ineq = norm.L2, 
-                              opts        = opt.list,
-                              Z = Z, V = V, A = A, J = Jtot, Q1 = QQ, Q2 = Q2, KMI = KMI, S = S)
-      
-    } else {
-      if (dire == "==") {
-        res <-   nloptr::nloptr(x0          = rep(0, (Jtot+KMI)),
-                                eval_f      = obj.fun.est.multi,
-                                lb          = c(rep(lb,Jtot), rep(-Inf,KMI)),
-                                ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                                eval_g_eq   = norm.co.est.multi, 
-                                opts        = opt.list,
-                                Z = Z, V = V, A = A, J = Jtot, QQ = QQ, KMI = KMI, p = pp, S = S)
-        
-      } else if (dire == "<=") {
-        res <-   nloptr::nloptr(x0          = rep(0, (Jtot+KMI)),
-                                eval_f      = obj.fun.est.multi,
-                                lb          = c(rep(lb,Jtot), rep(-Inf,KMI)),
-                                ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                                eval_g_ineq = norm.co.est.multi,
-                                opts        = opt.list,
-                                Z = Z, V = V, A = A, J = Jtot, QQ = QQ, KMI = KMI, p = pp, S = S)
-        
+    if (p == "L1") {
+      if (dire == "==") { # simplex
+        constraints <- append(constraints, list(CVXR::sum_entries(x[j.lb:j.ub]) == QQ[i]))
+      } else if (dire == "<=") { # lasso
+        constraints <- append(constraints, list(CVXR::norm1(x[j.lb:j.ub]) <= QQ[i]))
       }
-    }  
+      
+    } else if (p == "L2") { # ridge
+        constraints <- append(constraints, list(CVXR::sum_squares(x[j.lb:j.ub]) <= QQ[i]^2))
+
+    } else if (p == "L1-L2") {
+      constraints <- append(constraints, list(CVXR::sum_entries(x[j.lb:j.ub]) == QQ[i], 
+                          CVXR::power(CVXR::cvxr_norm(x[j.lb:j.ub], 2), 2) <= CVXR::power(Q2[i], 2)))
+    }    
     
-    b         <- res$solution
-    alert     <- res$status < 0 | res$status >= 5
-    
-    if (alert == TRUE) {
-      stop(paste0("Estimation algorithm not converged! The algorithm returned the value:", 
-                  res$status, ". To check to what errors it corresponds go to 
-                  'https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#return-values'."))
-    }
+    j.lb <- j.ub + 1
+  }
+  
+  prob        <- CVXR::Problem(objective, constraints)
+  sol         <- CVXR::solve(prob)
+  
+  b <- sol$getValue(x)
+  alert <- sol$status != "optimal"
+  
+  if (alert == TRUE) {
+    stop(paste0("Estimation algorithm not converged! The algorithm returned the value:", 
+                sol$status, ". To check to what errors it corresponds go to 
+                'https://cvxr.rbind.io/cvxr_examples/cvxr_gentle-intro/'."))
   }
 
-  if (is.matrix(b)) {
-    rownames(b)  <- colnames(Z)
-  } else {
-    names(b) <- colnames(Z)
-  }
+  rownames(b)  <- colnames(Z)
 
   return(b)
 }
@@ -733,17 +649,16 @@ u.des.prep <- function(B, C, u.order, u.lags, coig.data, T0.tot, constant,
 
 
 e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.feat, features,
-                       J, index, index.w, coig.data, T0, T1, constant, e.design, P.diff.pre) {
+                       J, index, index.w, coig.data, T0, T1, constant, e.design, P.diff.pre, effect, I) {
 
   # If the outcome variable is not among the features we need to create the
   # proper vector of residuals. Further, we force the predictors to be
   # the outcome variable of the donors
-  sel <- c()
-
   aux <- trendRemove(P)
   C <- trendRemove(C)$mat
   index <- index[aux$sel]
   P <- aux$mat
+  
   if (!is.null(P.diff.pre)) P.diff.pre <- trendRemove(as.matrix(P.diff.pre))$mat
   
   if (out.feat == FALSE) {
@@ -752,9 +667,14 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
     if (coig.data == TRUE) {
       e.des.0 <- apply(Y.donors, 2, function(x) x - dplyr::lag(x))[, index.w]
 
-      P.first <- P[1, ] - Y.donors[T0[1], ]
+      if (effect == "time") {
+        P.first <- (P[1, ]*I - Y.donors[T0[1], ])/I
+      } else {
+        P.first <- P[1, ] - Y.donors[T0[1], ]
+      }
       P.diff  <- rbind(P.first, apply(P, 2, diff))[, index, drop = FALSE]
       e.des.1 <- P.diff
+      
     } else {
       e.des.0  <- Y.donors[, index.w]
       e.des.1  <- P[, index, drop = FALSE]
@@ -780,14 +700,20 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
         # Create first differences of the first feature (outcome) of the matrix B (not of C!!)
         BB       <- B[feature.id == features[1], ]
         B.diff   <- rbind(B.diff, BB - dplyr::lag(BB))
+
         e.des.0 <- cbind(B.diff, C[feature.id == features[1], ])[, index, drop = FALSE]
 
 
         ## Take first differences of P
         # Remove last observation of first feature from first period of P
-        P.first <- c((P[1, (1:J), drop = FALSE] - B[feature.id == features[1], , drop = FALSE][T0[1], ]),
-                     P[1 , -(1:J), drop = FALSE])
+        if (effect == "time") {
+          P.first <- c((P[1, (1:J), drop = FALSE]*I - B[feature.id == features[1], , drop = FALSE][T0[1], ]),
+                       P[1, -(1:J), drop = FALSE]*I)/I
 
+        } else {
+          P.first <- c((P[1, (1:J), drop = FALSE] - B[feature.id == features[1], , drop = FALSE][T0[1], ]),
+                       P[1, -(1:J), drop = FALSE])
+        }
 
         # Take differences of other periods
         if (nrow(P) > 2) {
@@ -907,9 +833,9 @@ DUflexGet <- function(u.des.0.na, C, f.id.na, M) {
 }
 
 
-insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, S, Sigma.root, J, KMI, I,
+insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I,
                                    w.constr.inf, Q.star, Q2.star, lb, TT, sims, cores, verbose, 
-                                   w.lb.est, w.ub.est, opt.list.inf) {
+                                   w.lb.est, w.ub.est) {
 
   Q <- t(Z.na) %*% V.na %*% Z.na / TT
   colnames(Q) <- colnames(Z.na)
@@ -918,24 +844,32 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, S, Sigma.root, J, KMI
   if (w.constr.inf[["p"]] == "L1") p.int <- 1
   if (w.constr.inf[["p"]] == "L2") p.int <- 2
   if (w.constr.inf[["p"]] == "L1-L2") p.int <- NULL
-  
-  # Algorithm initial value is lower bound unless -Inf
-  x0 <- lb
-  x0[is.infinite(lb)] <- 0
 
   jj <- nrow(P.na)
 
   # optimizing options
   
-  opt.list <- prepareOptions(opt.list.inf, w.constr.inf[["p"]], w.constr.inf[["dir"]], lb, "scpi", I)
-  use.CVXR <- useCVXR(list(Q = Q.star, p = w.constr.inf[["p"]], dir = w.constr.inf[["dir"]], lb = lb))
   Jtot <- sum(unlist(J))
 
   iters <- round(sims / 10)
   perc  <- 0
+
   # simulate
+  ns <- ECOS_get_n_slacks(w.constr.inf, Jtot, I)
+  Qreg <- matRegularize(Q)
+  dimred <- nrow(Q) - nrow(Qreg)
+
+  if (dimred==0) {
+    Qreg <- sqrtm(Q)
+  }
+
+  data <- list()
+  data[["dims"]] <- ECOS_get_dims(Jtot, J, KMI, w.constr.inf, I, dimred)
+  data[["A"]] <- ECOS_get_A(J, Jtot, KMI, I, w.constr.inf, ns)
+  data[["b"]] <- ECOS_get_b(Q.star, Q2.star, w.constr.inf)
 
   if (cores == 1) {
+    
     vsig <- matrix(NA, nrow = sims, ncol = 2 * jj)
 
     for (sim in seq_len(sims)) {
@@ -947,22 +881,63 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, S, Sigma.root, J, KMI
       }
 
       zeta    <- rnorm(length(beta))
-      G       <- Sigma.root %*% zeta
-
+      G <- Sigma.root %*% zeta
+      a <- -2 * G - 2 * c(t(beta) %*% Q)
+      d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
+      
+      data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred)
+      data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
+      
       for (hor in seq_len(jj)) {
         xt <- P.na[hor, ]
+        
+        # minimization
+        if (w.lb.est == TRUE) {
+          data[["c"]] <- ECOS_get_c(-xt, ns)
+          
+          solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
+                                                  G = data[["G"]],
+                                                  h = data[["h"]],
+                                                  dims = data[["dims"]],
+                                                  A = data[["A"]],
+                                                  b = data[["b"]])
 
-        output  <- scpi.in(xt = xt, beta = beta, Q = Q, G = G, J = J, KMI = KMI, I = I, Jtot = Jtot, S = S,
-                           p.int = p.int, QQ = Q.star, QQ2 = Q2.star, lb = lb, x0 = x0,
-                           dire = w.constr.inf[["dir"]], p = w.constr.inf[["p"]],
-                           w.lb.est = w.lb.est, w.ub.est = w.ub.est, opt.list = opt.list, use.CVXR = use.CVXR)
+          if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+            lb.f <- NA
+          } else {
+            xx <- solver_output$x[1:(Jtot+KMI)]
+            lb.f <- -sum(xt*(xx - beta))
+          }     
+        } else {
+          lb.f <- NA
+        }
+        
+        # maximization
+        if (w.ub.est == TRUE) {
+          data[["c"]] <- ECOS_get_c(xt, ns)
+          
+          solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
+                                                  G = data[["G"]],
+                                                  h = data[["h"]],
+                                                  dims = data[["dims"]],
+                                                  A = data[["A"]],
+                                                  b = data[["b"]])
+          
+          if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+            ub.f <- NA
+          } else {
+            xx <- solver_output$x[1:(Jtot+KMI)]
+            ub.f <- -sum(xt*(xx - beta))
+          }     
+        } else {
+          ub.f <- NA
+        }
 
-        vsig[sim, hor]      <- output[1]
-        vsig[sim, hor + jj] <- output[2]
-
+        vsig[sim, hor] <- lb.f
+        vsig[sim, hor + nrow(P.na)] <- ub.f
       }
     }
-
+    
   } else if (cores >= 1) {
 
     progress <- function(n) {
@@ -979,29 +954,70 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, S, Sigma.root, J, KMI
     doSNOW::registerDoSNOW(cl)
 
     vsig <- foreach::foreach(i = 1 : sims,
-                             .packages = c('nloptr','CVXR'),
-                             .export   = c('scpi.in','obj.fun.min','obj.fun.max', 'checkConstraints', 'useCVXR',
-                                           'single.ineq','double.ineq', 'norm.equal', 'prepareOptions',
-                                           'obj.fun.min.sr','obj.fun.max.sr','double.ineq.sr', 'norm.equal.sr'),
+                             .packages = c('ECOSolveR', 'Matrix'),
+                             .export   = c('ECOS_get_G', 'ECOS_get_h', 'ECOS_get_h', 'ECOS_get_c',
+                                           'blockdiag', 'blockdiagRidge', 'sqrtm'),
                              .combine  = rbind,
                              .options.snow = opts) %dorng% {
                                
-                               zeta   <- rnorm(length(beta))
-                               G      <- Sigma.root %*% zeta
+                               ub.sim <- lb.sim <- c()
                                
-                               ub.sim <- c()
-                               lb.sim <- c()
+                               zeta    <- rnorm(length(beta))
+                               G       <- Sigma.root %*% zeta
+                               
+                               a <- -2 * G - 2 * c(t(beta) %*% Q)
+                               d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
+                               
+                               data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred)
+                               data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
                                
                                for (hor in seq_len(jj)) {
-                                 xt <- P.na[hor,]
+                                 xt <- P.na[hor, ]
                                  
-                                 output  <- scpi.in(xt = xt, beta = beta, Q = Q, G = G, J = J, KMI = KMI, I = I, Jtot = Jtot, S = S,
-                                                    p.int = p.int, QQ = Q.star, QQ2 = Q2.star, lb = lb, x0 = x0,
-                                                    dire = w.constr.inf[["dir"]], p = w.constr.inf[["p"]], 
-                                                    w.lb.est = w.lb.est, w.ub.est = w.ub.est, opt.list = opt.list, use.CVXR = use.CVXR)
+                                 # minimization
+                                 if (w.lb.est == TRUE) {
+                                   data[["c"]] <- ECOS_get_c(-xt, ns)
+                                   
+                                   solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
+                                                                           G = data[["G"]],
+                                                                           h = data[["h"]],
+                                                                           dims = data[["dims"]],
+                                                                           A = data[["A"]],
+                                                                           b = data[["b"]])
+                                   
+                                   if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+                                     lb.f <- NA
+                                   } else {
+                                     xx <- solver_output$x[1:(Jtot+KMI)]
+                                     lb.f <- -sum(xt*(xx - beta))
+                                   }     
+                                 } else {
+                                   lb.f <- NA
+                                 }
                                  
-                                 lb.sim      <- append(lb.sim, output[1])
-                                 ub.sim      <- append(ub.sim, output[2])
+                                 # maximization
+                                 if (w.ub.est == TRUE) {
+                                   data[["c"]] <- ECOS_get_c(xt, ns)
+                                   
+                                   solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
+                                                                           G = data[["G"]],
+                                                                           h = data[["h"]],
+                                                                           dims = data[["dims"]],
+                                                                           A = data[["A"]],
+                                                                           b = data[["b"]])
+                                   
+                                   if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+                                     ub.f <- NA
+                                   } else {
+                                     xx <- solver_output$x[1:(Jtot+KMI)]
+                                     ub.f <- -sum(xt*(xx - beta))
+                                   }     
+                                 } else {
+                                   ub.f <- NA
+                                 }
+                                 
+                                 lb.sim      <- append(lb.sim, lb.f)
+                                 ub.sim      <- append(ub.sim, ub.f)
                                  
                                }
                                
@@ -1014,330 +1030,8 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, S, Sigma.root, J, KMI
   return(vsig)
 }
 
-
-scpi.in <- function(xt, beta, Q, G, J, KMI, I, Jtot, S, p.int, QQ, QQ2, dire, p, lb, x0, 
-                    w.lb.est, w.ub.est, opt.list, use.CVXR) {
-  # define optimization; min
-  if (w.lb.est == TRUE) {
-    
-    if (use.CVXR == TRUE) { # handle L1 norm + inequality constraint
-      a <- -2 * G - 2 * c(t(beta) %*% Q)
-      d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-
-      x <- CVXR::Variable(Jtot+KMI)
-
-      objective   <- CVXR::Minimize(-sum(CVXR::multiply(xt,x - beta)))
-      
-      constraints <- list(CVXR::quad_form(x, Q) + sum(CVXR::multiply(a, x)) + d <= 0)
-      
-      if (lb[1] > - Inf) {
-        constraints <- append(constraints, list(x[1:Jtot] >= lb))
-      }
-      
-      j.lb <- 1
-      for (i in seq_len(I)) {
-        j.ub <- j.lb + J[[i]] - 1 
-        constraints <- append(constraints, list(CVXR::norm1(x[j.lb:j.ub]) <= QQ[i]))
-        j.lb <- j.ub + 1
-      }      
-      
-      prob     <- CVXR::Problem(objective, constraints)
-      sol      <- CVXR::solve(prob)
-      alert    <- !(sol$status %in% c("optimal","optimal_inaccurate"))
-      
-      if (alert == TRUE) {
-        lb.est <- NA
-      } else {
-        lb.est <- sol$value
-      }
-      
-    } else {
-
-      if (dire == "<=") {
-        res.lb <-   nloptr(x0          = c(x0, rep(0,KMI)),
-                           eval_f      = obj.fun.min,
-                           lb          = c(lb, rep(-Inf,KMI)),
-                           ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                           eval_g_ineq = double.ineq,
-                           opts        = opt.list,
-                           xt = xt, beta = beta, Q = Q, G = G, J = Jtot, KMI = KMI, 
-                           QQ = QQ, p.int = p.int, S = S)
-  
-      } else if (dire == "==") {
-        res.lb <-   nloptr(x0          = c(x0, rep(0,KMI)),
-                           eval_f      = obj.fun.min,
-                           lb          = c(lb, rep(-Inf,KMI)),
-                           ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                           eval_g_eq   = norm.equal,
-                           eval_g_ineq = single.ineq,
-                           opts        = opt.list,
-                           xt = xt, beta = beta, Q = Q, G = G, J = Jtot, KMI = KMI, 
-                           QQ = QQ, p.int = p.int, S = S)
-
-      } else if (dire == "==/<=") {
-        res.lb <-   nloptr(x0          = c(x0, rep(0,KMI)),
-                           eval_f      = obj.fun.min.sr,
-                           lb          = c(lb, rep(-Inf,KMI)),
-                           ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                           eval_g_eq   = norm.equal.sr,
-                           eval_g_ineq = double.ineq.sr,
-                           opts        = opt.list,
-                           xt = xt, beta = beta, Q = Q, G = G, J = Jtot, KMI = KMI, 
-                           Q1 = QQ, Q2 = QQ2, S = S)
-
-      } else if (dire == "NULL") {
-        res.lb <-   nloptr(x0          = c(x0, rep(0,KMI)),
-                           eval_f      = obj.fun.min,
-                           lb          = c(lb, rep(-Inf,KMI)),
-                           ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                           eval_g_ineq = single.ineq,
-                           opts        = opt.list,
-                           xt = xt, beta = beta, Q = Q, G = G, J = Jtot, KMI = KMI, 
-                           QQ = QQ, p.int = p.int, S = S)      
-      }
-      
-      alert <- res.lb$status < 0 | res.lb$status >= 5
-      #flag  <- checkConstraints(res.lb, dire, 1.0e-2, 1.0e-2)  # allow for a little bit of slackness 
-      
-      
-      if ((alert == TRUE) ) { #| (flag == TRUE)
-        lb.est <- NA
-      } else {
-        lb.est <- res.lb$objective
-      }
-    }
-  } else {
-    lb.est <- NA
-  }
-  
-  # define optimization; max
-  if (w.ub.est == TRUE) {
-    if (use.CVXR == TRUE) { # handle L1 norm + inequality constraint
-      
-      a <- -2*G - 2*c(t(beta) %*% Q)
-      d <- 2*sum(G*beta) + sum(beta*(Q %*% beta))
-      
-      x <- CVXR::Variable(Jtot+KMI)
-      
-      objective   <- CVXR::Minimize(sum(CVXR::multiply(xt,x-beta)))
-      
-      constraints <- list(CVXR::quad_form(x, Q) + sum(CVXR::multiply(a, x)) + d <= 0)
-      
-      if (!is.infinite(lb[1])) {
-        constraints <- append(constraints, list(x[1:J] >= 0))
-      }
-      
-      j.lb <- 1
-      for (i in seq_len(I)) {
-        j.ub <- j.lb + J[[i]] - 1 
-        constraints <- append(constraints, list(CVXR::norm1(x[j.lb:j.ub]) <= QQ[i]))
-        j.lb <- j.ub + 1
-      }      
-      
-      prob     <- CVXR::Problem(objective, constraints)
-      sol      <- CVXR::solve(prob)
-      alert    <- !(sol$status %in% c("optimal","optimal_inaccurate"))
-      
-      if (alert == TRUE) {
-        ub.est <- NA
-      } else {
-        ub.est <- -sol$value
-      }
-      
-    } else {    
-      
-      if (dire == "<=") {
-        res.ub <-   nloptr(x0          = c(x0, rep(0,KMI)),
-                           eval_f      = obj.fun.max,
-                           lb          = c(lb, rep(-Inf,KMI)),
-                           ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                           eval_g_ineq = double.ineq,
-                           opts        = opt.list,
-                           xt = xt, beta = beta, Q = Q, G = G, J = Jtot, KMI = KMI, 
-                           QQ = QQ, p.int = p.int, S = S)
-        
-      } else if (dire == "==") {
-        res.ub <-   nloptr(x0          = c(x0, rep(0,KMI)),
-                           eval_f      = obj.fun.max,
-                           lb          = c(lb, rep(-Inf,KMI)),
-                           ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                           eval_g_eq   = norm.equal,
-                           eval_g_ineq = single.ineq,
-                           opts        = opt.list,
-                           xt = xt, beta = beta, Q = Q, G = G, J = Jtot, KMI = KMI, 
-                           QQ = QQ, p.int = p.int, S = S)
-
-      } else if (dire == "==/<=") {
-        res.ub <-   nloptr(x0          = c(x0, rep(0,KMI)),
-                           eval_f      = obj.fun.max.sr,
-                           lb          = c(lb, rep(-Inf,KMI)),
-                           ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                           eval_g_eq   = norm.equal.sr,
-                           eval_g_ineq = double.ineq.sr,
-                           opts        = opt.list,
-                           xt = xt, beta = beta, Q = Q, G = G, J = Jtot, KMI = KMI, 
-                           Q1 = QQ, Q2 = QQ2, S = S)        
-        
-      } else if (dire == "NULL") {
-        res.ub <-   nloptr(x0          = c(x0, rep(0,KMI)),
-                           eval_f      = obj.fun.max,
-                           lb          = c(lb, rep(-Inf,KMI)),
-                           ub          = c(rep(Inf,Jtot), rep(Inf,KMI)),
-                           eval_g_ineq = single.ineq,
-                           opts        = opt.list,
-                           xt = xt, beta = beta, Q = Q, G = G, J = Jtot, KMI = KMI, 
-                           QQ = QQ, p.int = p.int, S = S)      
-      }
-      
-      alert <- res.ub$status < 0 | res.ub$status >= 5
-      #flag  <- checkConstraints(res.ub, dire, 1.0e-2, 1.0e-2)  # allow for a little bit of slackness 
-      
-      if ((alert == TRUE)) { #| (flag == TRUE)
-        ub.est <- NA
-      } else {
-        ub.est <- -res.ub$objective
-      }
-    }    
-    
-  } else {
-    ub.est <- NA
-  }
-  
-  return(c(lb.est, ub.est))
-}
-
-# prepare algorithm options
-prepareOptions <- function(opt.list, p, dire, lb, input, I = 1) {
-  
-  if (input == "scest") {
-    if (is.null(opt.list$algorithm)) {
-      if ((p == "L1") && (any(lb == -Inf))) {
-        opt.list$algorithm <- 'NLOPT_LD_MMA'
-      } else {
-        opt.list$algorithm <- 'NLOPT_LD_SLSQP'
-      } 
-    }
-    
-    if (is.null(opt.list$xtol_rel)) opt.list$xtol_rel <- 1.0e-8
-    if (is.null(opt.list$xtol_abs)) opt.list$xtol_abs <- 1.0e-8
-    if (is.null(opt.list$ftol_rel)) opt.list$ftol_rel <- 1.0e-8
-    if (is.null(opt.list$ftol_abs)) opt.list$ftol_abs <- 1.0e-8
-    if (is.null(opt.list$maxeval))  opt.list$maxeval  <- 5000
-    
-    if (dire == "==") {
-      if (is.null(opt.list$tol_constraints_eq)) {
-        opt.list$tol_constraints_eq <- rep(1.0e-8, I)
-      } else {
-        opt.list$tol_constraints_eq <- rep(opt.list$tol_constraints_eq[1], I) 
-      }
-      
-    } else if (dire == "<=") {
-      if (is.null(opt.list$tol_constraints_ineq)) {
-        opt.list$tol_constraints_ineq <- rep(1.0e-8, I)
-      } else {
-        opt.list$tol_constraints_ineq <- rep(opt.list$tol_constraints_ineq[1], I) 
-      }
-      
-    } else if (dire == "==/<=") {
-      opt.list$ftol_rel <- 1.0e-32
-      opt.list$ftol_abs <- 1.0e-32
-      if (is.null(opt.list$tol_constraints_eq)) {
-        opt.list$tol_constraints_eq <- rep(1.0e-8, I)
-      } else {
-        opt.list$tol_constraints_eq <- rep(opt.list$tol_constraints_eq[1], I) 
-      }
-      if (is.null(opt.list$tol_constraints_ineq)) {
-        opt.list$tol_constraints_ineq <- rep(1.0e-8, I)
-      } else {
-        opt.list$tol_constraints_ineq <- rep(opt.list$tol_constraints_ineq[1], I) 
-      } 
-    }
-  }
-  
-  if (input == "scpi") {
-    
-    if (is.null(opt.list$algorithm)) {
-      if ((p == "L1") && (any(lb == -Inf))) {
-        opt.list$algorithm <- 'NLOPT_LD_MMA'
-      } else {
-        opt.list$algorithm <- 'NLOPT_LD_SLSQP'
-      } 
-    }
-    
-    if (is.null(opt.list$xtol_rel)) opt.list$xtol_rel <- 1.0e-8
-    if (is.null(opt.list$xtol_abs)) opt.list$xtol_abs <- 1.0e-8
-    if (is.null(opt.list$ftol_rel)) opt.list$ftol_rel <- 1.0e-8
-    if (is.null(opt.list$ftol_abs)) opt.list$ftol_abs <- 1.0e-8
-    if (is.null(opt.list$maxeval))  opt.list$maxeval  <- 5000
-    
-    if (dire == "NULL") {
-      if (is.null(opt.list$tol_constraints_ineq)) {
-        opt.list$tol_constraints_ineq <- 1.0e-8
-      } else {
-        opt.list$tol_constraints_ineq <- opt.list$tol_constraints_ineq[1]
-      }
-      
-    } else if (dire == "==") {
-      if (is.null(opt.list$tol_constraints_ineq)) {
-        opt.list$tol_constraints_ineq <- 1.0e-8
-      } else {
-        opt.list$tol_constraints_ineq <- opt.list$tol_constraints_ineq[1]
-      }
-      if (is.null(opt.list$tol_constraints_eq)) {
-        opt.list$tol_constraints_eq <- rep(1.0e-8, I)
-      } else {
-        opt.list$tol_constraints_eq <- rep(opt.list$tol_constraints_eq[1], I) 
-      }
-      
-    } else if (dire == "<=") {
-      opt.list$ftol_rel <- 1.0e-32
-      opt.list$ftol_abs <- 1.0e-32
-      if (is.null(opt.list$tol_constraints_ineq)) {
-        opt.list$tol_constraints_ineq <- rep(1.0e-8, I + 1)
-      } else {
-        opt.list$tol_constraints_ineq <- rep(opt.list$tol_constraints_ineq[1], I + 1) 
-      }
-      
-    } else if (dire == "==/<=") {
-      opt.list$ftol_rel <- 1.0e-32
-      opt.list$ftol_abs <- 1.0e-32
-      if (is.null(opt.list$tol_constraints_ineq)) {
-        opt.list$tol_constraints_ineq <- rep(1.0e-8, I + 1)
-      } else {
-        opt.list$tol_constraints_ineq <- rep(opt.list$tol_constraints_ineq[1], I + 1)
-      }
-      if (is.null(opt.list$tol_constraints_eq)) {
-        opt.list$tol_constraints_eq <- rep(1.0e-8, I)
-      } else {
-        opt.list$tol_constraints_eq <- rep(opt.list$tol_constraints_eq[1], I) 
-      }
-    }  
-  }
-  return(opt.list) 
-}
-
-
-# function to check that inequality and equality constraints are satisfied
-checkConstraints <- function(nloptr.obj, dir, tol_eq, tol_ineq) {
-  
-  if (dir == "NULL") {
-    flag <- nloptr.obj$eval_g_ineq(nloptr.obj$solution)$constraints > tol_ineq
-    
-  } else if (dir == "==") {
-    flag1 <- nloptr.obj$eval_g_ineq(nloptr.obj$solution)$constraints    > tol_ineq
-    flag2 <- abs(nloptr.obj$eval_g_eq(nloptr.obj$solution)$constraints) > tol_eq
-    
-    flag <- flag1 | any(flag2)
-    
-  } else if(dir == "<=") {
-    flag <- nloptr.obj$eval_g_ineq(nloptr.obj$solution)$constraints > tol_ineq
-    flag <- any(flag)
-  }
-  return(flag)
-}
-
 # Prediction interval, for e
-scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose) {
+scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose, effect) {
   
   neval <- nrow(eval)
   e.1 <- e.2 <- lb <- ub <- NA
@@ -1346,14 +1040,32 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose)
     if (e.method == "gaussian") {
       x.more   <- rbind(eval, x)
       fit      <- predict(y=res, x=x, eval=x.more, type="lm")
+
       e.mean   <- fit[1:neval]
       res.fit  <- fit[-(1:neval)]
+
+      if (effect == "time") {
+        labels <- unlist(purrr::map(stringr::str_split(rownames(fit)[1:neval], "\\."), 2))
+        e.mean <- aggregateUnits(xx=e.mean, labels=labels)
+      }
       
       var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm")
-      e.sig2   <- exp(var.pred[1:neval])
-
+      if (effect == "time") {
+        var.pred <- aggregateUnits(xx=var.pred[1:neval], labels=labels)
+      } else {
+        var.pred <- var.pred[1:neval]
+      }
+      e.sig2   <- exp(var.pred)
+      
       q.pred <- predict(y=res-res.fit, x=x, eval=x.more, type="qreg", tau = c(0.25,0.75))
-      IQ.pred <- q.pred[1:neval,2] - q.pred[1:neval,1]
+      if (effect == "time") {
+        q3.pred <- aggregateUnits(xx=q.pred[1:neval,2], labels=labels)
+        q1.pred <- aggregateUnits(xx=q.pred[1:neval,1], labels=labels)
+      } else {
+        q3.pred <- q.pred[1:neval,2]
+        q1.pred <- q.pred[1:neval,1]
+      }
+      IQ.pred <- q3.pred - q1.pred
       IQ.pred <- abs(IQ.pred)
       e.sig <- apply(cbind(sqrt(e.sig2), IQ.pred/1.34), 1, min)
       eps <- sqrt(-log(alpha)*2)*e.sig
@@ -1370,13 +1082,31 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose)
       fit     <- predict(y=res, x=x, eval=x.more, type="lm")
       e.mean  <- fit[1:neval]
       res.fit <- fit[-(1:neval)]
-      
+
+      if (effect == "time") {
+        labels <- unlist(purrr::map(stringr::str_split(rownames(fit)[1:neval], "\\."), 2))
+        e.mean <- aggregateUnits(xx=e.mean, labels=labels)
+      }
+    
       var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm")
-      e.sig    <- sqrt(exp(var.pred[1:neval]))
-      res.st   <- (res-res.fit)/sqrt(exp(var.pred[-(1:neval)]))
+      res.var <- var.pred[-(1:neval)]
+      if (effect == "time") {
+        var.pred <- aggregateUnits(xx=var.pred[1:neval], labels=labels)
+      } else {
+        var.pred <- var.pred[1:neval]
+      }
+      e.sig    <- sqrt(exp(var.pred))
+      res.st   <- (res-res.fit)/sqrt(exp(res.var))
       
       q.pred <- predict(y=res-res.fit, x=x, eval=x.more, type="qreg", tau = c(0.25,0.75))
-      IQ.pred <- q.pred[1:neval,2] - q.pred[1:neval,1]
+      if (effect == "time") {
+        q3.pred <- aggregateUnits(xx=q.pred[1:neval,2], labels=labels)
+        q1.pred <- aggregateUnits(xx=q.pred[1:neval,1], labels=labels)
+      } else {
+        q3.pred <- q.pred[1:neval,2]
+        q1.pred <- q.pred[1:neval,1]
+      }
+      IQ.pred <- q3.pred - q1.pred
       IQ.pred <- abs(IQ.pred)
       e.sig <- apply(cbind(e.sig, IQ.pred/1.34), 1, min)
       
@@ -1389,8 +1119,18 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose)
       
     } else if (e.method == "qreg") {
       e.pred  <- predict(y=res, x=x, eval=eval, type="qreg", tau=c(alpha, 1-alpha), verbose = verbose)
-      lb <- e.pred[,1]
-      ub <- e.pred[,2]
+      
+      if (effect == "time") {
+        labels <- unlist(purrr::map(stringr::str_split(rownames(e.pred)[1:neval], "\\."), 2))
+        e.pred.lb <- aggregateUnits(e.pred[,1], labels)
+        e.pred.ub <- aggregateUnits(e.pred[,2], labels)
+      } else {
+        e.pred.lb <- e.pred[,1]
+        e.pred.ub <- e.pred[,2]
+      }
+      
+      lb <- e.pred.lb
+      ub <- e.pred.ub
       
     }
   }
@@ -1400,13 +1140,13 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose)
 
 
 simultaneousPredGet <- function(vsig, T1, T1.tot, I, u.alpha, e.alpha, e.res.na, e.des.0.na, e.des.1,
-                                w.lb.est, w.ub.est, w.bounds, w.name) {
+                                w.lb.est, w.ub.est, w.bounds, w.name, effect) {
 
   vsigUB <- vsig[, (T1.tot + 1):(2 * T1.tot), drop = FALSE]
   vsigLB <- vsig[, 1:T1.tot, drop = FALSE]
 
   pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1, 
-                     e.method = "gaussian", alpha = e.alpha/2, e.lb.est = TRUE, e.ub.est =  TRUE)
+                     e.method = "gaussian", alpha = e.alpha/2, e.lb.est = TRUE, e.ub.est =  TRUE, effect = effect)
 
   w.lb.joint <- w.ub.joint <- c()
   
@@ -1415,17 +1155,9 @@ simultaneousPredGet <- function(vsig, T1, T1.tot, I, u.alpha, e.alpha, e.res.na,
   for (i in seq_len(I)) {
     j.max <- T1[[i]] + j.min - 1
 
-#     if (w.name %in% c("ols", "ridge", "L1-L2")) {
-#       lb.joint <- quantile(apply(vsigLB[, j.min:j.max, drop = FALSE], 1, quantile, na.rm = TRUE, probs = 0.01),
-# 						   na.rm = TRUE, probs = u.alpha/2)
-#       ub.joint <- quantile(apply(vsigUB[, j.min:j.max, drop = FALSE], 1, quantile, na.rm = TRUE, probs = 0.99),
-# 						   na.rm = TRUE, probs = (1-u.alpha/2))
-#       
-#     } else {
     lb.joint <- quantile(apply(vsigLB[, j.min:j.max, drop = FALSE], 1, min, na.rm = TRUE), probs = u.alpha/2)
     ub.joint <- quantile(apply(vsigUB[, j.min:j.max, drop = FALSE], 1, max, na.rm = TRUE), probs = (1-u.alpha/2))
-#    }
-    
+
     w.lb.joint <- c(w.lb.joint, rep(lb.joint, T1[[i]]))
     w.ub.joint <- c(w.ub.joint, rep(ub.joint, T1[[i]]))
     j.min <- j.max + 1
@@ -1452,9 +1184,17 @@ simultaneousPredGet <- function(vsig, T1, T1.tot, I, u.alpha, e.alpha, e.res.na,
   return(list(MU=MU, ML=ML))
 }
 
-epskappaGet <- function(P, rho.vec, beta, I, joint = FALSE) {
-  P.list <- mat2list(P)
+epskappaGet <- function(P, rho.vec, beta, I, effect, joint = FALSE) {
   beta.list <- mat2list(beta)
+  
+  if (effect == "time") {
+    rho.vec <- mean(rho.vec)
+    I <- 1
+    P.list <- list(P)
+    beta.list <- list(beta)
+  } else {
+    P.list <- mat2list(P)
+  }
   
   epskappa <- c()
   for (i in seq_len(I)) {
@@ -1719,53 +1459,46 @@ local.geom.2step <- function(w, r, rho.vec, w.constr, Q, I) {
   return(list(Q = Q, lb = lb))
 }
 
-
-useCVXR <- function(w.constr) {
-  flag <- FALSE
-  if ((w.constr$p == "L1") && (w.constr$dir == "<=")) flag <- TRUE
-  return(flag)
-}
-
-executionTime <- function(T0, J, I, T1, sims, cores, name){
-  Ttot <- sum(T0)
-  tincr <- Ttot/1000
-  coefsJ <- c(-0.54755616,0.09985644)
-  
-  time <- sum(c(1,J)*coefsJ)    # Time for J donors, T0 = 1000, sims = 10
-  time <- ceiling(time)*sims/10  # rescale for simulations
-  time <- time/cores            # rescale by number of cores
-  time <- time*tincr            # rescale for number of obs
-  time <- time*T1               # rescale by post intervention periods
-  time <- time*I                # rescale by number of treated units
-  
-  time <- time/60               # Convert in minutes
-  time <- ceiling(time)         # Take smallest larger integer
-  time <- time*2
-  
-  if (name == "lasso") {
-    time <- time*8
-  }
-  
-  if (time < 60) {
-    if (time < 1) {
-      toprint <- "Maximum expected execution time: less than a minute.\n"
-    } else if (time == 1) {
-      toprint <- paste0("Maximum expected execution time: ",time," minute.\n")
-    } else {
-      toprint <- paste0("Maximum expected execution time: ",time," minutes.\n")
-    }
-  } else {
-    hours <- floor(time/60)
-    if (hours == 1) {
-      toprint <- paste0("Maximum expected execution time: more than ",hours," hour.\n")
-    } else {
-      toprint <- paste0("Maximum expected execution time: more than ",hours," hours.\n")
-    }
-  }
-  
-  cat(toprint)
-  cat("\n")
-}
+# executionTime <- function(T0, J, I, T1, sims, cores, name){
+#   Ttot <- sum(T0)
+#   tincr <- Ttot/1000
+#   coefsJ <- c(-0.54755616,0.09985644)
+#   
+#   time <- sum(c(1,J)*coefsJ)    # Time for J donors, T0 = 1000, sims = 10
+#   time <- ceiling(time)*sims/10  # rescale for simulations
+#   time <- time/cores            # rescale by number of cores
+#   time <- time*tincr            # rescale for number of obs
+#   time <- time*T1               # rescale by post intervention periods
+#   time <- time*I                # rescale by number of treated units
+#   
+#   time <- time/60               # Convert in minutes
+#   time <- ceiling(time)         # Take smallest larger integer
+#   time <- time*2
+#   
+#   if (name == "lasso") {
+#     time <- time*8
+#   }
+#   
+#   if (time < 60) {
+#     if (time < 1) {
+#       toprint <- "Maximum expected execution time: less than a minute.\n"
+#     } else if (time == 1) {
+#       toprint <- paste0("Maximum expected execution time: ",time," minute.\n")
+#     } else {
+#       toprint <- paste0("Maximum expected execution time: ",time," minutes.\n")
+#     }
+#   } else {
+#     hours <- floor(time/60)
+#     if (hours == 1) {
+#       toprint <- paste0("Maximum expected execution time: more than ",hours," hour.\n")
+#     } else {
+#       toprint <- paste0("Maximum expected execution time: more than ",hours," hours.\n")
+#     }
+#   }
+#   
+#   cat(toprint)
+#   cat("\n")
+# }
 
 
 mat2list <- function(mat, cols = TRUE){
@@ -1812,11 +1545,13 @@ ci2df <- function(CI, type) {
   return(df)
 }
 
-detectConstant <- function(x) {
-  n <- nrow(x)
-  col.keep <- apply(x, 2, function(j) sum(j == 1)) != n # remove double constant
-  col.keep2 <- colSums(x) != 0 # remove constant other features
+detectConstant <- function(x, scale.x = 1) {
+  x <- x*scale.x
+  n <- nrow(na.omit(x))
+  col.keep <- apply(x, 2, function(j) sum(j == 1, na.rm = TRUE)) != n # remove double constant
+  col.keep2 <- colSums(x, na.rm = TRUE) != 0 # remove constant other features
   x <- cbind(x[, (col.keep & col.keep2), drop = FALSE], 1)
+  x <- x/scale.x
   return(x)
 }
 
@@ -1833,6 +1568,25 @@ trendRemove <- function(mat) {
       }
     }
   }
-  
+
   return(list(mat=mat[,sel,drop=FALSE], sel=sel))
+}
+
+aggregateUnits <- function(xx, labels) {
+  xx.df <- data.frame(xx = xx, id = labels)
+  x.mean <- aggregate(xx.df[,"xx"], by=list(unit=xx.df$id), FUN=mean, na.rm=TRUE)
+  x.mean <- x.mean[order(as.numeric(x.mean$unit)),]$x
+  return(x.mean)
+}
+
+# sqrtm regularizer for symmetric positive definite matrices
+matRegularize <- function(mat, threshold = 1e-08) {
+
+  matsvd <- eigen(mat)
+  sel <- matsvd$values > threshold
+  U <- matsvd$vectors[, sel]
+  D <- diag(sqrt(matsvd$values[sel]))
+  matreg <- D %*% t(U) 
+
+  return(matreg)
 }

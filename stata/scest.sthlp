@@ -81,6 +81,7 @@ some popular constraints can be selected through the option {opt name}. A detail
 {p 8 12}{opt simplex} classic synthetic control estimator where the weights are constrained to be non-negative and their L1 norm must be equal to 1.{p_end}
 {p 8 12}{opt lasso} weights are estimated using a Lasso-type penalization{p_end}
 {p 8 12}{opt ridge} weights are estimated using a Ridge-type penalization.{p_end}
+{p 8 12}{opt L1-L2} weights are estimated using a Simplex-type constraint and a Ridge-type penalization.{p_end}
 {p 8 12}{opt ols} weights are estimated without constraints using least squares{p_end}
 
 {p 4 8}{cmd:V(}{it:string}{cmd:)} specifies the weighting matrix to be used in the loss function. The default is the identity matrix (option {cmd:V("separate")}), so equal weight is given to all observations. The other possibility is to 

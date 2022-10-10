@@ -6,16 +6,16 @@
 #' intervals according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}. \code{\link{scpi}} returns the estimated 
 #' post-treatment series for the synthetic unit through the command \code{\link{scest}} and quantifies in-sample and out-of-sample uncertainty to provide confidence intervals
 #' for each point estimate.
-#' 
+#'
 #' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 #'
 #' Companion commands are:  \link{scdata} and \link{scdataMulti} for data preparation in the single and multiple treated unit(s) cases, respectively,
 #' \link{scest} for point estimation, \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
-#' 
+#'
 #' Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
-#' 
+#'
 #' \href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
-#' 
+#'
 #' For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
 #'
 #' @param data a class 'scpi_data' object, obtained by calling \code{\link{scdata}}.
@@ -28,12 +28,14 @@
 #' - `\code{lb}', a scalar defining the lower bound on the weights. It can be either 0 or \code{-Inf}.
 #' - `\code{name}', a character selecting one of the default proposals
 #' See the \strong{Details} section for more.
-#'
-#' @param V a weighting matrix to be used when minimizing
-#' \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
 #' @param P a \eqn{I\cdot T_1\times I\cdot (J+KM)} matrix containing the design matrix to be used to obtain the predicted.
 #' post-intervention outcome of the synthetic control unit. \eqn{T_1} is the number of post-treatment periods,
 #' \eqn{J} is the size of the donor pool, and \eqn{K_1} is the number of covariates used for adjustment in the outcome equation.
+#' @param V specifies the weighting matrix to be used when minimizing the sum of squared residuals
+#' \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
+#' The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
+#' (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled". 
+#' See the \strong{Details} section for more.
 #' @param rho a string specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
 #' \code{rho = 'type-1'} (the default), then the tuning parameter is computed based on optimization inequalities. Users can provide a scalar 
 #' with their own value for \code{rho}. Other options are described in the \strong{Details} section.
@@ -75,14 +77,11 @@
 #' @param e.bounds a \eqn{N_1\cdot T_1\times 2} matrix with the user-provided bounds on \eqn{(\widehat{\mathbf{w}},\widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
 #' the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 #' by filling the other column with \code{NA}s.
-#' @param opt.list.est a list specifying the stopping criteria and the algorithm for the underlying optimizer \code{\link{nloptr}} or \code{\link{CVXR}} for point estimation.  
-#' See the \strong{Details} section for more. 
-#' @param opt.list.inf similar to the previous one but for the optimizer used for inference purposes. See the \strong{Details} section for more. 
-#'  
+#'
 #' @param save.data a character specifying the name and the path of the saved dataframe containing the processed data used to produce the plot. 
-#' 
+#'
 #' @param verbose if \code{TRUE} prints additional information in the console.
-#' 
+#'
 #' @return
 #' The function returns an object of class 'scpi_scpi' containing three lists. The first list is labeled 'data' and contains used data as returned by \code{\link{scdata}} and some other values.
 #' \item{A}{a matrix containing pre-treatment features of the treated unit.}
@@ -121,7 +120,6 @@
 #' \item{res}{a matrix containing the residuals \eqn{\mathbf{A}-\widehat{\mathbf{A}}}.}
 #' \item{V}{a matrix containing the weighting matrix used in estimation.}
 #' \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
-#' \item{S}{for internal use only.}
 #'
 #' The third list is labeled 'inference.results' and contains all the inference-related results.
 #' \item{CI.in.sample}{a matrix containing the prediction intervals taking only in-sample uncertainty in to account.}
@@ -248,13 +246,6 @@
 #' former condition is not satisfied we automatically set \code{u.order = u.lags = 0}, if instead the latter is not met
 #' we automatically set \code{e.order = e.lags = 0}.}
 #' 
-#' \item{\strong{Algorithm Options.} The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization 
-#' (\code{algorithm = 'NLOPTR_LD_SLSQP'}) for all cases not involving the L1 norm. 
-#' For a complete list of algorithms see \href{https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/}{the official \code{nloptr} documentation}.
-#' The other default values are \code{maxeval = 5000}, \code{ftol_res = 1.0e-8}, \code{ftol_abs = 1.0e-8}, \code{xtol_res = 1.0e-8}, \code{xtol_abs = 1.0e-8},
-#' \code{tol_constraints_eq = 1.0e-8}, and, finally, \code{tol_constraints_ineq = 1.0e-8}. More information on the stopping criteria can be obtained running
-#' \code{nloptr.print.options()} or \code{nloptr.get.default.options()}. If the optimization involves the L1 norm then \code{CVXR} is used for optimization.  
-#' More information on the stopping criteria can be obtained reading \href{https://cvxr.rbind.io/}{the official documentation}. }
 #' }
 #' 
 #' @author
@@ -273,7 +264,7 @@
 #' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
-#' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
+#' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
 #' }
 #'
 #' @seealso \code{\link{scdata}}, \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
@@ -311,15 +302,13 @@ scpi  <- function(data,
                   e.alpha      = 0.05,
                   sims         = 200,
                   rho          = NULL,
-                  rho.max      = NULL,
+                  rho.max      = 0.2,
                   lgapp        = "generalized",
                   cores        = NULL,
                   plot         = FALSE,
                   plot.name    = NULL,
                   w.bounds     = NULL,
                   e.bounds     = NULL,
-                  opt.list.est = NULL,
-                  opt.list.inf = NULL,
                   save.data    = NULL,
                   verbose      = TRUE) {
 
@@ -343,7 +332,7 @@ scpi  <- function(data,
     cat("---------------------------------------------------------------\n")
     cat("Estimating Weights...\n")
   }
-  sc.pred <- scest(data = data, w.constr = w.constr, V = V, opt.list = opt.list.est)
+  sc.pred <- scest(data = data, w.constr = w.constr, V = V)
 
 
   #############################################################################
@@ -372,7 +361,6 @@ scpi  <- function(data,
   b           <- sc.pred$est.results$b                    # w and r column-bind
   Y.post.fit  <- sc.pred$est.results$Y.post.fit           # Estimated post-treatment outcome for SC unit
   res         <- sc.pred$est.results$res                  # Residuals from estimation
-  S           <- sc.pred$est.results$S                    # auxiliary selection matrix for constraints
   outcome.var <- sc.pred$data$specs$outcome.var           # name of outcome variable
   sc.effect   <- sc.pred$data$specs$effect                # Causal quantity of interest
 
@@ -401,19 +389,6 @@ scpi  <- function(data,
   if (sc.effect == "unit") {
     T1.tot <- I
     T1 <- lapply(T1, function(x) 1)
-  }
-
-  # Prepare algorithm options for inference (the one for estimation is handled in scest)
-  if (is.null(opt.list.inf) == FALSE) {
-    if (is.list(opt.list.inf) == FALSE) {
-      stop("The object opt.list.inf should be a list!")
-    }
-  }
-
-  if (is.null(opt.list.est) == FALSE) {
-    if (is.list(opt.list.est) == FALSE) {
-      stop("The object opt.list.est should be a list!")
-    }
   }
 
   # Check on P
@@ -528,7 +503,7 @@ scpi  <- function(data,
     }
 
     cat("Quantifying Uncertainty\n")
-    executionTime(T0.tot, Jtot, I, T1.tot, sims, cores, constr.type)
+    #executionTime(T0.tot, Jtot, I, T1.tot, sims, cores, constr.type)
   }
 
   # create lists of matrices
@@ -546,12 +521,23 @@ scpi  <- function(data,
     names(C.list) <- sc.pred$data$specs$treated.units
   }
 
-  P.list   <- mat2list(P)
+  if (sc.pred$data$specs$effect == "time") {
+    P.list <- list()
+    names <- strsplit(colnames(P), "\\.")
+    cnames <- unlist(lapply(names, "[[", 1))
+    for (tr in sc.pred$data$specs$treated.units) {
+      P.list[[tr]] <- P[, cnames == tr, drop=FALSE]
+    }
+  } else {
+    P.list <- mat2list(P)
+  }
+
   if (!is.null(sc.pred$data$P.diff)) {
     Pd.list <- mat2list(sc.pred$data$P.diff)
   } else {
     Pd.list <- rep(list(NULL), I)
   }
+  
   V.list   <- mat2list(V)
   w.list   <- mat2list(as.matrix(w))
   res.list <- mat2list(res)
@@ -570,7 +556,7 @@ scpi  <- function(data,
     w.constr.list <- w.constr
   }
 
-  w.star <- index.w <- rho.vec <- Q.star <- Q2.star <- f.id <- e.res <- u.names <- e.rownames <- e.colnames <- c()
+  w.star <- index.w <- rho.vec <- Q.star <- Q2.star <- f.id <- e.res <- u.names <- e.rownames <- e.colnames <- e1.rownames <- c()
   u.des.0 <- e.des.0 <- e.des.1 <- matrix(NA, 0, 0)
   w.constr.inf <- list()
 
@@ -578,7 +564,7 @@ scpi  <- function(data,
     ## Regularize W and local geometry (treated unit by treated unit)
     loc.geom <- local.geom(w.constr.list[[i]], rho, rho.max, res.list[[i]], B.list[[i]], 
                            C.list[[i]], coig.data[[i]], T0.M[[i]], J[[i]], w.list[[i]], verbose)
-
+    
     w.star       <- c(w.star, loc.geom$w.star)
     index.w      <- c(index.w, loc.geom$index.w)
     w.constr.inf <- append(w.constr.inf, list(loc.geom$w.constr))
@@ -613,12 +599,19 @@ scpi  <- function(data,
     e.des <- e.des.prep(B.list[[i]], C.list[[i]], P.list[[i]], e.order, e.lags,
                         res.list[[i]], sc.pred, Y.d.list[[i]], out.feat[[i]],
                         features[[i]], J[[i]], index.i, loc.geom$index.w,
-                        coig.data[[i]], T0[[i]][outcome.var], T1[[i]], constant[[i]], e.design, Pd.list[[i]])
+                        coig.data[[i]], T0[[i]][outcome.var], T1[[i]], constant[[i]], 
+                        e.design, Pd.list[[i]], sc.pred$data$specs$effect, I)
     e.res   <- c(e.res, e.des$e.res)
     e.rownames <- c(e.rownames, rownames(e.des$e.res))
     cnames <- rep(paste0(names(w.constr.list)[[i]], "."), ncol(e.des$e.des.0))
     e.colnames <- c(e.colnames, cnames)
 
+    if (sc.pred$data$specs$effect == "time") {
+      trname <- unlist(purrr::map(stringr::str_split(rownames(e.des$e.des.0)[1], "\\."), 1))
+      rnames <- paste(trname, as.character(c(1:nrow(e.des$e.des.1))), sep=".")
+      e1.rownames <- c(e1.rownames, rnames)
+    }
+    
     e.des.0 <- Matrix::bdiag(e.des.0, e.des$e.des.0)
     e.des.1 <- Matrix::bdiag(e.des.1, e.des$e.des.1)
   }
@@ -656,7 +649,11 @@ scpi  <- function(data,
   rownames(e.res) <- e.rownames
   rownames(e.des.0) <- e.rownames
   colnames(e.des.0) <- e.colnames
-  rownames(e.des.1) <- rownames(P)
+  if (sc.pred$data$specs$effect == "time")  {
+    rownames(e.des.1) <- e1.rownames
+  } else {
+    rownames(e.des.1) <- rownames(P)
+  }
   colnames(e.des.1) <- e.colnames
 
   #############################################################################
@@ -767,14 +764,17 @@ scpi  <- function(data,
 
   ## Define constrained problem to be simulated
   if (w.lb.est == TRUE || w.ub.est == TRUE) {
-    vsig <- insampleUncertaintyGet(Z.na, V.na, P.na, beta, S, Sigma.root, J, KMI, I,
-                                   w.constr.inf[[1]], Q.star, Q2.star, lb, TT, sims, cores, verbose, 
-                                   w.lb.est, w.ub.est, opt.list.inf)
+
+    vsigg <- insampleUncertaintyGet(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I,
+                                    w.constr.inf[[1]], Q.star, Q2.star, lb, TT, sims, cores, verbose, 
+                                    w.lb.est, w.ub.est)
+
+    vsig <- vsigg[rowSums(is.na(vsigg)) < ncol(vsigg),] # remove simulations were SOCP was not solve at any horizon
   }
 
   if (w.lb.est == TRUE) {
     w.lb    <- apply(vsig[, 1:nrow(P.na), drop = FALSE], 2, quantile, probs = u.alpha / 2, na.rm = TRUE)
-    fail.lb <- apply(vsig[, 1:nrow(P.na), drop = FALSE], 2, function(x) sum(is.na(x)) / sims * 100)
+    fail.lb <- apply(vsigg[, 1:nrow(P.na), drop = FALSE], 2, function(x) sum(is.na(x)) / sims * 100)
 
   } else {
     w.lb     <- w.bounds[, 1]
@@ -785,7 +785,7 @@ scpi  <- function(data,
   if (w.ub.est == TRUE) {
     w.ub    <- apply(vsig[, (nrow(P.na) + 1):(2 * nrow(P.na)), drop = FALSE], 2, quantile, 
                      probs = (1 - u.alpha / 2), na.rm = TRUE)
-    fail.ub <- apply(vsig[, (nrow(P.na) + 1):(2 * nrow(P.na)), drop = FALSE], 2, function(x) sum(is.na(x))/sims*100)
+    fail.ub <- apply(vsigg[, (nrow(P.na) + 1):(2 * nrow(P.na)), drop = FALSE], 2, function(x) sum(is.na(x))/sims*100)
 
   } else {
     w.ub     <- w.bounds[, 2]
@@ -803,9 +803,8 @@ scpi  <- function(data,
   if ((sum(failed.sims) > 0.1 * sims * ncol(vsig)) && verbose) {
     warning("For some of the simulations used to quantify in-sample uncertainty the solution of the optimization problem 
           was not found! We suggest inspecting the magnitude of this issue by consulting the percentage of simulations
-          that failed contained in YOUR_SCPI_OBJECT_NAME$inference.results$failed.sims. In case the number of 
-          unsuccessful simulations is high, you might want to consider switching the solver or changing the 
-          stopping criteria of the algorithm through the option 'opt.list.inf'.", immediate. = TRUE, call. = FALSE)
+          that failed contained in YOUR_SCPI_OBJECT_NAME$inference.results$failed.sims.",
+            immediate. = TRUE, call. = FALSE)
   }
 
   ## Adjust for missing values
@@ -829,15 +828,14 @@ scpi  <- function(data,
   ## Estimate out-of-sample uncertainty
   #############################################################################
   #############################################################################
-  
   if (w.constr.inf[[1]][["p"]] %in% c("L2","L1-L2")) {
     beta.mat <- as.matrix(beta)
-    epsk <- epskappaGet(P.na, rho.vec, beta.mat, I)
-    epsk.j <- epskappaGet(P.na, rho.vec, beta.mat, I, joint = TRUE)
+    epsk <- epskappaGet(P, rho.vec, beta.mat, I, sc.pred$data$specs$effect)
+    epsk.j <- epskappaGet(P, rho.vec, beta.mat, I, sc.pred$data$specs$effect, joint = TRUE)
   } else {
     epsk <- epsk.j <- 0
   }
-  
+
   # PIs for u
   sc.l.1 <- sc.r.1 <- sc.l.2 <- sc.r.2 <- sc.l.3 <- sc.r.3 <- sc.l.4 <- sc.r.4 <- rep(NA, T1.tot)
   len.1  <- len.2  <- len.3  <- len.4  <- rep(NA, T1.tot)
@@ -895,10 +893,18 @@ scpi  <- function(data,
 
   e.des.0.na.list <- mat2list(e.des.0.na)
   e.des.1.list <- mat2list(e.des.1)
-  
+  e1.rnames <- rownames(e.des.1)
+  e0.rnames <- rownames(e.des.0.na)
+
+  if (sc.pred$data$specs$effect == "time") {
+    scale.x <- sc.pred$data$specs$I
+  } else {
+    scale.x <- 1
+  }
+
   for (i in seq_len(I)) {
     e.des.0.na.list[[i]] <- detectConstant(e.des.0.na.list[[i]])
-    e.des.1.list[[i]] <- detectConstant(e.des.1.list[[i]])  
+    e.des.1.list[[i]] <- detectConstant(e.des.1.list[[i]], scale.x)
 
     if (i == 1) {
       e.des.0.na <- e.des.0.na.list[[i]]
@@ -911,12 +917,16 @@ scpi  <- function(data,
 
   e.des.0.na <- as.matrix(e.des.0.na)
   e.des.1 <- as.matrix(e.des.1)
+  rownames(e.des.0.na) <- e0.rnames
+  rownames(e.des.1) <- e1.rnames
 
   if (e.method == "gaussian" || e.method == "all") {
+
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1,
                        e.method = "gaussian", alpha = e.alpha / 2,
-                       e.lb.est = e.lb.est, e.ub.est =  e.lb.est)
-    
+                       e.lb.est = e.lb.est, e.ub.est =  e.lb.est,
+                       effect = sc.pred$data$specs$effect)
+
     e.lb.gau <- pi.e$lb
     e.ub.gau <- pi.e$ub
     e.mean <- pi.e$e.1
@@ -935,7 +945,8 @@ scpi  <- function(data,
 
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1,
                        e.method = "ls", alpha = e.alpha / 2,
-                       e.lb.est = e.lb.est, e.ub.est =  e.lb.est)
+                       e.lb.est = e.lb.est, e.ub.est =  e.lb.est,
+                       effect = sc.pred$data$specs$effect)
 
     e.lb.ls <- pi.e$lb
     e.ub.ls <- pi.e$ub
@@ -959,7 +970,8 @@ scpi  <- function(data,
     } else {
       pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1,
                          e.method = "qreg", alpha = e.alpha / 2,
-                         e.lb.est = e.lb.est, e.ub.est =  e.ub.est, verbose = verbose)
+                         e.lb.est = e.lb.est, e.ub.est =  e.ub.est, verbose = verbose,
+                         effect = sc.pred$data$specs$effect)
 
       lb <- pi.e$lb
       ub <- pi.e$ub
@@ -986,11 +998,19 @@ scpi  <- function(data,
   if (sc.effect == "unit-time") { # joint within unit
     joint.bounds <- simultaneousPredGet(vsig, T1, nrow(P.na), I, u.alpha, e.alpha, 
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est,
-                                        w.bounds, w.constr.inf[[1]]["name"])
-  } else { # joint across units
+                                        w.bounds, w.constr.inf[[1]]["name"],
+                                        sc.pred$data$specs$effect)
+    
+  } else if (sc.effect == "unit") { # joint across units
     joint.bounds <- simultaneousPredGet(vsig, nrow(P.na), nrow(P.na), I = 1, u.alpha, e.alpha, 
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est, w.bounds,
-                                        w.constr.inf[[1]]["name"])
+                                        w.constr.inf[[1]]["name"], sc.pred$data$specs$effect)
+    
+  } else if (sc.effect == "time") { # joint within aggregate unit
+    joint.bounds <- simultaneousPredGet(vsig, min(unlist(T1)), nrow(P.na), 1, u.alpha, e.alpha, 
+                                        e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est,
+                                        w.bounds, w.constr.inf[[1]]["name"],
+                                        sc.pred$data$specs$effect)
   }
   
   ML <- joint.bounds$ML
@@ -998,6 +1018,13 @@ scpi  <- function(data,
   
   names(ML) <- rownames(P.na)
   names(MU) <- rownames(P.na)
+  
+  if (sc.pred$data$specs$effect == "time") {
+    rownames(Wlb) <- paste0("aggregate.", rownames(Wlb))
+    rownames(Wub) <- paste0("aggregate.", rownames(Wub))
+    names(ML) <- paste0("aggregate.", names(ML))
+    names(MU) <- paste0("aggregate.", names(MU))
+  }
   
   ## Store all bounds
   bounds <- list("insample" = cbind(Wlb, Wub),
@@ -1014,6 +1041,7 @@ scpi  <- function(data,
   
   CI.0 <- cbind(sc.l.0, sc.r.0, len.0)
   colnames(CI.0) <- c("Left Bound", "Right Bound", "Length")
+  if (sc.pred$data$specs$effect == "time") rownames(P.na) <- paste0("aggregate.", rownames(P.na))
   rownames(CI.0) <- rownames(P.na)
 
   if (is.null(sc.l.1) == FALSE) {

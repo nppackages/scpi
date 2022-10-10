@@ -7,8 +7,11 @@ Created on Tue Aug 17 14:46:14 2021
 # Temporary code to suppress pandas FutureWarning
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+from statsmodels.tools.sm_exceptions import IterationLimitWarning
+warnings.filterwarnings("ignore", category=IterationLimitWarning)
 
 import pandas
+pandas.options.mode.chained_assignment = None
 import numpy
 from copy import deepcopy
 import multiprocessing as mp
@@ -46,8 +49,6 @@ def scpi(data,
          plot=False,
          w_bounds=None,
          e_bounds=None,
-         opt_dict_est=None,
-         opt_dict_inf=None,
          verbose=True,
          pass_stata=False):
 
@@ -150,18 +151,6 @@ def scpi(data,
         a T1 x 2 array with the user-provided bounds on e. If e_bounds is provided, then
         the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or
         the upper bound by filling the other column with NAs.
-
-    opt_dict_est : dict
-        a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
-        The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based
-        optimization ('SLSQP'). In case a lasso-type constraint is implemented, cvxpy is used for optimization.
-        More information on the stopping criteria can be obtained reading the official documentation at
-        https://www.cvxpy.org/. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8', 'xtol_abs = 1e-8',
-        'ftol_rel = 1e-4', 'ftol_abs = 1e-4', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
-
-    opt_dict_inf : dict
-        same as above but for inference purposes. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8',
-        'xtol_abs = 1e-8', 'ftol_rel = 1e-4', 'ftol_abs = 1e-4', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
 
     verbose : bool
         if True prints additional information in the console.
@@ -386,7 +375,7 @@ def scpi(data,
     if pass_stata is False and verbose:
         print("-----------------------------------------------")
         print("Estimating Weights...")
-    sc_pred = scest(df=data, w_constr=w_constr, V=V, opt_dict=opt_dict_est)
+    sc_pred = scest(df=data, w_constr=w_constr, V=V)
 
     ######################################
     # Retrieve processed data from scest
@@ -474,22 +463,14 @@ def scpi(data,
             zeros = numpy.zeros((T1, sum(K.iloc[1:, ])))
             P = pandas.DataFrame(numpy.c_[P, zeros])
 
-    if opt_dict_inf is not None:
-        if not isinstance(opt_dict_inf, dict):
-            raise Exception("The object opt_list_inf should be a dictionary!")
-
-    if opt_dict_est is not None:
-        if not isinstance(opt_dict_est, dict):
-            raise Exception("The object opt_list_est should be a dictionary!")
-
     if not isinstance(u_sigma, str):
         raise Exception("The object u_sigma should be of type character!")
     else:
         if u_sigma not in ['HC0', 'HC1', 'HC2', 'HC3']:
             raise Exception("Supported variance estimators are 'HC0','HC1','HC2','HC3'.")
 
-    if sims < 10:
-        raise Exception("The number of simulations needs to be larger or equal than 10!")
+    # if sims < 10:
+        # raise Exception("The number of simulations needs to be larger or equal than 10!")
 
     if w_bounds is not None:
         if not isinstance(w_bounds, (pandas.DataFrame, numpy.ndarray)):
@@ -559,7 +540,15 @@ def scpi(data,
     else:
         C_dict = dict(zip(tr_units, [pandas.DataFrame(None)] * iota))
 
-    P_dict = mat2dict(P)
+    if sc_effect == "time":
+        P_dict = {}
+        for tr in tr_units:
+            csel = [c.split("_")[0] == tr for c in P.columns.tolist()]
+            X_rc = P.loc[:, numpy.array(csel)]
+            P_dict[tr] = X_rc
+    else:
+        P_dict = mat2dict(P)
+
     if sc_pred.P_diff is not None:
         Pd_dict = mat2dict(sc_pred.P_diff)
     else:
@@ -612,7 +601,7 @@ def scpi(data,
 
         ##########################################################################
         # Prepare design matrix for in-sample uncertainty
-        ud0 = u_des_prep(B_dict[tr], C_dict[tr], u_order, u_lags, coig_data[tr],
+        ud0 = u_des_prep(B_dict[tr], C_dict[tr], u_order, 1, coig_data[tr],
                          T0_M[tr], M[tr], constant[tr], index_i, iw_dict[tr],
                          u_design, res_dict[tr])
 
@@ -622,7 +611,8 @@ def scpi(data,
                                   e_lags, res_dict[tr], sc_pred, Yd_dict[tr],
                                   out_feat[tr], J[tr], index_i, iw_dict[tr],
                                   coig_data[tr], T0[tr][outcome_var], T1[tr],
-                                  constant[tr], e_design, outcome_var, Pd_dict[tr])
+                                  constant[tr], e_design, outcome_var, Pd_dict[tr],
+                                  sc_effect, iota)
 
         ###########################################################################
         # Remove NA - In sample uncertainty
@@ -660,16 +650,22 @@ def scpi(data,
         r_na.insert(0, "treated_unit", tr)
         er_na.insert(0, "treated_unit", tr)
         ed0_na.insert(0, "treated_unit", tr)
-        ed1.insert(0, "treated_unit", tr)
+        if sc_effect == "time":
+            idx = pandas.MultiIndex.from_product([[tr], ed1.index.get_level_values(0).tolist()],
+                                                 names=['treated_unit', '__time'])
+            ed1.set_index(idx, inplace=True, append=False)
+        else:
+            ed1.insert(0, "treated_unit", tr)
+            ed1.set_index('treated_unit', append=True, drop=True, inplace=True)
+            P_na.insert(0, "treated_unit", tr)
+            P_na.set_index('treated_unit', append=True, drop=True, inplace=True)
+
         Z_na.insert(0, "treated_unit", tr)
-        P_na.insert(0, "treated_unit", tr)
         ud0_na.set_index('treated_unit', append=True, drop=True, inplace=True)
         r_na.set_index('treated_unit', append=True, drop=True, inplace=True)
         er_na.set_index('treated_unit', append=True, drop=True, inplace=True)
         ed0_na.set_index('treated_unit', append=True, drop=True, inplace=True)
-        ed1.set_index('treated_unit', append=True, drop=True, inplace=True)
         Z_na.set_index('treated_unit', append=True, drop=True, inplace=True)
-        P_na.set_index('treated_unit', append=True, drop=True, inplace=True)
         u_des_0_na_dict[tr] = ud0_na
         res_na_dict[tr] = r_na
         e_res_na_dict[tr] = er_na
@@ -714,7 +710,8 @@ def scpi(data,
     e_res_na = e_res_na.reorder_levels(['treated_unit', '__time'])
     res_na = res_na.reorder_levels(['treated_unit', 'feature', '__time'])
     Z_na = Z_na.reorder_levels(['treated_unit', 'feature', '__time'])
-    P_na = P_na.reorder_levels(['treated_unit', '__time'])
+    if sc_effect != "time":
+        P_na = P_na.reorder_levels(['treated_unit', '__time'])
 
     Z_na = Z_na[col_order]
     P_na = P_na[col_order]
@@ -842,11 +839,11 @@ def scpi(data,
             p_int = 1
         elif p == "L2":
             p_int = 2
-        elif p == "L1/L2":
+        elif p == "L1-L2":
             p_int = None
 
         vsig = scpi_in(sims, b_arr, Sigma_root, Q, P_na, J, KM, iota, w_lb_est,
-                       w_ub_est, p, p_int, Q_star, Q2_star, dire, lb, cores, opt_dict_inf, pass_stata, verbose)
+                       w_ub_est, p, p_int, Q_star, Q2_star, dire, lb, cores, pass_stata, verbose)
 
     if w_lb_est is True:
         w_lb = numpy.nanquantile(vsig[:, :len(P_na)], q=u_alpha / 2, axis=0)
@@ -884,9 +881,7 @@ def scpi(data,
         warnings.warn("For some of the simulations used to quantify in-sample uncertainty the solution of " +
                       "the optimization problem was not found! We suggest inspecting the magnitude of this issue " +
                       "by consulting the percentage of simulations that failed contained in " +
-                      "YOUR_SCPI_OBJECT_NAME.failed_sims." +
-                      "In case the number of unsuccessful simulations is high, you might want to consider " +
-                      "changing the stopping criteria of the algorithm through the option 'opt_list_inf'.")
+                      "YOUR_SCPI_OBJECT_NAME.failed_sims.")
 
     # PIs for w
     sc_l_0 = Y_post_fit + w_lb        # Left bound
@@ -899,10 +894,10 @@ def scpi(data,
     ######################################
     ######################################
 
-    if w_constr_inf[tr_units[0]]['p'] in ["L1/L2", "L2"]:
-        epsk = epskappaGet(P_na, rho_dict, beta, tr_units)
+    if w_constr_inf[tr_units[0]]['p'] in ["L1-L2", "L2"]:
+        epsk = epskappaGet(P, rho_dict, beta, tr_units, effect=sc_effect)
         epsk = pandas.DataFrame(epsk, index=w_lb.index)
-        epsk_j = epskappaGet(P_na, rho_dict, beta, tr_units, joint=True)
+        epsk_j = epskappaGet(P, rho_dict, beta, tr_units, effect=sc_effect, joint=True)
     else:
         epsk = pandas.DataFrame([0] * len(w_lb), index=w_lb.index)
         epsk_j = 0
@@ -958,9 +953,14 @@ def scpi(data,
     e_des_0_na = pandas.DataFrame(None)
     e_des_1 = pandas.DataFrame(None)
 
+    if sc_effect == "time":
+        scale_x = sc_pred.iota
+    else:
+        scale_x = 1
+
     for tr in tr_units:
         ed0_dict[tr] = detectConstant(ed0_dict[tr], tr)
-        ed1_dict[tr] = detectConstant(ed1_dict[tr], tr)
+        ed1_dict[tr] = detectConstant(ed1_dict[tr], tr, scale_x)
         ed0_dict[tr].insert(0, "treated_unit", tr)
         ed0_dict[tr].set_index('treated_unit', append=False, drop=True, inplace=True)
         ed1_dict[tr].insert(0, "treated_unit", tr)
@@ -969,14 +969,21 @@ def scpi(data,
         e_des_1 = pandas.concat([e_des_1, ed1_dict[tr]], axis=0)
 
     e_des_0_na.set_index(e_res_na.index, append=False, inplace=True)
-    e_des_1.set_index(P_na.index, append=False, inplace=True)
+    if sc_effect == "time":
+        idx = pandas.MultiIndex.from_product([e_des_1.index.unique('treated_unit').tolist(),
+                                             [i for i in range(1, len(P_na) + 1)]],
+                                             names=['treated_unit', '__time'])
+        e_des_1.set_index(idx, append=False, inplace=True)
+    else:
+        e_des_1.set_index(P_na.index, append=False, inplace=True)
     e_des_0_na.fillna(0, inplace=True)
     e_des_1.fillna(0, inplace=True)
 
     if e_method == 'gaussian' or e_method == 'all':
         e_lb_gau, e_ub_gau, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                                 e_method="gaussian", alpha=e_alpha / 2,
-                                                e_lb_est=e_lb_est, e_ub_est=e_ub_est)
+                                                e_lb_est=e_lb_est, e_ub_est=e_ub_est,
+                                                effect=sc_effect)
 
         # Overwrite with user's input
         if e_lb_est is False:
@@ -994,7 +1001,8 @@ def scpi(data,
     if e_method == 'ls' or e_method == 'all':
         e_lb_ls, e_ub_ls, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                               e_method="ls", alpha=e_alpha / 2,
-                                              e_lb_est=e_lb_est, e_ub_est=e_ub_est)
+                                              e_lb_est=e_lb_est, e_ub_est=e_ub_est,
+                                              effect=sc_effect)
 
         # Overwrite with user's input
         if e_lb_est is False:
@@ -1013,7 +1021,8 @@ def scpi(data,
         else:
             e_lb_qreg, e_ub_qreg, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                                       e_method="qreg", alpha=e_alpha / 2,
-                                                      e_lb_est=e_lb_est, e_ub_est=e_ub_est)
+                                                      e_lb_est=e_lb_est, e_ub_est=e_ub_est,
+                                                      effect=sc_effect)
         # Overwrite with user's input
         if e_lb_est is False:
             e_lb = e_bounds[0]
@@ -1027,25 +1036,37 @@ def scpi(data,
     ####################################################
     # Simultaneous Prediction Intervals (for each unit)
 
-    if sc_effect == "unit_time":  # joint within unit
+    if sc_effect == "unit-time":  # joint within unit
         T1val = [v for v in T1.values()]
         ML, MU = simultaneousPredGet(vsig, T1val, len(P_na), iota, u_alpha,
                                      e_alpha, e_res_na, e_des_0_na, e_des_1,
                                      w_lb_est, w_ub_est, w_bounds,
-                                     w_constr_aux[tr_units[0]]['name'])
-    else:  # joint across units
+                                     w_constr_aux[tr_units[0]]['name'], sc_effect)
+
+    elif sc_effect == "unit":  # joint across units
         ML, MU = simultaneousPredGet(vsig, [len(P_na)], len(P_na), 1, u_alpha,
                                      e_alpha, e_res_na, e_des_0_na, e_des_1,
                                      w_lb_est, w_ub_est, w_bounds,
-                                     w_constr_aux[tr_units[0]]['name'])
+                                     w_constr_aux[tr_units[0]]['name'], sc_effect)
+
+    elif sc_effect == "time":  # joint within aggregate unit
+        ML, MU = simultaneousPredGet(vsig, [len(P_na)], len(P_na), 1, u_alpha,
+                                     e_alpha, e_res_na, e_des_0_na, e_des_1,
+                                     w_lb_est, w_ub_est, w_bounds,
+                                     w_constr_aux[tr_units[0]]['name'], sc_effect)
 
     ML.set_index(P_na.index, inplace=True, append=False)
     MU.set_index(P_na.index, inplace=True, append=False)
 
     ###############################################
     # Store all bounds
-    idx = w_lb.index
-    idx.rename(["ID", "Time"], inplace=True)
+    if sc_effect == "time":
+        idx = pandas.MultiIndex.from_product([["aggregate"], w_lb.index.get_level_values(0).tolist()],
+                                             names=['ID', 'Time'])
+    else:
+        idx = w_lb.index
+        idx.rename(["ID", "Time"], inplace=True)
+
     df_insample = pandas.DataFrame(numpy.c_[w_lb, w_ub], columns=["Lower", "Upper"], index=idx)
     df_insample = df_insample.apply(pandas.to_numeric, errors='coerce', axis=1)
 
@@ -1089,12 +1110,16 @@ def scpi(data,
 
     CI_0 = pandas.concat([sc_l_0, sc_r_0, len_0], axis=1)
     CI_0.columns = ['Lower', 'Upper', 'Length']
+    if sc_effect == "time":
+        CI_0.set_index(idx, inplace=True)
     CI_0.index.rename(['ID', 'Time'], inplace=True)
     CI_0 = CI_0.apply(pandas.to_numeric, errors='coerce', axis=1)
 
     if sc_l_1 is not None:
         CI_1 = pandas.concat([sc_l_1, sc_r_1, len_1], axis=1)
         CI_1.columns = ['Lower', 'Upper', 'Length']
+        if sc_effect == "time":
+            CI_1.set_index(idx, inplace=True)
         CI_1.index.rename(['ID', 'Time'], inplace=True)
         CI_1 = CI_1.apply(pandas.to_numeric, errors='coerce', axis=1)
     else:
@@ -1103,6 +1128,8 @@ def scpi(data,
     if sc_l_2 is not None:
         CI_2 = pandas.concat([sc_l_2, sc_r_2, len_2], axis=1)
         CI_2.columns = ['Lower', 'Upper', 'Length']
+        if sc_effect == "time":
+            CI_2.set_index(idx, inplace=True)
         CI_2.index.rename(['ID', 'Time'], inplace=True)
         CI_2 = CI_2.apply(pandas.to_numeric, errors='coerce', axis=1)
     else:
@@ -1111,6 +1138,8 @@ def scpi(data,
     if sc_l_3 is not None:
         CI_3 = pandas.concat([sc_l_3, sc_r_3, len_3], axis=1)
         CI_3.columns = ['Lower', 'Upper', 'Length']
+        if sc_effect == "time":
+            CI_3.set_index(idx, inplace=True)
         CI_3.index.rename(['ID', 'Time'], inplace=True)
         CI_3 = CI_3.apply(pandas.to_numeric, errors='coerce', axis=1)
     else:

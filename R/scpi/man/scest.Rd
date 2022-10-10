@@ -8,7 +8,6 @@ scest(
   data,
   w.constr = NULL,
   V = "separate",
-  opt.list = NULL,
   plot = FALSE,
   plot.name = NULL,
   plot.path = NULL,
@@ -33,9 +32,6 @@ See the \strong{Details} section for more.
 \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
 The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
 (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
-See the \strong{Details} section for more.}
-
-\item{opt.list}{a list specifying the stopping criteria and the algorithm for the underlying optimizer (\code{\link{nloptr}} or \code{\link{CVXR}}) for point estimation.
 See the \strong{Details} section for more.}
 
 \item{plot}{a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working directory. For more options see \code{\link{scplot}}.}
@@ -86,7 +82,6 @@ The second list is labeled 'est.results' and contains estimation results.
 \item{res}{a matrix containing the residuals \eqn{\mathbf{A}-\widehat{\mathbf{A}}}.}
 \item{V}{a matrix containing the weighting matrix used in estimation.}
 \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
-\item{S}{for internal use only.}
 }
 \description{
 The command implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints. For more information see
@@ -156,13 +151,6 @@ which optimizes the separate fit for each treated unit.}
 which optimizes the pooled fit for the average of the treated units.}
 }}
 
-\item{\strong{Algorithm Options.} The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization
-(\code{algorithm = 'NLOPTR_LD_SLSQP'}) for all cases not involving the L1 norm.
-For a complete list of algorithms see \href{https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/}{the official \code{nloptr} documentation}.
-The other default values are \code{maxeval = 5000}, \code{ftol_res = 1.0e-8}, \code{ftol_abs = 1.0e-8}, \code{xtol_res = 1.0e-8}, \code{xtol_abs = 1.0e-8},
-\code{tol_constraints_eq = 1.0e-8}, and, finally, \code{tol_constraints_ineq = 1.0e-8}. More information on the stopping criteria can be obtained running
-\code{nloptr.print.options()} or \code{nloptr.get.default.options()}. f the optimization involves the L1 norm then \code{CVXR} is used for optimization.
-More information on the stopping criteria can be obtained reading \href{https://cvxr.rbind.io/}{the official documentation}. }
 }
 }
 \examples{
@@ -187,7 +175,7 @@ result <- scest(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1))
 \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
-scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
+scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
 }
 }
 \seealso{

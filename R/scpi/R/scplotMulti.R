@@ -50,7 +50,7 @@
 #' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.} 
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022)},
-#' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
+#' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
 #' }
 #'
 #' @seealso \code{\link{scdata}}, \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplotMulti}}
@@ -81,7 +81,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
                         col.treated = "black", col.synth = "mediumblue", scales = "fixed",
                         point.size = 1.5, ncols = 3, save.data = NULL, verbose = TRUE) {
 
-  Treatment <- ID <- Time <- Tdate <- Type <- NULL
+  Treatment <- ID <- Time <- Tdate <- Type <- tstd <- NULL
 
   if (!(result$data$specs$class.type %in% c("scpi_scest_multi", "scpi_scpi_multi"))) {
     stop("data should be the object returned by running scest or scpi when the data have been processed through scdataMulti!")
@@ -93,6 +93,9 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
 
   plot.type <- result$data$specs$effect
   I <- result$data$specs$I
+  if (plot.type == "time") {
+    I <- 1
+  }
   
   if (I > 20 && (plot.type != "unit" || type != "treatment") && verbose) {
     warning(paste0(I, " treated units detected, therefore some graphs might be too crowded! ",
@@ -117,6 +120,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
     names <- strsplit(rownames(Y.post.fit), "\\.")
     Y.actual.post.agg$Time <- as.numeric(unlist(lapply(names, "[[", 2)))
     Y.actual <- rbind(Y.actual.pre, Y.actual.post.agg)
+
   } else {
     Y.actual <- res.df # dataframe
   }
@@ -127,18 +131,73 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
   treated.reception$Tdate <- as.numeric(treated.reception$Tdate) - result$data$specs$anticipation - 1 / 2
   treated.reception <- subset(treated.reception, ID %in% result$data$specs$units.est)
 
-  # Merge synthetic
-  names <- strsplit(rownames(synth.mat), "\\.")
-  unit <- unlist(lapply(names, "[[", 1))
-  period <- unlist(lapply(names, "[[", 2))
+  if (plot.type == "time") {
+    res.df <- merge(res.df, treated.reception, by = "ID")
+    Y.actual.pre <- subset(res.df, Time < Tdate)
+    Y.actual.post <- subset(res.df, Time > Tdate)
+    Y.actual.pre$Tdate <- Y.actual.pre$Tdate + 1/2
+    Y.actual.post$Tdate <- Y.actual.post$Tdate + 1/2
+    Y.actual.pre$tstd <- Y.actual.pre$Time - Y.actual.pre$Tdate
+    Y.actual.post$tstd <- Y.actual.post$Time - Y.actual.post$Tdate
 
-  synth <- data.frame(ID = unit, Time = period, Synthetic = synth.mat)
-  
-  toplot <- merge(Y.actual, synth, by = c("ID", "Time"), all = FALSE) # keep only treated units
+    names <- strsplit(rownames(synth.mat), "\\.")
+    unit <- unlist(lapply(names, "[[", 1))
+    no.agg <- unit %in% result$data$specs$treated.units
+    time <- unlist(lapply(names[1:sum(no.agg)], "[[", 2))
+    synth.pre <- data.frame(ID = unit[no.agg == TRUE],
+                            Synthetic = synth.mat[no.agg == TRUE, 1],
+                            Time = time)
+
+    Y.pre <- merge(Y.actual.pre, synth.pre, by=c("ID", "Time"))
+    max.pre <- max(aggregate(tstd ~ ID, data = Y.pre, min)$tstd)
+    min.post <- min(unlist(lapply(result$data$specs$period.post, length))) - 1
+
+    Y.pre.agg <- aggregate(x = Y.pre[c("Actual", "Synthetic")],
+                           by = Y.pre[c("tstd")],
+                           FUN = mean, na.rm = TRUE)
+    names(Y.pre.agg) <- c("Time", "Actual", "Synthetic")
+    Y.pre.agg <- subset(Y.pre.agg, Time >= max.pre)
+
+    Y.post.agg <- aggregate(x = Y.actual.post[c("Actual")],
+                           by = Y.actual.post[c("tstd")],
+                           FUN = mean, na.rm = TRUE)
+
+    Y.post.agg <- subset(Y.post.agg, tstd <= min.post)
+
+    Y.post.agg <- data.frame(ID = unit[no.agg == FALSE],
+                             Actual = Y.post.agg$Actual,
+                             Synthetic = synth.mat[no.agg == FALSE, 1],
+                             Time = c(0:(sum(no.agg==FALSE)-1))) 
+
+    Y.pre.agg$Treatment <- 1
+    Y.post.agg$Treatment <- 0
+
+    Y.pre.agg$ID <- "aggregate"
+    Y.post.agg$ID <- "aggregate"
+
+    Y.actual <- rbind(Y.pre.agg, Y.post.agg)
+    Y.actual$Tdate <- 0
+
+    plot.type <- "unit-time"
+    I <- 1
+    treated.reception <- data.frame(ID="aggregate", Tdate = 1/2)
+    toplot <- Y.actual
+    toplot$Time <- toplot$Time + 1
+
+  } else {
+    # Merge synthetic
+    names <- strsplit(rownames(synth.mat), "\\.")
+    unit <- unlist(lapply(names, "[[", 1))
+    period <- unlist(lapply(names, "[[", 2))
+
+    synth <- data.frame(ID = unit, Time = period, Synthetic = synth.mat)
+    toplot <- merge(Y.actual, synth, by = c("ID", "Time"), all = FALSE) # keep only treated units
+  }
 
   toplot$Effect <- toplot$Actual - toplot$Synthetic # compute treatment effect
 
   toplot <- merge(toplot, treated.reception, by = "ID") # compute periods since treated
+  
   if (plot.type == 'unit-time' && type == "series") { # plot series
     toplot <- toplot[c("ID","Time","Actual", "Synthetic")]
     toplot <- reshape2::melt(toplot, id=c("ID","Time"))
@@ -201,7 +260,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
     if (type == "series") {
       toplot <- merge(toplot, ci2df(result$inference.results$CI.in.sample, type = "insample"),
                       by = c("ID", "Time"), all = TRUE)
-
+  
       if (e.method %in% c("all", "gaussian")) {
         toplot <- merge(toplot, ci2df(result$inference.results$CI.all.gaussian, type = "gaussian"),
                         by = c("ID", "Time"), all = TRUE)
@@ -275,6 +334,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
                   ggtitle("In-sample Uncertainty")
 
       } else {
+        
         plot.w <- plot + geom_errorbar(data = toplot,
                                        aes(x = .data$Time, ymin = .data$lb.insample, ymax = .data$ub.insample), colour = col.synth,
                                        width = 0.5, linetype = 'solid')  +  ggtitle("In-sample Uncertainty")

@@ -30,9 +30,6 @@
 #' The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
 #' (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled". 
 #' See the \strong{Details} section for more.
-#'
-#' @param opt.list a list specifying the stopping criteria and the algorithm for the underlying optimizer (\code{\link{nloptr}} or \code{\link{CVXR}}) for point estimation.
-#' See the \strong{Details} section for more.
 #' 
 #' @param plot a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working directory. For more options see \code{\link{scplot}}.
 #' @param plot.name a string containing the name of the plot (the format is by default .png). For more options see \code{\link{scplot}}.
@@ -79,7 +76,6 @@
 #' \item{res}{a matrix containing the residuals \eqn{\mathbf{A}-\widehat{\mathbf{A}}}.}
 #' \item{V}{a matrix containing the weighting matrix used in estimation.}
 #' \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
-#' \item{S}{for internal use only.}
 #'
 #' @details
 #' Information is provided for the simple case in which \eqn{N_1=1} if not specified otherwise.
@@ -134,13 +130,6 @@
 #' which optimizes the pooled fit for the average of the treated units.}
 #' }}
 #'
-#' \item{\strong{Algorithm Options.} The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization 
-#' (\code{algorithm = 'NLOPTR_LD_SLSQP'}) for all cases not involving the L1 norm. 
-#' For a complete list of algorithms see \href{https://nlopt.readthedocs.io/en/latest/NLopt_Algorithms/}{the official \code{nloptr} documentation}.
-#' The other default values are \code{maxeval = 5000}, \code{ftol_res = 1.0e-8}, \code{ftol_abs = 1.0e-8}, \code{xtol_res = 1.0e-8}, \code{xtol_abs = 1.0e-8},
-#' \code{tol_constraints_eq = 1.0e-8}, and, finally, \code{tol_constraints_ineq = 1.0e-8}. More information on the stopping criteria can be obtained running
-#' \code{nloptr.print.options()} or \code{nloptr.get.default.options()}. f the optimization involves the L1 norm then \code{CVXR} is used for optimization.  
-#' More information on the stopping criteria can be obtained reading \href{https://cvxr.rbind.io/}{the official documentation}. }
 #' }
 #'
 #' @author
@@ -159,7 +148,7 @@
 #' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
-#' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
+#' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
 #' }
 #' 
 #' @seealso \code{\link{scdataMulti}}, \code{\link{scdata}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
@@ -183,7 +172,6 @@
 scest <- function(data,
                   w.constr  = NULL,
                   V         = "separate",
-                  opt.list  = NULL,
                   plot      = FALSE,
                   plot.name = NULL,
                   plot.path = NULL,
@@ -209,12 +197,6 @@ scest <- function(data,
       }
     }
   }
-  
-  if (is.null(opt.list) == FALSE) {
-    if (is.list(opt.list) == FALSE) {
-      stop("The object opt.list should be a list!")
-    }
-  }  
   
   # Data matrices
   A <- data$A
@@ -279,9 +261,8 @@ scest <- function(data,
   # Estimate SC
   if (class.type == 'scpi_data') { # single treated unit
     w.constr <- w.constr.OBJ(w.constr, A, Z, V, J, KM, M)
-    b <- b.est(A = A, Z = Z, J = J, KM = KM, w.constr = w.constr, V = V, opt.list = opt.list)
-    S <- matrix(1, nrow=1, ncol=J)
-    
+    b <- b.est(A = A, Z = Z, J = J, KM = KM, w.constr = w.constr, V = V)
+
   } else if (class.type == 'scpi_data_multi') { # multiple treated units
     
     A.list <- mat2list(A)
@@ -290,7 +271,6 @@ scest <- function(data,
     V.list <- mat2list(V)
 
     w.constr.list <- list()
-    S <- matrix(0, nrow = I, ncol = Jtot)
 
     w.store <- c()
     r.store <- c()
@@ -308,10 +288,9 @@ scest <- function(data,
       V.i <- V.list[[i]]
 
       w.constr.list[[data$specs$treated.units[i]]] <- w.constr.OBJ(w.constr, A.i, Z.i, V.i, J[[i]], KM[[i]], M[[i]])
-      S[i, j.lb:j.ub] <- 1
 
       if (V.type == "separate") {
-        res <- b.est(A = A.i, Z = Z.i, J = J[[i]], KM = KM[[i]], w.constr = w.constr.list[[i]], V = V.i, opt.list = opt.list)
+        res <- b.est(A = A.i, Z = Z.i, J = J[[i]], KM = KM[[i]], w.constr = w.constr.list[[i]], V = V.i)
         w.store <- c(w.store, res[1:J[[i]]])
         if (KM[[i]] > 0) r.store <- c(r.store, res[(J[[i]]+1):length(res)])
       }
@@ -319,7 +298,9 @@ scest <- function(data,
 
     if (V.type != "separate") {
       b <- b.est.multi(A = A, Z = Z, J = J, KMI = KMI, I = I, 
-                       w.constr = w.constr.list, V = V, opt.list = opt.list, S = S)
+                       w.constr = w.constr.list, V = V)
+      b <- b[,1,drop=TRUE]
+      
     } else if (V.type == "separate") {
       b <- c(w.store, r.store)
     }
@@ -354,6 +335,9 @@ scest <- function(data,
     
     i.lb <- 1
     fit.pre <- c()
+    Yd.list <- mat2list(data$Y.donors)
+    w.list <- mat2list(as.matrix(w), cols=FALSE)
+    
     for (i in seq_len(I)) {
       i.ub <- i.lb + T0.features[[i]][outcome.var] - 1
       
@@ -362,17 +346,13 @@ scest <- function(data,
         names    <- strsplit(rownames(fit.pre.i), "\\.")
         rownames(fit.pre.i) <- unlist(lapply(names, function(x) paste(x[1],x[3],sep=".")))   
       } else {
-        temp.df <- subset(data$Y.df,
-                          .data$ID == data$specs$treated.units[i] &&
-                          .data$Treatment == 0)
-        names <- paste(as.character(temp.df$ID), as.character(temp.df$Time), sep=".")
-        fit.pre.i <- data.matrix(temp.df[outcome.var]) %*% w
-        rownames(fit.pre.i) <- names
+        fit.pre.i <- Yd.list[[i]] %*% w.list[[i]]
       }
       i.lb <- i.lb + sum(unlist(T0.features[[i]]), na.rm = TRUE)
       fit.pre <- rbind(fit.pre, fit.pre.i)
     }
   }
+  
   
   # Post-treatment prediction of outcome of interest
   fit.post <- P %*% b
@@ -385,8 +365,7 @@ scest <- function(data,
                       A.hat = A.hat,
                       res = res,
                       V = V,
-                      w.constr = w.constr,
-                      S = S)
+                      w.constr = w.constr)
 
   if (class.type == 'scpi_data') {
     df   <- list(A = data$A,

@@ -95,3 +95,29 @@ scplotMulti(res_pi, ptype="series")
 
 # plot treatment effects
 scplotMulti(res_pi, ptype="treatment", joint=True)
+
+###############################################
+# average post-treatment effect on the treated
+###############################################
+
+aux = scdataMulti(df=data,
+                  id_var=id_var,
+                  treatment_var=treatment_var,
+                  outcome_var=outcome_var,
+                  time_var=time_var,
+                  features={"Italy": ["gdp", "trade"],
+                            "West Germany": ["gdp", "infrate"]},
+                  constant={'Italy': True, 'West Germany': False},
+                  cointegrated_data=True,
+                  cov_adj=covs_adj, effect="time")
+
+res = scest(aux, w_constr={'name': 'simplex'})
+scplotMulti(res)
+
+res_pi = scpi(aux, w_constr={'name': 'simplex'}, sims=200, cores=1)
+
+# plot series
+scplotMulti(res_pi, ptype="series")
+
+# plot treatment effects
+scplotMulti(res_pi, ptype="treatment", joint=True)

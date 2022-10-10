@@ -28,6 +28,8 @@
 {cmd:constant(}{it:string}{cmd:)}
 {cmd:anticipation(}{it:string}{cmd:)}
 {cmd:effect(}{it:string}{cmd:)}
+{cmd:post_est(}{it:string}{cmd:)}
+{cmd:units_est(}{it:string}{cmd:)}
 {cmd:pypinocheck}]{p_end}
 
 {synoptset 28 tabbed}{...}
@@ -81,19 +83,27 @@ references therein.{p_end}
 
 {p 4 8}{cmd:cointegrated(}{it:string}{cmd:)} a logical value (the input should be either True or False) that 
 specifies the presence of a cointegrating relationship between the features of the 
-treated unit(s) and the the features of the donors. Default is {cmd:cointegrated(False)}. It can be specified for each treated unit.
+treated unit(s) and the the features of the donors. Default is {cmd:cointegrated("False")}. It can be specified for each treated unit.
 See Details section for more.{p_end}
 
 {p 4 8}{cmd:constant(}{it:string}{cmd:)} a logical value (the input should be either True or False) that  includes a common constant 
-term across features. Default is {cmd:constant(False}}. It can be specified for each treated unit.
+term across features. Default is {cmd:constant("False"}}. It can be specified for each treated unit.
 See Details section for more.{p_end}
 
-{p 4 8}{cmd:anticipation(}{it:string}{cmd:)} specifies the number of periods of potential anticipation effects. Default is no anticipation.It can be specified for each treated unit.
+{p 4 8}{cmd:anticipation(}{it:string}{cmd:)} specifies the number of periods of potential anticipation effects. Default is no anticipation.
+Note that it has to be a string, e.g. {cmd: anticipation("1")}. It can be specified for each treated unit.
 See Details section for more.{p_end}
 
 {p 4 8}{cmd:effect(}{it:string}{cmd:)} a string indicating the type of treatment effect to be estimated. Options are: 'unit-time', which estimates
-        treatment effects for each treated unit-time combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time.{p_end}
+        treatment effects for each treated unit-time combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time;
+        'time', which estimates the average treatment effect on the treated at various horizons.{p_end}
 
+{p 4 8}{cmd:post_est(}{it:string}{cmd:)} a string specifying the number of post-treatment periods for which treatment effects have to be estimated for each treated unit. If
+        effect = "unit" it indicates the number of periods over which the average post-treatment effect is computed. Note that it has to be a string, e.g. {cmd: post_est("1")}.{p_end}
+
+{p 4 8}{cmd:units_est(}{it:string}{cmd:)} a string specifying the treated units for which treatment effects have to be estimated. Treated 
+        units must be separated by commas, e.g. {cmd:units_est("unit1, unit2, unit3")}.{p_end}
+        
 {dlgtab:Others}
 
 {p 4 8}{cmd:dfname(}{it:string}{cmd:)} specifies the name of the Python object that is saved and that will be passed to {help scest:scest} or {help scpi:scpi}.{p_end}

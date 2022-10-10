@@ -1,5 +1,5 @@
-*! Date        : 28 Jul 2022
-*! Version     : 1.0
+*! Date        : 07 Oct 2022
+*! Version     : 2.0
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Data preparation for scest or scpi

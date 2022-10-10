@@ -3,12 +3,12 @@
 ** Do-file for Empirical Illustration - Single Treated Unit
 ** Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik 
 *****************************************************************************************
-** hlp2winpdf, cdn(scdata) replace
-** hlp2winpdf, cdn(scdatamulti) replace
-** hlp2winpdf, cdn(scest) replace
-** hlp2winpdf, cdn(scpi) replace
-** hlp2winpdf, cdn(scplot) replace
-** hlp2winpdf, cdn(scplotmulti) replace
+** hlp2pdf scdata, replace
+** hlp2pdf scdatamulti, replace
+** hlp2pdf scest, replace
+** hlp2pdf scpi, replace
+** hlp2pdf scplot, replace
+** hlp2pdf scplotmulti, replace
   
 *****************************************************************************************
 ** net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/stata) replace

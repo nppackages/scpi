@@ -9,13 +9,14 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import pandas
+pandas.options.mode.chained_assignment = None
 import numpy
 from copy import deepcopy
 from .funs import w_constr_prep, b_est, b_est_multi, V_prep, mat2dict
 from .scplot import scplot
 
 
-def scest(df, w_constr=None, V="separate", opt_dict=None, plot=False):
+def scest(df, w_constr=None, V="separate", plot=False):
 
     '''
 
@@ -37,14 +38,6 @@ def scest(df, w_constr=None, V="separate", opt_dict=None, plot=False):
         a weighting matrix to be used when minimizing the sum of squared residuals.
         The default is the identity matrix ("separate"), so equal weight is given to all observations.
         The other possibility is to specify V = "pooled" for the pooled fit.
-
-    opt_dict : dictionary
-        a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
-        The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based
-        optimization ('SLSQP'). In case a lasso-type constraint is implemented, cvxpy is used for optimization.
-        More information on the stopping criteria can be obtained reading the official documentation at
-        https://www.cvxpy.org/. The default values are 'maxeval = 5000', 'xtol_rel = 1e-8', 'xtol_abs = 1e-8',
-        'ftol_rel = 1e-8', 'ftol_abs = 1e-8', 'tol_eq = 1e-8', and 'tol_ineq = 1e-8'.
 
     plot : bool, default False
         a logical specifying whether scplot should be called and a plot saved in the current working directory. For more
@@ -179,15 +172,11 @@ def scest(df, w_constr=None, V="separate", opt_dict=None, plot=False):
 
         if 'name' in w_names:
 
-            if not w_constr['name'] in ["simplex", "lasso", "ridge", "ols", "L1/L2"]:
+            if not w_constr['name'] in ["simplex", "lasso", "ridge", "ols", "L1-L2"]:
                 raise Exception("If 'name' is specified in w_constr, then it should be chosen" +
-                                " among 'simplex', 'lasso', 'ridge', 'ols', 'L1/L2'.")
+                                " among 'simplex', 'lasso', 'ridge', 'ols', 'L1-L2'.")
         else:
             w_constr['name'] = None
-
-    if opt_dict is not None:
-        if not isinstance(opt_dict, dict):
-            raise Exception("opt_dict should be an object of type dict!")
 
     # Data matrices and specs
     A = deepcopy(df.A)
@@ -243,7 +232,7 @@ def scest(df, w_constr=None, V="separate", opt_dict=None, plot=False):
     # Estimate SC
     if class_type == "scpi_data":
         w_constr = w_constr_prep(w_constr, w_names, A, Z, V, J, KM)
-        result = b_est(A=A, Z=Z, J=J, KM=KM, w_constr=w_constr, V=V, opt_dict=opt_dict)
+        result = b_est(A=A, Z=Z, J=J, KM=KM, w_constr=w_constr, V=V)
         cnms = [c.split("_", 1)[1] for c in Z.columns.tolist()]
         idx = pandas.MultiIndex.from_product([df.treated_units, cnms], names=['treated_unit', 'donor'])
         b = pandas.DataFrame(result, index=idx)
@@ -269,7 +258,7 @@ def scest(df, w_constr=None, V="separate", opt_dict=None, plot=False):
 
             if V_type == "separate":
                 result = b_est(A=A_i, Z=Z_i, J=J[tr], KM=KM[tr], w_constr=w_constr_dict[tr],
-                               V=V_i, opt_dict=opt_dict)
+                               V=V_i)
                 idx = pandas.MultiIndex.from_product([[tr], df.donors_dict[tr]])
                 auxdf = pandas.DataFrame(result[0:J[tr]], index=idx)
                 w_store = pandas.concat([w_store, auxdf], axis=0)
@@ -283,7 +272,7 @@ def scest(df, w_constr=None, V="separate", opt_dict=None, plot=False):
         if V_type != "separate":
             w_constr_list = [v for v in w_constr_dict.values()]
             b = b_est_multi(A=A, Z=Z, J=J, KM=KM, iota=iota, w_constr=w_constr_list,
-                            V=V, opt_dict=opt_dict)
+                            V=V)
 
             j_lb = 0
             for tr in df.treated_units:

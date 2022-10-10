@@ -1,5 +1,5 @@
-*! Date        : 28 Jul 2022
-*! Version     : 1.0
+*! Date        : 07 Oct 2022
+*! Version     : 2.0
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Synthetic control inference
@@ -14,7 +14,7 @@ program define scpi, eclass
 version 17.0           
 
 	syntax , dfname(string) [p(integer 1) direc(string) q(real -11.92) lb(string) V(string) name(string) u_missp u_sigma(string) u_order(integer 1) u_lags(integer 0) u_alpha(real 0.05) sims(integer 200) ///
-			 e_method(string) e_order(integer 1) e_lags(integer 0) e_alpha(real 0.05) lgapp(string) rho(real -11) rho_max(real -11) cores(integer 1) opt_est(string) opt_inf(string) pypinocheck]
+			 e_method(string) e_order(integer 1) e_lags(integer 0) e_alpha(real 0.05) lgapp(string) rho(real -11) rho_max(real -11) cores(integer 1) pypinocheck]
 
 	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
 		python: version_checker()
@@ -42,14 +42,6 @@ version 17.0
 			local direc "None"
 		}
 	}
-	
-	if mi("`opt_est'") {
-		local opt_est "None"
-	}
-
-	if mi("`opt_inf'") {
-		local opt_inf "None"
-	}	
 	
 	if !mi("`p'") {
 		if `p' == 0 {
@@ -101,7 +93,7 @@ version 17.0
 	}
 	
 	if mi("`e_method'") {
-		local e_method "all"
+		local e_method "gaussian"
 	}
 	
 	python: executionTime(`cores', `sims', "`dfname'")
@@ -115,7 +107,7 @@ version 17.0
 	sleep 500
 
 	python: scpi_wrapper("`p_str'", "`direc'", `q', "`lb'", "`name'", "`V'", "`u_missp'", "`u_sigma'", `u_order', `u_lags', `u_alpha', "`e_method'", `e_order', `e_lags', ///
-						 `e_alpha', `sims', "`lgapp'", `rho', `rho_max', `cores', "`opt_est'", "`opt_inf'", "`dfname'")
+						 `e_alpha', `sims', "`lgapp'", `rho', `rho_max', `cores', "`dfname'")
 	
 	ereturn clear
 	
@@ -190,7 +182,7 @@ from sfi import Scalar, Matrix, Macro
 from math import ceil, floor
 
 
-def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_alpha, e_method, e_order, e_lags, e_alpha, sims, lgapp, rho, rho_max, cores, opt_est, opt_inf, dfname):
+def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_alpha, e_method, e_order, e_lags, e_alpha, sims, lgapp, rho, rho_max, cores, dfname):
 
 	filename = dfname + '.obj'
 	filehandler = open(filename, 'rb') 
@@ -222,12 +214,6 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 		else:
 			w_constr = {'name': str(name), 'Q': Q}
 				
-	if opt_est == "None":
-		opt_est = {}
-		
-	if opt_inf == "None":
-		opt_inf = {}
-		
 	if rho == -11:
 		rho = None
 	if rho_max == -11:
@@ -238,8 +224,8 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 		u_missp_bool = False
 	else:
 		u_missp_bool = True
-		
-	res_pi = scpi(df, w_constr, V, None, u_missp_bool, u_sigma, u_order, u_lags, None, u_alpha, str(e_method), e_order, e_lags, None, e_alpha, sims, rho, rho_max, lgapp, cores, False, None, None, opt_est, opt_inf, True, True)
+
+	res_pi = scpi(df, w_constr, V, None, u_missp_bool, u_sigma, u_order, u_lags, None, u_alpha, str(e_method), e_order, e_lags, None, e_alpha, sims, rho, rho_max, lgapp, cores, False, None, None, True, True)
 	class_type = res_pi.__class__.__name__
 	Macro.setLocal("class_type", class_type)
 	
@@ -248,12 +234,7 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 	
 	filename = '__scpi__output.obj'
 	file     = open(filename, 'wb')
-	pickle.dump(res_pi, file)
-		
-	Matrix.create("wmat", len(res_pi.w), 1, 0)
-	Matrix.store("wmat", res_pi.w.values)
-	names = [str(row) for row in res_pi.w.index.tolist()]
-	Matrix.setRowNames("wmat", names)
+	pickle.dump(res_pi, file)	
 	
 	if res_pi.KMI > 0:
 		Matrix.create("rmat", len(res_pi.r), 1, 0)
@@ -395,6 +376,10 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 	names = res_pi.treated_units
 	
 	if class_type == "scpi_output":
+		Matrix.create("wmat", len(res_pi.w), 1, 0)
+		Matrix.store("wmat", res_pi.w.values)
+		nms = [str(row) for row in res_pi.w.index.tolist()]
+		Matrix.setRowNames("wmat", nms)
 	
 		Matrix.create("T1", 1, 1, 0)
 		Matrix.store("T1", res_pi.T1_outcome)
@@ -421,8 +406,12 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 		Macro.setLocal("features", ' '.join([str(elem) for elem in res_pi.features]))
 		Macro.setLocal("anticipation", str(res_pi.anticipation))
 
-
+	
 	if class_type == "scpi_multi_output":
+		Matrix.create("wmat", len(res_pi.w), 1, 0)
+		Matrix.store("wmat", res_pi.w.values)
+		names = [ix2rn(row) for row in res_pi.w.index.tolist()]
+		Matrix.setRowNames("wmat", names)
 	
 		Matrix.create("T1", len(res_pi.T1_outcome), 1, 0)
 		names = [str(k) for k in res_pi.T1_outcome.keys()]

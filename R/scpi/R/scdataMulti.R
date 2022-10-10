@@ -39,7 +39,8 @@
 #' @param constant a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}. 
 #' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}. 
 #' @param effect a string indicating the type of treatment effect to be estimated. Options are: 'unit-time', which estimates treatment effects for each 
-#' treated unit-time combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time.
+#' treated unit- post treatment period combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time;
+#' 'time', which estimates the average treatment effect on the treated at various horizons.
 #' @param anticipation a scalar that indicates the number of periods of potential anticipation effects. Default is 0. 
 #' @param verbose if \code{TRUE} prints additional information in the console.
 #' @param sparse.matrices if \code{TRUE} all block diagonal matrices (\eqn{\mathbf{B}}, \eqn{\mathbf{C}}, and \eqn{\mathbf{P}}) 
@@ -112,7 +113,7 @@
 #' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
-#' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
+#' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
 #'}
 #'
 #' @seealso \code{\link{scdata}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
@@ -206,50 +207,53 @@ scdataMulti <- function(df,
   } else {
     features <- outcome.var
   }
-  
+
   # Check inputs are in dataframe
   if (!(id.var %in% var.names)) {
     stop("ID variable (id.var) not found in the input dataframe!")
   }
-  
+
   if (!(time.var %in% var.names)) {
     stop("Time variable (time.var) not found in the input dataframe!")
   }
-  
+
   if (!(outcome.var %in% var.names)) {
     stop("Outcome variable (outcome.var) not found in the input dataframe!")
   }
-  
+
   if (!(treatment.var %in% var.names)) {
     stop("Treatment variable (treatment.var) not found in the input dataframe!")
   }
-  
+
   time.var.class = var.class[var.names == time.var]
   if (!time.var.class %in% c("numeric","integer","Date")) {
     stop("Time variable (time.var) must be either numeric or Date format!")
   }
-  
+
   if (!var.class[var.names == outcome.var] %in% c("numeric","integer")) {
     stop("Outcome variable (outcome.var) must be numeric!")
   }
-  
+
   if (!var.class[var.names == treatment.var] %in% c("numeric","integer")) {
     stop("Outcome variable (treatment.var) must be numeric!")
   }  
-  
+
   if (is.character(effect) == FALSE) {
     stop("The option 'effect' must be a character (eg. effect = 'unit-time')!")
   }
-  
+
   if (!(effect %in% c('unit-time', 'unit', 'time'))) {
     stop("The option 'effect' should be either 'unit-time', 'time', or 'unit'." )
   }
-  
+
   # Rename treatment, time, and ID variables
   var.names[var.names == treatment.var] <- "Treatment"
   var.names[var.names == id.var]   <- "ID"
   var.names[var.names == time.var]   <- "Time"
   names(data) <- var.names
+  if (is.numeric(data[,"Treatment"])) {
+    data[,"ID"] <- as.character(data[,"ID"])
+  }
   time <- unique(data[,"Time"])                
   Y.df <- data[c("ID", "Time", "Treatment", outcome.var)]
 
@@ -262,13 +266,13 @@ scdataMulti <- function(df,
     if (!all(units.est %in% treated.units)) {
       stop("The object units.est must contain the identifiers (id.var) of the treated units for which treatment effects have to be estimated!")
     }
-    
+
     sel.tr <- treated.units %in% units.est
     treated.units <- treated.units[sel.tr]
   }  else {
     units.est <- treated.units
   }
-    
+
   # Control covariates for adjustment and matching features 
   if (is.null(cov.adj) == FALSE) {
     cov.adj.list <- list()
@@ -377,9 +381,7 @@ scdataMulti <- function(df,
       }
       period.post <- period.post[sel.post]
     }
-    
-    #covs <- cov.adj.list[[treated.unit]]
-    #covs.feat <- covs[names(covs) %in% features.list[[treated.unit]]]
+
     scdata.out <- tryCatch(
                       {
                          scdata(df.aux, id.var = "ID",
@@ -485,12 +487,22 @@ scdataMulti <- function(df,
     colnames.P <- c(colnames.P, c(colnames(B.tr), colnames(C.tr)))
     colnames.Y.donors <- c(colnames.Y.donors, colnames(Y.donors.tr))
     rownames.Y.donors <- c(rownames.Y.donors, rownames(Y.donors.tr))
-
+    
+    if (effect == "time") {
+      P.tr <- cbind(c(1:nrow(P.tr)), P.tr)
+      colnames(P.tr) <- c("aux_id", colnames(P.tr)[-1])
+    }
+    
     if (tr.count == 1) {
       A.stacked <- A.tr
       B.stacked <- B.tr
       C.stacked <- C.tr
-      P.stacked <- P.tr
+      if (effect == "time") {
+        P.stacked <- as.data.frame(P.tr)
+      } else {
+        P.stacked <- P.tr
+      }
+      
       Pd.stacked <- P.diff
       Y.donors.stacked <- Y.donors.tr
 
@@ -498,7 +510,11 @@ scdataMulti <- function(df,
       A.stacked <- rbind(A.stacked, A.tr)
       B.stacked <- Matrix::bdiag(B.stacked, B.tr)
       C.stacked <- Matrix::bdiag(C.stacked, C.tr)
-      P.stacked <- Matrix::bdiag(P.stacked, P.tr)
+      if (effect == "time") {
+        P.stacked <- merge(P.stacked, as.data.frame(P.tr), by = "aux_id", all = TRUE)
+      } else {
+        P.stacked <- Matrix::bdiag(P.stacked, P.tr)
+      }
       if (is.null(Pd.stacked) == FALSE) Pd.stacked <- Matrix::bdiag(Pd.stacked, P.diff)
       Y.donors.stacked <- Matrix::bdiag(Y.donors.stacked, Y.donors.tr)
     }
@@ -521,20 +537,30 @@ scdataMulti <- function(df,
   rownames(B.stacked) <- rownames.A
   rownames(C.stacked) <- rownames.A
   rownames(Y.donors.stacked) <- rownames.Y.donors
-  rownames(P.stacked) <- rownames.P
-
+  if (effect == "time") {
+    P.stacked$aux_id <- NULL
+  } else {
+    rownames(P.stacked) <- rownames.P
+  }
+  
   colnames(A.stacked) <- "A"
   colnames(B.stacked) <- colnames.B
   colnames(C.stacked) <- colnames.C
   colnames(P.stacked) <- colnames.P
   colnames(Y.donors.stacked) <- colnames.Y.donors
 
+  
   # Rearrange P so that order of columns coincides with (B,C)
   P.stacked <- P.stacked[, c(colnames.B, colnames.C), drop = FALSE]
   if (is.null(Pd.stacked) == FALSE) {
     colnames(Pd.stacked) <- colnames.P
     rownames(Pd.stacked) <- rownames.P
     Pd.stacked <- Pd.stacked[, c(colnames.B, colnames.C), drop = FALSE]
+  }
+  
+  if (effect == "time") {
+    P.stacked <- P.stacked/length(treated.units)
+    P.stacked <- na.omit(P.stacked)
   }
 
   specs <- list(J = J.list,

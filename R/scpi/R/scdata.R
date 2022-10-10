@@ -104,7 +104,7 @@
 #' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
-#' scpi: Uncertainty Quantification for Synthetic Control Estimators, \emph{arXiv}:2202.05984.}
+#' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
 #'}
 #'
 #' @seealso \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
@@ -266,15 +266,18 @@ scdata <- function(df,
          cov.adj!")
   }
 
-  
   period.pre  <- sort(period.pre, decreasing = FALSE)
   period.post <- sort(period.post, decreasing = FALSE)
-
+  
   # Create ID and time variables
+  if (is.numeric(data[id.var])) {
+    data[id.var] <- as.character(data[id.var])
+  }
+
   id          <- as.matrix(unique(data[id.var]))        # ID of units
   time        <- unique(data[,time.var])                # Time periods
   time        <- time[time %in% c(period.pre, period.post)]
-
+  
   # Check that specified units are in dataframe
   if (!(unit.tr %in% id)) {
     stop("There is no treated unit with the specified ID (unit.tr) in the specified ID variable (id.var)!")
@@ -282,10 +285,11 @@ scdata <- function(df,
 
   if (!all(unit.co %in% id)) {
     co.not.found <- unit.co[!(unit.co %in% id)]
+
     stop(paste(c("The following control unit(s) are not in the input dataframe:",
                  co.not.found), collapse = " "))
   }
-
+  
   if (unit.tr %in% unit.co) {
     stop("The treated unit is also contained in the donor pool!")
   }
@@ -676,9 +680,16 @@ scdata <- function(df,
     K <- K + 1
   }
 
-  if (out.in.features == FALSE) C.na <- NULL
-
-  colnames(P) <- c(colnames(B.na), colnames(C.na))
+  if (out.in.features == FALSE) {
+    C.na <- NULL
+    KM <- 0
+    nK <- names(K)
+    K <- rep(0, length(K))
+    names(K) <- nK
+    colnames(P) <- colnames(B.na)
+  } else {
+    colnames(P) <- c(colnames(B.na), colnames(C.na))
+  }
   
   specs <- list(J = J,
                 K = K,

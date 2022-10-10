@@ -1,5 +1,5 @@
-*! Date        : 28 Jul 2022
-*! Version     : 1.0
+*! Date        : 07 Oct 2022
+*! Version     : 2.0
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Synthetic control estimation
@@ -8,7 +8,7 @@ capture program drop scest
 program define scest, eclass         
 version 17.0           
 
-	syntax , dfname(string) [name(string) p(integer 1) direc(string) q(real -11.92) lb(string) V(string) opt(string) pypinocheck]
+	syntax , dfname(string) [name(string) p(integer 1) direc(string) q(real -11.92) lb(string) V(string) pypinocheck]
 	
 	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
 		python: version_checker()
@@ -35,10 +35,6 @@ version 17.0
 		if `p' == 0 {
 			local direc "None"
 		}
-	}
-	
-	if mi("`opt'") {
-		local opt "None"
 	}
 	
 	if !mi("`p'") {
@@ -76,7 +72,7 @@ version 17.0
 		}
 	}
 	
-	python: scest_wrapper("`p_str'", "`direc'", `q', "`lb'", "`name'", "`V'", "`opt'", "`dfname'")
+	python: scest_wrapper("`p_str'", "`direc'", `q', "`lb'", "`name'", "`V'", "`dfname'")
 
 	ereturn clear
 
@@ -107,7 +103,7 @@ version 17.0
 		ereturn matrix Y_pre      = Y_pre		
 	}
 	
-	ereturn matrix beta       = bmat
+	ereturn matrix beta = bmat
 	capture ereturn matrix r = rmat
 	ereturn matrix w    = wmat
 	ereturn matrix res  = res
@@ -130,7 +126,7 @@ from scpi_pkg.scest import scest
 from scpi_pkg import version as lver
 from sfi import Scalar, Matrix, Macro
 
-def scest_wrapper(p, dir, QQ, lb, name, V, opt, dfname):
+def scest_wrapper(p, dir, QQ, lb, name, V, dfname):
 	
 	filename = dfname + '.obj'
 	filehandler = open(filename, 'rb') 
@@ -154,9 +150,7 @@ def scest_wrapper(p, dir, QQ, lb, name, V, opt, dfname):
 		else:
 			w_constr = {'name': str(name), 'Q': QQ}
 
-	if opt == "None":
-		opt = {}
-	res_est = scest(df, w_constr = w_constr, V = V, opt_dict = opt)
+	res_est = scest(df, w_constr = w_constr, V = V)
 
 	class_type = res_est.__class__.__name__
 	Macro.setLocal("class_type", class_type)
