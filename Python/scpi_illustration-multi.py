@@ -10,7 +10,6 @@ import pandas
 import numpy
 import random
 import os
-from plotnine import ggsave
 from warnings import filterwarnings
 from scpi_pkg.scdata import scdata
 from scpi_pkg.scdataMulti import scdataMulti
@@ -22,7 +21,6 @@ from scpi_pkg.scplotMulti import scplotMulti
 ########################################
 # Load database
 data = pandas.read_csv("scpi_germany.csv")
-os.chdir('YOUR_PATH_HERE')
 
 filterwarnings("ignore")
 
@@ -62,7 +60,7 @@ aux = scdataMulti(df=data,
 res = scest(aux, w_constr={'name': 'simplex'})
 scplotMulti(res)
 
-res_pi = scpi(aux, w_constr={'name': 'simplex'}, sims=200, cores=1)
+res_pi = scpi(aux, w_constr={'name': 'simplex'}, sims=50, cores=1)
 
 # plot series
 scplotMulti(res_pi, ptype="series")
@@ -88,7 +86,7 @@ aux = scdataMulti(df=data,
 res = scest(aux, w_constr={'name': 'simplex'})
 scplotMulti(res)
 
-res_pi = scpi(aux, w_constr={'name': 'simplex'}, sims=200, cores=1)
+res_pi = scpi(aux, w_constr={'name': 'simplex'}, sims=50, cores=1)
 
 # plot series
 scplotMulti(res_pi, ptype="series")
@@ -114,7 +112,7 @@ aux = scdataMulti(df=data,
 res = scest(aux, w_constr={'name': 'simplex'})
 scplotMulti(res)
 
-res_pi = scpi(aux, w_constr={'name': 'simplex'}, sims=200, cores=1)
+res_pi = scpi(aux, w_constr={'name': 'simplex'}, sims=50, cores=1)
 
 # plot series
 scplotMulti(res_pi, ptype="series")

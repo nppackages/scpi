@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti) &#8212; scpi-pkg 0.1 documentation</title>
+    <title>Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti) &#8212; scpi-pkg 2.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -14,6 +14,7 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Point estimation for Synthetic Control (scest.scest)" href="scest.html" />
@@ -31,7 +32,7 @@
         <li class="right" >
           <a href="scdata.html" title="Data Preparation for Synthetic Control (scdata.scdata)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a></li> 
       </ul>
     </div>  
@@ -49,8 +50,7 @@ produces an object of class <code class="docutils literal notranslate"><span cla
 <p>The command prepares the data to be used by scest or scpi for point estimation and inference procedures using
 Synthetic Control. It allows the user to specify the outcome variable and, for each treated unit, the features
 to be matched, and covariate-adjustment feature by feature. The names of the output matrices
-follow the notation proposed in <a class="reference external" href="https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf">Cattaneo, Feng, Palomba, and Titiunik (2022)</a>
-[UPDATE LINK].</p>
+follow the notation proposed in <a class="reference external" href="https://arxiv.org/abs/2210.05026">Cattaneo, Feng, Palomba, and Titiunik (2022)</a>.</p>
 <section id="syntax">
 <h2>Syntax<a class="headerlink" href="#syntax" title="Permalink to this heading">¶</a></h2>
 <dl class="py function">
@@ -87,8 +87,8 @@ sub-lists matters, in the sense that the first sub-list is interpreted as the se
 feature, and so on. Finally, the user can specify ‘constant’ and ‘trend’ as covariates even if they are not
 present in the loaded dataframe.</p>
 </p></li>
-<li><p><strong>post_est</strong> (<em>int</em><em>, </em><em>default None</em>) – an integer specifying the number of post-treatment periods
-for which treatment effects have to be estimated for each treated unit.</p></li>
+<li><p><strong>post_est</strong> (<em>int</em><em>, </em><em>default None</em>) – an integer specifying the number of post-treatment periods for which treatment effects have to be estimated for each treated unit. If
+effect = “unit” it indicates the number of periods over which the average post-treatment effect is computed.</p></li>
 <li><p><strong>units_est</strong> (<em>list</em><em>, </em><em>default None</em>) – a list specifying the treated units for which treatment effects have to be estimated.</p></li>
 <li><p><strong>constant</strong> (<em>bool/dict</em><em>, </em><em>default False</em>) – a logical which controls the inclusion of a constant term across features. If the user wants to specify this
 option indipendently for each treated unit, a dictionary must be provided instead of a boolean value.
@@ -99,8 +99,9 @@ this option indipendently for each treated unit, a dictionary must be provided i
 Specifically, the dictionary must contain as many keys as the number of treated units in the data.
 Each key must correspond to the identifier (id_var) of one treated unit.</p></li>
 <li><p><strong>effect</strong> (<em>str</em><em>, </em><em>default &quot;unit-time&quot;</em>) – a string indicating the type of treatment effect to be estimated. Options are: ‘unit-time’, which estimates
-treatment effects for each treated unit-time combination; ‘unit’, which estimates the treatment effect for
-each unit by averaging post-treatment features over time.</p></li>
+treatment effects for each treated unit- post treatment period combination; ‘unit’, which estimates the
+treatment effect for each unit by averaging post-treatment features over time; ‘time’, which estimates the
+average treatment effect on the treated at various horizons.</p></li>
 <li><p><strong>anticipation</strong> (<em>int/dict</em><em>, </em><em>default 0</em>) – a scalar that indicates the number of periods of potential anticipation effects. If the user wants to specify
 this option indipendently for each treated unit, a dictionary must be provided instead of an integer value.
 Specifically, the dictionary must contain as many keys as the number of treated units in the data.
@@ -234,7 +235,10 @@ Synthetic Control Estimators”.</p>
     <h3><a href="index.html">Table of Contents</a></h3>
     <ul>
 <li><a class="reference internal" href="#">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a><ul>
-<li><a class="reference internal" href="#syntax">Syntax</a></li>
+<li><a class="reference internal" href="#syntax">Syntax</a><ul>
+<li><a class="reference internal" href="#scpi_pkg.scdataMulti.scdataMulti"><code class="docutils literal notranslate"><span class="pre">scdataMulti()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li><a class="reference internal" href="#usage">Usage</a></li>
 </ul>
@@ -285,13 +289,13 @@ Synthetic Control Estimators”.</p>
         <li class="right" >
           <a href="scdata.html" title="Data Preparation for Synthetic Control (scdata.scdata)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.2.3.
     </div>
   </body>
 </html>

@@ -24,7 +24,7 @@ scpi(
   rho = NULL,
   rho.max = 0.2,
   lgapp = "generalized",
-  cores = NULL,
+  cores = 1,
   plot = FALSE,
   plot.name = NULL,
   w.bounds = NULL,
@@ -34,7 +34,7 @@ scpi(
 )
 }
 \arguments{
-\item{data}{a class 'scpi_data' object, obtained by calling \code{\link{scdata}}.}
+\item{data}{a class 'scdata' object, obtained by calling \code{\link{scdata}}, or class 'scdataMulti' obtained via \code{\link{scdataMulti}}.}
 
 \item{w.constr}{a list specifying the constraint set the estimated weights of the donors must belong to.
 \code{w.constr} can contain up to five elements:
@@ -104,9 +104,10 @@ with their own value for \code{rho}. Other options are described in the \strong{
 and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid
 with linear constraints only.}
 
-\item{cores}{number of cores to be used by the command. The default is the number of cores available minus one.}
+\item{cores}{number of cores to be used by the command. The default is one.}
 
-\item{plot}{a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working directory. For more options see \code{\link{scplot}}.}
+\item{plot}{a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working
+directory. For more options see \code{\link{scplot}}.}
 
 \item{plot.name}{a string containing the name of the plot (the format is by default .png). For more options see \code{\link{scplot}}.}
 
@@ -114,7 +115,8 @@ with linear constraints only.}
 the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 by filling the other column with \code{NA}s.}
 
-\item{e.bounds}{a \eqn{N_1\cdot T_1\times 2} matrix with the user-provided bounds on \eqn{(\widehat{\mathbf{w}},\widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
+\item{e.bounds}{a \eqn{N_1\cdot T_1\times 2} matrix with the user-provided bounds on \eqn{(\widehat{\mathbf{w}},
+\widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
 the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 by filling the other column with \code{NA}s.}
 
@@ -123,7 +125,8 @@ by filling the other column with \code{NA}s.}
 \item{verbose}{if \code{TRUE} prints additional information in the console.}
 }
 \value{
-The function returns an object of class 'scpi_scpi' containing three lists. The first list is labeled 'data' and contains used data as returned by \code{\link{scdata}} and some other values.
+The function returns an object of class 'scpi' containing three lists. The first list is labeled 'data' and contains used
+data as returned by \code{\link{scdata}} and some other values.
 \item{A}{a matrix containing pre-treatment features of the treated unit.}
 \item{B}{a matrix containing pre-treatment features of the control units.}
 \item{C}{a matrix containing covariates for adjustment.}
@@ -307,12 +310,12 @@ we automatically set \code{e.order = e.lags = 0}.}
 
 data <- scpi_germany
 
-df <- scdata(df = data, id.var = "country", time.var = "year", 
-             outcome.var = "gdp", period.pre = (1960:1990), 
+df <- scdata(df = data, id.var = "country", time.var = "year",
+             outcome.var = "gdp", period.pre = (1960:1990),
              period.post = (1991:2003), unit.tr = "West Germany",
-             unit.co = unique(data$country)[-7], constant = TRUE,
-             cointegrated.data = TRUE)
-             
+             unit.co = setdiff(unique(data$country), "West Germany"),
+             constant = TRUE, cointegrated.data = TRUE)
+
 result <- scpi(df, w.constr = list(name = "simplex", Q = 1), cores = 1, sims = 10)
 result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1),
                cores = 1, sims = 10)
@@ -326,6 +329,8 @@ result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1),
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+\item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 }
 }
 \seealso{

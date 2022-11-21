@@ -23,18 +23,18 @@ data <- scpi_germany
 
 ####################################
 ### Set options for data preparation
-id.var      <- "country"                             # ID variable
-time.var    <- "year"                                # Time variable
-period.pre  <- seq(from = 1960, to = 1990, by = 1)   # Pre-treatment period
-period.post <- (1991:2003)                           # Post-treatment period
-unit.tr     <- "West Germany"                        # Treated unit (in terms of id.var)
-unit.co     <- unique(data$country)[-7]              # Donors pool
-outcome.var <- "gdp"                                 # Outcome variable
-cov.adj     <- NULL                                  # Covariates for adjustment
-features    <- NULL                                  # No features other than outcome
-constant    <- FALSE                                 # No constant term
-report.missing <- FALSE                              # To check where missing values are
-cointegrated.data <- TRUE                            # Belief that the data are cointegrated
+id.var      <- "country"                              # ID variable
+time.var    <- "year"                                 # Time variable
+period.pre  <- seq(from = 1960, to = 1990, by = 1)    # Pre-treatment period
+period.post <- (1991:2003)                            # Post-treatment period
+unit.tr     <- "West Germany"                         # Treated unit (in terms of id.var)
+unit.co     <- setdiff(unique(data$country), unit.tr) # Donors pool
+outcome.var <- "gdp"                                  # Outcome variable
+cov.adj     <- NULL                                   # Covariates for adjustment
+features    <- NULL                                   # No features other than outcome
+constant    <- FALSE                                  # No constant term
+report.missing <- FALSE                               # To check where missing values are
+cointegrated.data <- TRUE                             # Belief that the data are cointegrated
 
 
 ####################################
@@ -83,7 +83,7 @@ summary(est.ridge2)
 est.l1l2 <- scest(data = df, w.constr = list(name="L1-L2"))
 summary(est.l1l2)
 est.l1l2.2 <- scest(data = df, w.constr = list(p = "L1-L2", dir = "==/<=", Q = 1, 
-                                             Q2 = Qest, lb = -Inf))
+                                             Q2 = Qest, lb = 0))
 summary(est.l1l2.2)
 
 
@@ -172,14 +172,13 @@ for (l in 1:length(time)) {
                                col="maroon", width=0.2, linetype=5) +
     geom_errorbar(data=sen.dat, aes(x=lab, ymin=lb, ymax=ub),
                   col="blue", width=0.2, linetype=1) +
-    geom_hline(yintercept = y[time[l]-1990], linetype=1, size=0.3, alpha=0.8) +
+    geom_hline(yintercept = y[time[l]-1990], linetype=1, linewidth=0.3, alpha=0.8) +
     annotate("text", x=5.4, y=y[time[l]-1990]-.1,label="Y(1)", size=3.5) +
     scale_x_discrete(labels=c(parse(text=TeX("$0.25\\hat{\\sigma}$")),
                               parse(text=TeX("$0.5\\hat{\\sigma}$")),
                               parse(text=TeX("$\\hat{\\sigma}$")),
                               parse(text=TeX("$1.5\\hat{\\sigma}$")),
                               parse(text=TeX("$2\\hat{\\sigma}$"))))
-  ggsave(paste("sensitivity", l, ".png", sep=""), width=6, height=4.5, dpi=1000)
 }
 
 

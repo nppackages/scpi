@@ -3,7 +3,7 @@
 \docType{data}
 \name{scpi_germany}
 \alias{scpi_germany}
-\title{Economic indicators for OECD countries}
+\title{Replication Dataset for Estimating the Economic Impact of German Reunification}
 \format{
 A data frame with 748 rows and 11 variables:
 \describe{

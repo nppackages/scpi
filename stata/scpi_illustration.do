@@ -55,8 +55,14 @@ scest, dfname("python_scdata") p(1) direc("<=") q(1) lb("-inf")  // equivalent
 ** SC - point estimation with ridge
 *****************************************************************************************
 scest, dfname("python_scdata") name(ridge)
-local Qridge = e(q)
+local Qridge = e(Qstar)[1,1]
+di `Qridge'
 scest, dfname("python_scdata") p(2) direc("<=") q(`Qridge') lb("-inf") // equivalent
+
+*****************************************************************************************
+** SC - point estimation with L1-L2
+*****************************************************************************************
+scest, dfname("python_scdata") name(L1-L2)
 
 *****************************************************************************************
 ** SC - point estimation with least squares
@@ -69,7 +75,7 @@ scest, dfname("python_scdata") p(0) lb("-inf") 	// equivalent
 *****************************************************************************************
 set seed 8894
 scpi, dfname("python_scdata") name(simplex) u_missp u_order(1) u_lags(0) ///
-	  u_sigma("HC1") e_order(1) e_lags(0) e_method(qreg)
+	  u_sigma("HC1") e_order(1) e_lags(0) e_method(gaussian)
 
 
 *****************************************************************************************

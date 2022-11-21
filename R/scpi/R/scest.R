@@ -1,22 +1,24 @@
 ###############################################################################
 
-#' @title Estimation of Synthetic Control
+#' @title Prediction of Synthetic Control
 #'
-#' @description The command implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints. For more information see
-#'  \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}. 
+#' @description The command implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso,
+#' ridge, or simplex-type constraints. For more information see
+#' \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 #'
-#' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+#' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described
+#' in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 #'
 #' Companion commands are: \link{scdata} and \link{scdataMulti} for data preparation in the single and multiple treated unit(s) cases, respectively,
 #' \link{scpi} for inference procedures, \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
-#' 
+#'
 #' Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
-#' 
+#'
 #' \href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
-#' 
+#'
 #' For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
-#' 
-#' @param data a class 'scpi_data' object, obtained by calling \code{\link{scdata}}, or class 'scpi_data_multi' obtained via \code{\link{scdataMulti}}.
+#'
+#' @param data a class 'scdata' object, obtained by calling \code{\link{scdata}}, or class 'scdataMulti' obtained via \code{\link{scdataMulti}}.
 #' @param w.constr a list specifying the constraint set the estimated weights of the donors must belong to.
 #' \code{w.constr} can contain up to four objects:
 #' - `\code{p}', a string indicating the norm to be constrained (\code{p} should be one of "no norm", "L1", and "L2")
@@ -28,16 +30,18 @@
 #' @param V specifies the weighting matrix to be used when minimizing the sum of squared residuals
 #' \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
 #' The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
-#' (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled". 
+#' (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
 #' See the \strong{Details} section for more.
-#' 
-#' @param plot a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working directory. For more options see \code{\link{scplot}}.
+#'
+#' @param plot a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working
+#' directory. For more options see \code{\link{scplot}}.
 #' @param plot.name a string containing the name of the plot (the format is by default .png). For more options see \code{\link{scplot}}.
 #' @param plot.path a string containing the path at which the plot should be saved (default is output of \code{getwd()}.)
 #' @param save.data a character specifying the name and the path of the saved dataframe containing the processed data used to produce the plot. 
 #'
 #' @return
-#' The function returns an object of class 'scpi_scest' containing two lists. The first list is labeled 'data' and contains used data as returned by \code{\link{scdata}} and some other values.
+#' The function returns an object of class 'scest' containing two lists. The first list is labeled 'data' and
+#' contains used data as returned by \code{\link{scdata}} and some other values.
 #' \item{A}{a matrix containing pre-treatment features of the treated unit.}
 #' \item{B}{a matrix containing pre-treatment features of the control units.}
 #' \item{C}{a matrix containing covariates for adjustment.}
@@ -106,7 +110,7 @@
 #'
 #' \item{If \code{name == "ridge"}, then
 #' \deqn{||\mathbf{w}||_2 \leq Q,}
-#' where \code{Q} is a tuning parameter that is by default computed as 
+#' where \code{Q} is a tuning parameter that is by default computed as
 #' \deqn{(J+KM) \widehat{\sigma}_u^{2}/||\widehat{\mathbf{w}}_{OLS}||_{2}^{2}}
 #' where \eqn{J} is the number of donors and \eqn{KM} is the total number of covariates used for adjustment.
 #' The user can provide \code{Q} as an element of the list (eg. \code{w.constr =
@@ -114,13 +118,13 @@
 #'
 #' \item{If \code{name == "ols"}, then the problem is unconstrained and the vector of weights
 #' is estimated via ordinary least squares.}
-#' 
+#'
 #' \item{If \code{name == "L1-L2"}, then
 #' \deqn{||\mathbf{w}||_1 = 1,\:\:\: ||\mathbf{w}||_2 \leq Q,}
 #' where \eqn{Q} is a tuning parameter computed as in the "ridge" case.}
 #' }}
 #'
-#' \item{\strong{Weighting Matrix with Multiple Treated Units.} 
+#' \item{\strong{Weighting Matrix with Multiple Treated Units.}
 #' \itemize{
 #' \item{if \code{V <- "separate"}, then \eqn{\mathbf{V} = \mathbf{I}} and the minimized objective function is
 #' \deqn{\sum_{i=1}^{N_1} \sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{{i \prime }} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{{i \prime}} \mathbf{r}_{l}^{i}\right)^{2},}
@@ -139,34 +143,35 @@
 #'
 #' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
 #'
-#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}. 
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
 #'
 #' @references
 #' \itemize{
 #' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
-#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
+#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+#' \item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+#' Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 #' }
-#' 
+#'
 #' @seealso \code{\link{scdataMulti}}, \code{\link{scdata}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
 #'
 #' @examples
-#' 
+#'
 #' data <- scpi_germany
-#' 
-#' df <- scdata(df = data, id.var = "country", time.var = "year", 
-#'              outcome.var = "gdp", period.pre = (1960:1990), 
+#'
+#' df <- scdata(df = data, id.var = "country", time.var = "year",
+#'              outcome.var = "gdp", period.pre = (1960:1990),
 #'              period.post = (1991:2003), unit.tr = "West Germany",
-#'              unit.co = unique(data$country)[-7], constant = TRUE,
-#'              cointegrated.data = TRUE)
-#'              
+#'              unit.co = setdiff(unique(data$country), "West Germany"),
+#'              constant = TRUE, cointegrated.data = TRUE)
+#'
 #' result <- scest(df, w.constr = list(name = "simplex", Q = 1))
 #' result <- scest(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1))
-#' 
-#' 
+#'
 #' @export
 
 scest <- function(data,
@@ -176,18 +181,18 @@ scest <- function(data,
                   plot.name = NULL,
                   plot.path = NULL,
                   save.data = NULL) {
-  
+
   ##########################
-  if ( (methods::is(data, "scpi_data") | methods::is(data, "scpi_data_multi")) == FALSE ) {
+  if ((methods::is(data, "scdata") || methods::is(data, "scdataMulti")) == FALSE) {
     stop("data should be the object returned by running scdata or scdata_multi!")
   }
-  
+
   if (is.null(w.constr) == FALSE) { # The user has specified W
-    
+
     if (is.list(w.constr) == FALSE) {
       stop("w.constr should be a list!")
     }
-    
+
     if (!"name" %in% names(w.constr)) {
       w.constr[["name"]] <- "NULL"
     } else {
@@ -197,7 +202,7 @@ scest <- function(data,
       }
     }
   }
-  
+
   # Data matrices
   A <- data$A
   B <- data$B
@@ -207,9 +212,9 @@ scest <- function(data,
   Y.donors <- data$Y.donors
   outcome.var <- data$specs$outcome.var
   
-  if (class(data)[1] == 'scpi_data') {
+  if (class(data)[1] == 'scdata') {
     class.type <- 'scpi_data'
-  } else if (class(data)[1] == 'scpi_data_multi') {
+  } else if (class(data)[1] == 'scdataMulti') {
     class.type <- 'scpi_data_multi'
   }
   

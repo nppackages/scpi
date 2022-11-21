@@ -23,8 +23,6 @@ Dependencies
 
             `dask <https://docs.dask.org/en/stable/>`_, 
 
-            `nlopt <https://nlopt.readthedocs.io/en/latest/>`_,
-
             `numpy <https://numpy.org/>`_, 
 
             `pandas <https://pandas.pydata.org/>`_, 

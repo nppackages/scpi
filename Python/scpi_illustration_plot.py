@@ -11,7 +11,7 @@ import numpy
 import random
 import os
 from copy import deepcopy
-from plotnine import ggplot, ggsave, aes, geom_point, geom_errorbar, geom_vline, geom_line, theme, theme_bw
+from plotnine import ggplot, aes, geom_point, geom_errorbar, geom_vline, geom_line, theme, theme_bw
 from plotnine import element_blank, labs, guide_legend, scale_color_manual, ggtitle, facet_wrap, geom_ribbon
 from warnings import filterwarnings
 from scpi_pkg.scdata import scdata
@@ -24,7 +24,6 @@ from scpi_pkg.scplotMulti import scplotMulti
 
 ########################################
 # Load database
-os.chdir('YOUR_PATH_HERE')
 data = pandas.read_csv("scpi_germany.csv")
 
 ##############################################################################
@@ -76,8 +75,6 @@ result = scpi(data_prep, sims=sims, w_constr=w_constr, u_order=u_order, u_lags=u
 ####################################
 # SC - plot results
 plot = scplot(result)
-filterwarnings("ignore")
-ggsave(filename='germany_unc.png', plot=plot)
 
 ####################################
 # SC - manually reproduce plot
@@ -148,5 +145,3 @@ plot_lines = (plot_struc +
 title_plot = 'In and Out of Sample Uncertainty'
 plot = plot_lines + geom_errorbar(mapping=aes(x='time', ymin='lb', ymax='ub', color='sc'),
                                   size=0.5, linetype='solid') + ggtitle(title_plot)
-
-ggsave(filename='germany_unc.png', plot=plot)

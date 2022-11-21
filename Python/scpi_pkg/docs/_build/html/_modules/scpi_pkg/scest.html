@@ -13,6 +13,7 @@
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
@@ -45,13 +46,14 @@
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span>
+<span class="n">pandas</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">chained_assignment</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">.funs</span> <span class="kn">import</span> <span class="n">w_constr_prep</span><span class="p">,</span> <span class="n">b_est</span><span class="p">,</span> <span class="n">b_est_multi</span><span class="p">,</span> <span class="n">V_prep</span><span class="p">,</span> <span class="n">mat2dict</span>
 <span class="kn">from</span> <span class="nn">.scplot</span> <span class="kn">import</span> <span class="n">scplot</span>
 
 
-<div class="viewcode-block" id="scest"><a class="viewcode-back" href="../../scest.html#scpi_pkg.scest.scest">[docs]</a><span class="k">def</span> <span class="nf">scest</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="s2">&quot;separate&quot;</span><span class="p">,</span> <span class="n">opt_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="scest"><a class="viewcode-back" href="../../scest.html#scpi_pkg.scest.scest">[docs]</a><span class="k">def</span> <span class="nf">scest</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="s2">&quot;separate&quot;</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
     <span class="sd">&#39;&#39;&#39;</span>
 
@@ -73,14 +75,6 @@
 <span class="sd">        a weighting matrix to be used when minimizing the sum of squared residuals.</span>
 <span class="sd">        The default is the identity matrix (&quot;separate&quot;), so equal weight is given to all observations.</span>
 <span class="sd">        The other possibility is to specify V = &quot;pooled&quot; for the pooled fit.</span>
-
-<span class="sd">    opt_dict : dictionary</span>
-<span class="sd">        a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.</span>
-<span class="sd">        The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based</span>
-<span class="sd">        optimization (&#39;SLSQP&#39;). In case a lasso-type constraint is implemented, cvxpy is used for optimization.</span>
-<span class="sd">        More information on the stopping criteria can be obtained reading the official documentation at</span>
-<span class="sd">        https://www.cvxpy.org/. The default values are &#39;maxeval = 5000&#39;, &#39;xtol_rel = 1e-8&#39;, &#39;xtol_abs = 1e-8&#39;,</span>
-<span class="sd">        &#39;ftol_rel = 1e-8&#39;, &#39;ftol_abs = 1e-8&#39;, &#39;tol_eq = 1e-8&#39;, and &#39;tol_ineq = 1e-8&#39;.</span>
 
 <span class="sd">    plot : bool, default False</span>
 <span class="sd">        a logical specifying whether scplot should be called and a plot saved in the current working directory. For more</span>
@@ -215,15 +209,11 @@
 
         <span class="k">if</span> <span class="s1">&#39;name&#39;</span> <span class="ow">in</span> <span class="n">w_names</span><span class="p">:</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">w_constr</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;simplex&quot;</span><span class="p">,</span> <span class="s2">&quot;lasso&quot;</span><span class="p">,</span> <span class="s2">&quot;ridge&quot;</span><span class="p">,</span> <span class="s2">&quot;ols&quot;</span><span class="p">,</span> <span class="s2">&quot;L1/L2&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">w_constr</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;simplex&quot;</span><span class="p">,</span> <span class="s2">&quot;lasso&quot;</span><span class="p">,</span> <span class="s2">&quot;ridge&quot;</span><span class="p">,</span> <span class="s2">&quot;ols&quot;</span><span class="p">,</span> <span class="s2">&quot;L1-L2&quot;</span><span class="p">]:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;If &#39;name&#39; is specified in w_constr, then it should be chosen&quot;</span> <span class="o">+</span>
-                                <span class="s2">&quot; among &#39;simplex&#39;, &#39;lasso&#39;, &#39;ridge&#39;, &#39;ols&#39;, &#39;L1/L2&#39;.&quot;</span><span class="p">)</span>
+                                <span class="s2">&quot; among &#39;simplex&#39;, &#39;lasso&#39;, &#39;ridge&#39;, &#39;ols&#39;, &#39;L1-L2&#39;.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">w_constr</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="k">if</span> <span class="n">opt_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">opt_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;opt_dict should be an object of type dict!&quot;</span><span class="p">)</span>
 
     <span class="c1"># Data matrices and specs</span>
     <span class="n">A</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">A</span><span class="p">)</span>
@@ -279,7 +269,7 @@
     <span class="c1"># Estimate SC</span>
     <span class="k">if</span> <span class="n">class_type</span> <span class="o">==</span> <span class="s2">&quot;scpi_data&quot;</span><span class="p">:</span>
         <span class="n">w_constr</span> <span class="o">=</span> <span class="n">w_constr_prep</span><span class="p">(</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">w_names</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">KM</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">b_est</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">Z</span><span class="o">=</span><span class="n">Z</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="p">,</span> <span class="n">KM</span><span class="o">=</span><span class="n">KM</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="n">V</span><span class="p">,</span> <span class="n">opt_dict</span><span class="o">=</span><span class="n">opt_dict</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">b_est</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">Z</span><span class="o">=</span><span class="n">Z</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="p">,</span> <span class="n">KM</span><span class="o">=</span><span class="n">KM</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="n">V</span><span class="p">)</span>
         <span class="n">cnms</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">Z</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([</span><span class="n">df</span><span class="o">.</span><span class="n">treated_units</span><span class="p">,</span> <span class="n">cnms</span><span class="p">],</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;treated_unit&#39;</span><span class="p">,</span> <span class="s1">&#39;donor&#39;</span><span class="p">])</span>
         <span class="n">b</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
@@ -305,7 +295,7 @@
 
             <span class="k">if</span> <span class="n">V_type</span> <span class="o">==</span> <span class="s2">&quot;separate&quot;</span><span class="p">:</span>
                 <span class="n">result</span> <span class="o">=</span> <span class="n">b_est</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A_i</span><span class="p">,</span> <span class="n">Z</span><span class="o">=</span><span class="n">Z_i</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">KM</span><span class="o">=</span><span class="n">KM</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span>
-                               <span class="n">V</span><span class="o">=</span><span class="n">V_i</span><span class="p">,</span> <span class="n">opt_dict</span><span class="o">=</span><span class="n">opt_dict</span><span class="p">)</span>
+                               <span class="n">V</span><span class="o">=</span><span class="n">V_i</span><span class="p">)</span>
                 <span class="n">idx</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="n">tr</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">donors_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">]])</span>
                 <span class="n">auxdf</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">J</span><span class="p">[</span><span class="n">tr</span><span class="p">]],</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
                 <span class="n">w_store</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">w_store</span><span class="p">,</span> <span class="n">auxdf</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -319,7 +309,7 @@
         <span class="k">if</span> <span class="n">V_type</span> <span class="o">!=</span> <span class="s2">&quot;separate&quot;</span><span class="p">:</span>
             <span class="n">w_constr_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">w_constr_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
             <span class="n">b</span> <span class="o">=</span> <span class="n">b_est_multi</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">Z</span><span class="o">=</span><span class="n">Z</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="p">,</span> <span class="n">KM</span><span class="o">=</span><span class="n">KM</span><span class="p">,</span> <span class="n">iota</span><span class="o">=</span><span class="n">iota</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr_list</span><span class="p">,</span>
-                            <span class="n">V</span><span class="o">=</span><span class="n">V</span><span class="p">,</span> <span class="n">opt_dict</span><span class="o">=</span><span class="n">opt_dict</span><span class="p">)</span>
+                            <span class="n">V</span><span class="o">=</span><span class="n">V</span><span class="p">)</span>
 
             <span class="n">j_lb</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">treated_units</span><span class="p">:</span>
@@ -711,7 +701,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.2.3.
     </div>
   </body>
 </html>

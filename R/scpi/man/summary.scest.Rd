@@ -2,12 +2,12 @@
 % Please edit documentation in R/scest_methods.R
 \name{summary.scest}
 \alias{summary.scest}
-\title{Summary Method for Synthetic Control Estimation}
+\title{Summary Method for Synthetic Control Prediction}
 \usage{
 \method{summary}{scest}(object, ...)
 }
 \arguments{
-\item{object}{Class "scpi_scest" or "scpi_scest_multi" object, obtained by calling \code{\link{scest}}.}
+\item{object}{Class "scest" object, obtained by calling \code{\link{scest}}.}
 
 \item{...}{Additional arguments}
 }
@@ -15,7 +15,7 @@
 No return value, called to summarize \code{\link{scest}} results.
 }
 \description{
-The summary method for synthetic control estimation objects.
+The summary method for synthetic control prediction objects.
 }
 \seealso{
 \code{\link{scest}}

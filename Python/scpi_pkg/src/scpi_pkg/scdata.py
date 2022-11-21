@@ -63,11 +63,11 @@ def scdata(df,
     unit_co : array
          a numeric vector that identifies the donor pool in id_var.
 
-    features : list
+    features : list, default None
          a character list containing the name of the feature variables used for estimation.
         If this option is not specified the default is features = outcome_var.
 
-     cov_adj : list
+     cov_adj : list, default None
         a list specifying the names of the covariates to be used for adjustment for each feature. If the user wants
         to specify the same set of covariates for all features, a single list should be provided. If instead a
         different set of covariates per feature has to be specified, then a list of lists should be provided. Note that
@@ -166,6 +166,9 @@ def scdata(df,
 
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
     Synthetic Control Estimators”.
+
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+    Controls with Staggered Treatment Adoption”.
 
     See Also
     --------

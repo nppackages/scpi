@@ -11,7 +11,7 @@ import numpy
 import random
 import os
 from copy import deepcopy
-from plotnine import ggplot, ggsave, aes, geom_point, geom_errorbar, geom_vline, geom_line, theme, theme_bw
+from plotnine import ggplot, aes, geom_point, geom_errorbar, geom_vline, geom_line, theme, theme_bw
 from plotnine import element_blank, labs, guide_legend, scale_color_manual, ggtitle, facet_wrap, geom_ribbon
 from warnings import filterwarnings
 from scpi_pkg.scdata import scdata
@@ -24,7 +24,6 @@ from scpi_pkg.scplotMulti import scplotMulti
 
 ########################################
 # Load database
-os.chdir('YOUR_PATH_HERE')
 data = pandas.read_csv("scpi_germany.csv")
 
 ##############################################################################
@@ -63,7 +62,6 @@ aux = scdataMulti(df=data,
 result = scpi(aux, w_constr={'name': 'simplex'}, sims=10, cores=1)
 
 plot = scplotMulti(result, ptype="series", joint=True, save_data='__scpi_plot')
-ggsave(filename='germany_unc_multi.png', plot=plot)
 
 toplot = pandas.read_csv('__scpi_plot.csv')
 

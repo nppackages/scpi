@@ -58,7 +58,7 @@ def scpi(data,
     data : scdata_output
         a class scdata_output object, obtained by calling scdata
 
-    w_constr : dict
+    w_constr : dict, default {"name": "simplex"}
         a dictionary specifying the constraint set the estimated weights of the donors must belong to.
         w_constr can contain up to five objects:
         1. p, a scalar indicating the norm to be used (p should be one of "no norm", "L1", and "L2")
@@ -142,20 +142,20 @@ def scpi(data,
         a logical specifying whether scplot should be called and a plot saved in the current working directory.
         For more options see scplot.
 
-    w_bounds : numpy.array
+    w_bounds : numpy.array, default None
         a T1 x 2 array with the user-provided bounds on beta. If w_bounds is provided, then
         the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the
         upper bound by filling the other column with NAs.
 
-    e_bounds : numpy.array
+    e_bounds : numpy.array, default None
         a T1 x 2 array with the user-provided bounds on e. If e_bounds is provided, then
         the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or
         the upper bound by filling the other column with NAs.
 
-    verbose : bool
-        if True prints additional information in the console.
+    verbose : bool, default True
+        if False prevents printing additional information in the console.
 
-    pass_stat : bool
+    pass_stat : bool, default False
         for internal use only.
 
     Returns
@@ -355,6 +355,9 @@ def scpi(data,
 
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
     Synthetic Control Estimators”.
+
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+    Controls with Staggered Treatment Adoption”.
 
     See Also
     --------
@@ -806,6 +809,10 @@ def scpi(data,
 
     # Use HC inference to estimate V[u|H] (note that w is pre-regularization)
     df = df_EST(w_constr=w_constr[tr], w=w, B=B, J=Jtot, KM=KMI)
+    if df >= TT:
+        df = TT - 1
+        warnings.warn("The current specification uses more degrees of freedom than observations. We suggest to increase the level of " +
+                      "sparsity or consider using a smaller donor pool.")
 
     Sigma, Omega = u_sigma_est(u_mean=u_mean, u_sigma=u_sigma,
                                res=res_na, Z=Z_na, V=V_na,

@@ -1,29 +1,29 @@
 ################################################################################
-#' Print Method for Synthetic Control Estimation
+#' Print Method for Synthetic Control Methods
 #'
-#' @description The print method for synthetic control estimation objects.
+#' @description The print method for synthetic control prediction objects.
 #'
-#' @param x Class "scpi_scest" or "scpi_scest_multi" object, obtained by calling \code{\link{scest}}.
+#' @param x Class "scest" object, obtained by calling \code{\link{scest}}.
 #' @param ... Other arguments.
 #'
 #' @return No return value, called to print \code{\link{scest}} results.
-#' 
+#'
 #' @author
 #' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
-#' 
-#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
-#' 
-#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
-#' 
-#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}. 
 #'
-#' @seealso \code{\link{scest}} for synthetic control estimation.
+#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#'
+#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#'
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+#'
+#' @seealso \code{\link{scest}} for synthetic control prediction.
 #'
 #' Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}.
 #'
 #'
 #' @export
-#' 
+#'
 
 
 print.scest <- function(x, ...) {
@@ -31,18 +31,18 @@ print.scest <- function(x, ...) {
 
   if (I == 1) {
     Weights    <- round(x$est.results$w, digits = 3)
-    
+
     if (length(x$est.results$r) > 0) {
-      Covariates <- round(x$est.results$r, digits = 3) 
+      Covariates <- round(x$est.results$r, digits = 3)
     }
     active.w  <- sum(abs(Weights) > 0)
-    
+
     names <- strsplit(names(Weights), "\\.")
     names <- unlist(lapply(names, "[[", 2))  # Get all control units
     names(Weights) <- names
-    
+
     cat("\n")
-    cat("Synthetic Control Estimation - Results\n")
+    cat("Synthetic Control Prediction - Results\n")
     cat("\n")
     cat(paste("Active donors:", active.w,"\n"))
     cat("\n")
@@ -55,12 +55,12 @@ print.scest <- function(x, ...) {
     treated.units <- x$data$specs$treated.units
     Weights <- round(x$est.results$w, digits = 3)
     W.list <- mat2list(as.matrix(Weights))
-    
+
     names <- strsplit(names(Weights), "\\.")
     names <- unlist(lapply(names, "[[", 2))  # Get all control units
     co.units <- unique(names)
     to.print <- data.frame(control.unit = co.units)
-    
+
     for (i in seq_len(I)) {
       names <- strsplit(rownames(W.list[[i]]), "\\.")
       names <- unlist(lapply(names, "[[", 2))  # Get all control units
@@ -68,14 +68,14 @@ print.scest <- function(x, ...) {
       names(to.merge) <- c("control.unit", treated.units[i])
       to.print <- merge(to.print, to.merge, by="control.unit", all = TRUE)
     }
-    
+
     mat.print <- as.matrix(to.print[,-1, drop = FALSE])
     rownames(mat.print) <- to.print[,1, drop = TRUE]
 
     active.w <- colSums(abs(mat.print) > 0, na.rm = TRUE)
-    
+
     cat("\n")
-    cat("Synthetic Control Estimation - Results\n")
+    cat("Synthetic Control Prediction - Results\n")
     cat("\n")
     cat(paste("Active donors:\n"))
     print(active.w)
@@ -89,11 +89,11 @@ print.scest <- function(x, ...) {
 
 
 ################################################################################
-#' Summary Method for Synthetic Control Estimation
+#' Summary Method for Synthetic Control Prediction
 #'
-#' @description The summary method for synthetic control estimation objects.
+#' @description The summary method for synthetic control prediction objects.
 #'
-#' @param object Class "scpi_scest" or "scpi_scest_multi" object, obtained by calling \code{\link{scest}}.
+#' @param object Class "scest" object, obtained by calling \code{\link{scest}}.
 #' @param ... Additional arguments
 #'
 #' @return No return value, called to summarize \code{\link{scest}} results.
@@ -105,16 +105,16 @@ print.scest <- function(x, ...) {
 #' 
 #' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
 #' 
-#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}. 
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
 #' 
-#' @seealso \code{\link{scest}} 
+#' @seealso \code{\link{scest}}
 #'
 #' Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}.
 #'
 #' @export
 
 summary.scest <- function(object, ...) {
-  
+
   if (object$data$specs$I == 1) {
     J       <- object$data$specs$J
     M       <- object$data$specs$M
@@ -131,39 +131,39 @@ summary.scest <- function(object, ...) {
       w.size  <- round(object$est.results$w.constr[["Q"]], 3)
     }
     cat("\n")
-    cat(paste0("Synthetic Control Estimation - Setup\n"))
+    cat(paste0("Synthetic Control Prediction - Setup\n"))
     cat("\n")
-    
+
     cat(paste("Constraint Type:                           ", w.cons, "\n", sep = ""))
     cat(paste("Constraint Size (Q):                       ", w.size, "\n", sep = ""))
     cat(paste("Treated Unit:                              ", tr.unit,"\n", sep = ""))
     cat(paste("Size of the donor pool:                    ", J,"\n", sep = ""))
     cat(paste("Features:                                  ", M,"\n", sep = ""))
     cat(paste("Pre-treatment period:                      ", pt.in,"-",pt.fi,"\n", sep = ""))
-    
+
     if (M == 1) {
-      cat(paste("Pre-treatment periods used in estimation:  ",T0,"\n", sep = ""))
+      cat(paste("Pre-treatment periods used in prediction:  ",T0,"\n", sep = ""))
       cat(paste("Covariates used for adjustment:            ",KM,"\n", sep = ""))
-      
+
     } else {
-      cat("Pre-treatment periods used in estimation per feature:\n")
+      cat("Pre-treatment periods used in prediction per feature:\n")
       print(T0)
       cat("Covariates used for adjustment per feature:\n")
       print(K)
     }
-    
+
   } else {
     trunits <- object$data$specs$treated.units
-    
+
     for (tr in trunits) {
       J       <- object$data$specs$J[[tr]]
       M       <- object$data$specs$M[[tr]]
       K       <- object$data$specs$K[[tr]]
       KM      <- object$data$specs$KM[[tr]]
       T0      <- object$data$specs$T0.features[[tr]]
-      
+
       pt.in   <- object$data$specs$period.pre[[tr]][1]
-      pt.fi   <- object$data$specs$period.pre[[tr]][length(object$data$specs$period.pre[[tr]])]  
+      pt.fi   <- object$data$specs$period.pre[[tr]][length(object$data$specs$period.pre[[tr]])]
       w.cons  <- object$est.results$w.constr[[tr]][["name"]]
       if (is.null(object$est.results$w.constr[[tr]][["Q"]])) {
         w.size <- "-"
@@ -171,22 +171,22 @@ summary.scest <- function(object, ...) {
         w.size  <- round(object$est.results$w.constr[[tr]][["Q"]], 3)
       }
       cat("--------------------------------------------------------------------\n")
-      cat(paste0("Synthetic Control Estimation - Setup for ",tr," \n"))
+      cat(paste0("Synthetic Control Prediction - Setup for ",tr," \n"))
       cat("\n")
-      
+
       cat(paste("Constraint Type:                           ", w.cons, "\n", sep = ""))
       cat(paste("Constraint Size (Q):                       ", w.size, "\n", sep = ""))
-      cat(paste("Treated Unit:                              ", tr,"\n", sep = ""))
-      cat(paste("Size of the donor pool:                    ", J,"\n", sep = ""))
-      cat(paste("Features:                                  ", M,"\n", sep = ""))
-      cat(paste("Pre-treatment period:                      ", pt.in,"-",pt.fi,"\n", sep = ""))
-      
+      cat(paste("Treated Unit:                              ", tr , "\n", sep = ""))
+      cat(paste("Size of the donor pool:                    ", J, "\n", sep = ""))
+      cat(paste("Features:                                  ", M, "\n", sep = ""))
+      cat(paste("Pre-treatment period:                      ", pt.in, "-", pt.fi, "\n", sep = ""))
+
       if (M == 1) {
-        cat(paste("Pre-treatment periods used in estimation:  ",T0,"\n", sep = ""))
-        cat(paste("Covariates used for adjustment:            ",KM,"\n", sep = ""))
-        
+        cat(paste("Pre-treatment periods used in prediction:  ", T0, "\n", sep = ""))
+        cat(paste("Covariates used for adjustment:            ", KM, "\n", sep = ""))
+
       } else {
-        cat("Pre-treatment periods used in estimation per feature:\n")
+        cat("Pre-treatment periods used in prediction per feature:\n")
         print(T0)
         cat("Covariates used for adjustment per feature:\n")
         print(K)
@@ -195,6 +195,6 @@ summary.scest <- function(object, ...) {
     }
     cat("--------------------------------------------------------------------\n")
  }
-  
+
   print.scest(object)
 }

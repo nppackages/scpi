@@ -13,6 +13,7 @@
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
@@ -45,6 +46,7 @@
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span>
+<span class="n">pandas</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">chained_assignment</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">from</span> <span class="nn">plotnine</span> <span class="kn">import</span> <span class="n">ggplot</span><span class="p">,</span> <span class="n">aes</span><span class="p">,</span> <span class="n">geom_point</span><span class="p">,</span> <span class="n">geom_errorbar</span><span class="p">,</span> <span class="n">geom_vline</span><span class="p">,</span> <span class="n">geom_line</span><span class="p">,</span> <span class="n">geom_hline</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">theme_bw</span>
 <span class="kn">from</span> <span class="nn">plotnine</span> <span class="kn">import</span> <span class="n">element_blank</span><span class="p">,</span> <span class="n">labs</span><span class="p">,</span> <span class="n">guide_legend</span><span class="p">,</span> <span class="n">scale_color_manual</span><span class="p">,</span> <span class="n">ggtitle</span><span class="p">,</span> <span class="n">facet_wrap</span><span class="p">,</span> <span class="n">coord_flip</span><span class="p">,</span> <span class="n">geom_ribbon</span>
@@ -138,6 +140,9 @@
 
     <span class="n">class_input</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
 
+    <span class="k">def</span> <span class="nf">ix2rn</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="n">class_input</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;scest_multi_output&#39;</span><span class="p">,</span> <span class="s1">&#39;scpi_multi_output&#39;</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;result&#39; should be the output of scest or scpi &quot;</span> <span class="o">+</span>
                         <span class="s2">&quot;when the data have been processed through scdataMulti!&quot;</span><span class="p">)</span>
@@ -147,6 +152,8 @@
 
     <span class="n">plot_type</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">effect</span>
     <span class="n">iota</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">iota</span>
+    <span class="k">if</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
+        <span class="n">iota</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="k">if</span> <span class="n">iota</span> <span class="o">&gt;</span> <span class="mi">20</span> <span class="ow">and</span> <span class="p">(</span><span class="n">plot_type</span> <span class="o">!=</span> <span class="s2">&quot;unit&quot;</span> <span class="ow">or</span> <span class="n">ptype</span> <span class="o">!=</span> <span class="s2">&quot;treatment&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">iota</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; treated units detected, therefore some graphs might be too crowded!&quot;</span> <span class="o">+</span>
@@ -157,8 +164,10 @@
     <span class="n">Y_pre_fit</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">Y_pre_fit</span>
     <span class="n">Y_post_fit</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">Y_post_fit</span>
     <span class="n">synth_mat</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_pre_fit</span><span class="p">,</span> <span class="n">Y_post_fit</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">synth_mat</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">synth_mat</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">rename</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">])</span>
-    <span class="n">synth_mat</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Synthetic&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">plot_type</span> <span class="o">!=</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
+        <span class="n">synth_mat</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">synth_mat</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">rename</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">])</span>
+        <span class="n">synth_mat</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Synthetic&#39;</span><span class="p">]</span>
+
     <span class="n">Y_df</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">Y_df</span>
     <span class="n">Y_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="s1">&#39;Treatment&#39;</span><span class="p">,</span> <span class="s1">&#39;Actual&#39;</span><span class="p">]</span>
 
@@ -191,9 +200,72 @@
     <span class="n">sel_units</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">units_est</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">treated_reception</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]]</span>
     <span class="n">treated_reception</span> <span class="o">=</span> <span class="n">treated_reception</span><span class="p">[</span><span class="n">sel_units</span><span class="p">]</span>
 
-    <span class="n">toplot</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_actual</span><span class="p">,</span> <span class="n">synth_mat</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plot_type</span> <span class="o">!=</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
+        <span class="n">toplot</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_actual</span><span class="p">,</span> <span class="n">synth_mat</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
+        <span class="n">res_df</span> <span class="o">=</span> <span class="n">res_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">treated_reception</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Tdate&#39;</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;ID&quot;</span><span class="p">)</span>
+        <span class="n">Y_actual_pre</span> <span class="o">=</span> <span class="n">res_df</span><span class="p">[</span><span class="n">res_df</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">res_df</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]]</span>
+        <span class="n">Y_actual_post</span> <span class="o">=</span> <span class="n">res_df</span><span class="p">[</span><span class="n">res_df</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">res_df</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]]</span>
+        <span class="n">Y_actual_pre</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Y_actual_pre</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">Y_actual_post</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Y_actual_post</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">Y_actual_pre</span><span class="p">[</span><span class="s1">&#39;tstd&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Y_actual_pre</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">Y_actual_pre</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]</span>
+        <span class="n">Y_actual_post</span><span class="p">[</span><span class="s1">&#39;tstd&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Y_actual_post</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">Y_actual_post</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]</span>
+
+        <span class="n">names</span> <span class="o">=</span> <span class="n">synth_mat</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">ix2rn</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">]</span>
+        <span class="n">unit</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">unitagg</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">unit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">unitagg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">synth_pre</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;ID&#39;</span><span class="p">:</span> <span class="n">unit</span><span class="p">,</span>
+                                      <span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="n">time</span><span class="p">,</span>
+                                      <span class="s1">&#39;Synthetic&#39;</span><span class="p">:</span> <span class="n">synth_mat</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">unit</span><span class="p">),</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">})</span>
+        <span class="n">synth_pre</span> <span class="o">=</span> <span class="n">synth_pre</span><span class="o">.</span><span class="n">astype</span><span class="p">({</span><span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="n">Y_actual_pre</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dtypes</span><span class="p">})</span>
+        <span class="n">Y_pre</span> <span class="o">=</span> <span class="n">Y_actual_pre</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">synth_pre</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+        <span class="n">max_pre</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">Y_actual_pre</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;tstd&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">min_post</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">T1_outcome</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="n">Y_pre_agg</span> <span class="o">=</span> <span class="n">Y_pre</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;tstd&#39;</span><span class="p">])[[</span><span class="s1">&#39;Actual&#39;</span><span class="p">,</span> <span class="s1">&#39;Synthetic&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">Y_pre_agg</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">Y_pre_agg</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="s1">&#39;Actual&#39;</span><span class="p">,</span> <span class="s1">&#39;Synthetic&#39;</span><span class="p">]</span>
+        <span class="n">Y_pre_agg</span> <span class="o">=</span> <span class="n">Y_pre_agg</span><span class="p">[</span><span class="n">Y_pre_agg</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">max_pre</span><span class="p">]</span>
+
+        <span class="n">Y_post_agg</span> <span class="o">=</span> <span class="n">Y_actual_post</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;tstd&#39;</span><span class="p">])[[</span><span class="s1">&#39;Actual&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">Y_post_agg</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">Y_post_agg</span> <span class="o">=</span> <span class="n">Y_post_agg</span><span class="p">[</span><span class="n">Y_post_agg</span><span class="p">[</span><span class="s1">&#39;tstd&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">min_post</span><span class="p">]</span>
+
+        <span class="n">Y_post_agg</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;ID&#39;</span><span class="p">:</span> <span class="n">unitagg</span><span class="p">,</span>
+                                       <span class="s1">&#39;Actual&#39;</span><span class="p">:</span> <span class="n">Y_post_agg</span><span class="p">[</span><span class="s1">&#39;Actual&#39;</span><span class="p">],</span>
+                                       <span class="s1">&#39;Synthetic&#39;</span><span class="p">:</span> <span class="n">synth_mat</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">unit</span><span class="p">):,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                                       <span class="s1">&#39;Time&#39;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">unitagg</span><span class="p">))})</span>
+
+        <span class="n">Y_pre_agg</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">Y_post_agg</span><span class="p">[</span><span class="s1">&#39;Treatment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">Y_pre_agg</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;aggregate&quot;</span>
+        <span class="n">Y_post_agg</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;aggregate&quot;</span>
+
+        <span class="n">Y_actual</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_pre_agg</span><span class="p">,</span> <span class="n">Y_post_agg</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">Y_actual</span><span class="p">[</span><span class="s1">&#39;Tdate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">plot_type</span> <span class="o">=</span> <span class="s2">&quot;unit-time&quot;</span>
+        <span class="n">iota</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">treated_reception</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;ID&#39;</span><span class="p">:</span> <span class="s1">&#39;aggregate&#39;</span><span class="p">,</span>
+                                              <span class="s1">&#39;Tdate&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">]})</span>
+        <span class="n">toplot</span> <span class="o">=</span> <span class="n">Y_actual</span>
+        <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
     <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Effect&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Actual&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">toplot</span><span class="p">[</span><span class="s1">&#39;Synthetic&#39;</span><span class="p">]</span>
-    <span class="n">toplot</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">plot_type</span> <span class="o">!=</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
+        <span class="n">toplot</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
     <span class="n">toplot</span> <span class="o">=</span> <span class="n">toplot</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">treated_reception</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Tdate&#39;</span><span class="p">]],</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">plot_type</span> <span class="o">==</span> <span class="s1">&#39;unit-time&#39;</span> <span class="ow">and</span> <span class="n">ptype</span> <span class="o">==</span> <span class="s2">&quot;series&quot;</span><span class="p">:</span>  <span class="c1"># plot series</span>
@@ -550,7 +622,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.2.3.
     </div>
   </body>
 </html>

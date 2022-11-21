@@ -17,8 +17,8 @@
 #'
 #' For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
 #'
-#' @param result a class 'scpi_est' object, obtained by calling \code{\link{scest}}, or a class
-#' 'scpi_pi' object, obtained by calling \code{\link{scpi}}
+#' @param result a class 'scest' object, obtained by calling \code{\link{scest}}, or a class
+#' 'scpi' object, obtained by calling \code{\link{scpi}}.
 #' @param fig.path a string indicating the path where the plot(s) should be saved.
 #' @param fig.name a string indicating the name of the plot(s). If multiple plots will be saved the command automatically
 #' generates a numeric suffix to avoid overwriting them.
@@ -58,6 +58,8 @@
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.} 
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022)},
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+#' \item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+#' Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 #' }
 #'
 #' @seealso \code{\link{scdata}}, \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplotMulti}}
@@ -69,8 +71,8 @@
 #' df <- scdata(df = data, id.var = "country", time.var = "year",
 #'              outcome.var = "gdp", period.pre = (1960:1990),
 #'              period.post = (1991:2003), unit.tr = "West Germany",
-#'              unit.co = unique(data$country)[-7], constant = TRUE,
-#'              cointegrated.data = TRUE)
+#'              unit.co = setdiff(unique(data$country), "West Germany"),
+#'              constant = TRUE, cointegrated.data = TRUE)
 #'
 #' result <- scest(df, w.constr = list(name = "simplex", Q = 1))
 #'

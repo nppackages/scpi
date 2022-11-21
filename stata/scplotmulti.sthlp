@@ -162,7 +162,10 @@ references therein.{p_end}
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
-{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators, {it:arXiv}:2202.05984.}.{p_end}
+{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}, {it:arXiv}:2202.05984.{p_end}
+
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
+{browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}, {it:arXiv}:2210.05026. {p_end}
 
 {marker authors}{...}
 {title:Authors}

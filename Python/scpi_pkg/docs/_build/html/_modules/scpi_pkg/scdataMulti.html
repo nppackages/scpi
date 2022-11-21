@@ -13,6 +13,7 @@
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
@@ -44,6 +45,8 @@
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
 
+<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="n">pandas</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">chained_assignment</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
@@ -111,8 +114,8 @@
 <span class="sd">        present in the loaded dataframe.</span>
 
 <span class="sd">    post_est : int, default None</span>
-<span class="sd">        an integer specifying the number of post-treatment periods</span>
-<span class="sd">        for which treatment effects have to be estimated for each treated unit.</span>
+<span class="sd">        an integer specifying the number of post-treatment periods for which treatment effects have to be estimated for each treated unit. If</span>
+<span class="sd">        effect = &quot;unit&quot; it indicates the number of periods over which the average post-treatment effect is computed.</span>
 
 <span class="sd">    units_est : list, default None</span>
 <span class="sd">        a list specifying the treated units for which treatment effects have to be estimated.</span>
@@ -131,8 +134,9 @@
 
 <span class="sd">    effect : str, default &quot;unit-time&quot;</span>
 <span class="sd">        a string indicating the type of treatment effect to be estimated. Options are: &#39;unit-time&#39;, which estimates</span>
-<span class="sd">        treatment effects for each treated unit-time combination; &#39;unit&#39;, which estimates the treatment effect for</span>
-<span class="sd">        each unit by averaging post-treatment features over time.</span>
+<span class="sd">        treatment effects for each treated unit- post treatment period combination; &#39;unit&#39;, which estimates the</span>
+<span class="sd">        treatment effect for each unit by averaging post-treatment features over time; &#39;time&#39;, which estimates the</span>
+<span class="sd">        average treatment effect on the treated at various horizons.</span>
 
 <span class="sd">    anticipation : int/dict, default 0</span>
 <span class="sd">        a scalar that indicates the number of periods of potential anticipation effects. If the user wants to specify</span>
@@ -251,8 +255,8 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cov_adj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;cov_adj&#39; should be a dictionary!&quot;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">effect</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;unit&quot;</span><span class="p">,</span> <span class="s2">&quot;unit-time&quot;</span><span class="p">]:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;effect&#39; should be either &#39;unit&#39; or &#39;unit-time&#39;!&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">effect</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;unit&quot;</span><span class="p">,</span> <span class="s2">&quot;unit-time&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object &#39;effect&#39; should be either &#39;unit&#39;, &#39;time&#39;, or &#39;unit-time&#39;!&quot;</span><span class="p">)</span>
 
     <span class="c1"># Check variables are in dataframe (id and time can be either variables or indices)</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">id_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">var_names</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">id_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">):</span>
@@ -446,11 +450,12 @@
 
         <span class="k">if</span> <span class="n">post_est</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">T1_last</span> <span class="o">=</span> <span class="n">treated_unit_T0</span> <span class="o">+</span> <span class="n">post_est</span>
-            <span class="n">treated_donors</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">treated_post</span><span class="p">))</span> <span class="o">&amp;</span>
-                                              <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">T1_last</span><span class="p">)]</span>
+            <span class="n">treated_donors</span> <span class="o">=</span> <span class="n">data</span><span class="p">[(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">treated_post</span><span class="p">))</span> <span class="o">&amp;</span>
+                                  <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">T1_last</span><span class="p">)]</span>
             <span class="n">tr_donors_count</span> <span class="o">=</span> <span class="n">treated_donors</span><span class="p">[[</span><span class="s1">&#39;__ID&#39;</span><span class="p">,</span> <span class="s1">&#39;__Treatment&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;__ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
             <span class="n">tr_donors_units</span> <span class="o">=</span> <span class="n">tr_donors_count</span><span class="p">[</span><span class="n">tr_donors_count</span><span class="p">[</span><span class="s1">&#39;__Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-            <span class="n">donors_units</span> <span class="o">=</span> <span class="n">donors_units</span> <span class="o">+</span> <span class="n">tr_donors_units</span>
+            <span class="n">donors_units</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">tr_donors_units</span><span class="p">)</span>
+            <span class="n">donors_units</span> <span class="o">=</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">donors_units</span><span class="p">)))</span>
             <span class="n">donors_units</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
 
         <span class="c1"># subset dataset selecting treated units and proper donors</span>
@@ -494,6 +499,13 @@
 
         <span class="n">Y_donors_tr</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">Y_donors</span>
         <span class="n">P_tr</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">P</span>
+
+        <span class="k">if</span> <span class="n">effect</span> <span class="o">==</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="n">P_tr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s1">&#39;__time&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">time</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">time</span><span class="p">]</span>
+            <span class="n">P_tr</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">P_tr</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                                    <span class="n">index</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+                                    <span class="n">columns</span><span class="o">=</span><span class="n">P_tr</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">effect</span> <span class="o">==</span> <span class="s2">&quot;unit&quot;</span> <span class="ow">and</span> <span class="n">cointegrated_data_tr</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">):</span>
             <span class="n">P_diff</span> <span class="o">=</span> <span class="kc">None</span>
@@ -555,7 +567,10 @@
             <span class="n">A_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">A_stacked</span><span class="p">,</span> <span class="n">A_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">B_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">B_stacked</span><span class="p">,</span> <span class="n">B_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">C_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">C_stacked</span><span class="p">,</span> <span class="n">C_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            <span class="n">P_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">P_stacked</span><span class="p">,</span> <span class="n">P_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">effect</span> <span class="o">==</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
+                <span class="n">P_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">P_stacked</span><span class="p">,</span> <span class="n">P_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">)</span>  <span class="c1"># stack horizontally</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">P_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">P_stacked</span><span class="p">,</span> <span class="n">P_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># stack diagonally</span>
             <span class="k">if</span> <span class="n">Pd_stacked</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">Pd_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Pd_stacked</span><span class="p">,</span> <span class="n">P_diff</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="n">Y_donors_stacked</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_donors_stacked</span><span class="p">,</span> <span class="n">Y_donors_tr</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -590,6 +605,9 @@
     <span class="n">bcols</span> <span class="o">=</span> <span class="n">B_stacked</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
     <span class="n">ccols</span> <span class="o">=</span> <span class="n">C_stacked</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
     <span class="n">P_stacked</span> <span class="o">=</span> <span class="n">P_stacked</span><span class="p">[</span><span class="n">bcols</span> <span class="o">+</span> <span class="n">ccols</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">effect</span> <span class="o">==</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
+        <span class="n">P_stacked</span> <span class="o">=</span> <span class="n">P_stacked</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">)</span>
 
     <span class="c1"># number of treated units and number of covariates used for adjustment</span>
     <span class="n">iota</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">)</span>
@@ -675,7 +693,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.2.3.
     </div>
   </body>
 </html>

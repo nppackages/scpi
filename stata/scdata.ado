@@ -1,5 +1,5 @@
-*! Date        : 07 Oct 2022
-*! Version     : 2.0
+*! Date        : 21 Nov 2022
+*! Version     : 2.0.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Data preparation for scest or scpi
@@ -68,6 +68,9 @@ import pandas, pickle, numpy, urllib, luddite
 from scpi_pkg.scdata import scdata
 from scpi_pkg import version as lver
 from sfi import Scalar, Matrix, Macro
+
+def ix2rn(s):
+	return str(s).replace('(','').replace(')','').replace("'",'').replace(", ","_")
 
 def version_checker():
 	# try to connect to pypi and get the latest version of scpi_pkg
@@ -147,12 +150,12 @@ def scdata_wrapper(features, id_var, time_var, outcome_var, covadj, anticipation
 	
 	Matrix.create("A", len(data_prep.A), 1, 0)
 	Matrix.store("A", data_prep.A.values)
-	names = [str(row) for row in data_prep.A.index.tolist()]
+	names = [ix2rn(row) for row in data_prep.A.index.tolist()]
 	Matrix.setRowNames("A", names)
 	
 	Matrix.create("B", len(data_prep.B), data_prep.J, 0)
 	Matrix.store("B", data_prep.B.values)
-	names = [str(row) for row in data_prep.B.index.tolist()]
+	names = [ix2rn(row) for row in data_prep.B.index.tolist()]
 	Matrix.setRowNames("B", names)	
 	names = [str(col) for col in data_prep.B.columns.tolist()]
 	Matrix.setColNames("B", names)	
@@ -160,14 +163,14 @@ def scdata_wrapper(features, id_var, time_var, outcome_var, covadj, anticipation
 	if data_prep.KM > 0:
 		Matrix.create("C", len(data_prep.C), data_prep.KM, 0)
 		Matrix.store("C", data_prep.C.values)
-		names = [str(row) for row in data_prep.C.index.tolist()]
+		names = [ix2rn(row) for row in data_prep.C.index.tolist()]
 		Matrix.setRowNames("C", names)	
 		names = [str(col) for col in data_prep.C.columns.tolist()]
 		Matrix.setColNames("C", names)	
 
 	Matrix.create("P", len(data_prep.P), len(data_prep.P.columns), 0)
 	Matrix.store("P", data_prep.P.values)
-	names = [str(row) for row in data_prep.P.index.tolist()]
+	names = [ix2rn(row) for row in data_prep.P.index.tolist()]
 	Matrix.setRowNames("P", names)	
 	names = [str(col) for col in data_prep.P.columns.tolist()]
 	Matrix.setColNames("P", names)	
@@ -180,43 +183,4 @@ def scdata_wrapper(features, id_var, time_var, outcome_var, covadj, anticipation
 	Macro.setLocal("features", ' '.join([str(elem) for elem in data_prep.features]))
 	
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

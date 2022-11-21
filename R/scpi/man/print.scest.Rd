@@ -2,12 +2,12 @@
 % Please edit documentation in R/scest_methods.R
 \name{print.scest}
 \alias{print.scest}
-\title{Print Method for Synthetic Control Estimation}
+\title{Print Method for Synthetic Control Methods}
 \usage{
 \method{print}{scest}(x, ...)
 }
 \arguments{
-\item{x}{Class "scpi_scest" or "scpi_scest_multi" object, obtained by calling \code{\link{scest}}.}
+\item{x}{Class "scest" object, obtained by calling \code{\link{scest}}.}
 
 \item{...}{Other arguments.}
 }
@@ -15,10 +15,10 @@
 No return value, called to print \code{\link{scest}} results.
 }
 \description{
-The print method for synthetic control estimation objects.
+The print method for synthetic control prediction objects.
 }
 \seealso{
-\code{\link{scest}} for synthetic control estimation.
+\code{\link{scest}} for synthetic control prediction.
 
 Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}.
 }

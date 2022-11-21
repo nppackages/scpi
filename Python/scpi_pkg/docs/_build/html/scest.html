@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Point estimation for Synthetic Control (scest.scest) &#8212; scpi-pkg 0.1 documentation</title>
+    <title>Point estimation for Synthetic Control (scest.scest) &#8212; scpi-pkg 2.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -14,6 +14,7 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Prediction Intervals for Synthetic Control (scpi.scpi)" href="scpi.html" />
@@ -31,7 +32,7 @@
         <li class="right" >
           <a href="scdataMulti.html" title="Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</a></li> 
       </ul>
     </div>  
@@ -44,12 +45,14 @@
   <section id="point-estimation-for-synthetic-control-scest-scest">
 <h1>Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)<a class="headerlink" href="#point-estimation-for-synthetic-control-scest-scest" title="Permalink to this heading">¶</a></h1>
 <p>This page describes the function <code class="docutils literal notranslate"><span class="pre">scest</span></code> to implement point estimation for synthetic control methods
-using least squares, lasso, ridge, or simplex-type constraints. For further information see <a class="reference external" href="https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf">Cattaneo, Feng, and Titiunik (2021)</a>.</p>
+using least squares, lasso, ridge, or simplex-type constraints.
+For further information see <a class="reference external" href="https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf">Cattaneo, Feng, and Titiunik (2021)</a>.
+The names of the output matrices follow the notation proposed in <a class="reference external" href="https://arxiv.org/abs/2210.05026">Cattaneo, Feng, Palomba, and Titiunik (2022)</a></p>
 <section id="syntax">
 <h2>Syntax<a class="headerlink" href="#syntax" title="Permalink to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="scpi_pkg.scest.scest">
-<span class="sig-prename descclassname"><span class="pre">scpi_pkg.scest.</span></span><span class="sig-name descname"><span class="pre">scest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_constr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'separate'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scpi_pkg/scest.html#scest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scpi_pkg.scest.scest" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">scpi_pkg.scest.</span></span><span class="sig-name descname"><span class="pre">scest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_constr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'separate'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scpi_pkg/scest.html#scest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scpi_pkg.scest.scest" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -64,12 +67,6 @@ w_constr can contain up to four objects:
 <li><p><strong>V</strong> (<em>str/numpy.array</em><em>, </em><em>default &quot;separate&quot;</em>) – a weighting matrix to be used when minimizing the sum of squared residuals.
 The default is the identity matrix (“separate”), so equal weight is given to all observations.
 The other possibility is to specify V = “pooled” for the pooled fit.</p></li>
-<li><p><strong>opt_dict</strong> (<em>dictionary</em>) – a dictionary specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
-The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based
-optimization (‘SLSQP’). In case a lasso-type constraint is implemented, cvxpy is used for optimization.
-More information on the stopping criteria can be obtained reading the official documentation at
-<a class="reference external" href="https://www.cvxpy.org/">https://www.cvxpy.org/</a>. The default values are ‘maxeval = 5000’, ‘xtol_rel = 1e-8’, ‘xtol_abs = 1e-8’,
-‘ftol_rel = 1e-8’, ‘ftol_abs = 1e-8’, ‘tol_eq = 1e-8’, and ‘tol_ineq = 1e-8’.</p></li>
 <li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>default False</em>) – a logical specifying whether scplot should be called and a plot saved in the current working directory. For more
 options see scplot.</p></li>
 </ul>
@@ -211,7 +208,10 @@ Synthetic Control Estimators”.</p>
     <h3><a href="index.html">Table of Contents</a></h3>
     <ul>
 <li><a class="reference internal" href="#">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</a><ul>
-<li><a class="reference internal" href="#syntax">Syntax</a></li>
+<li><a class="reference internal" href="#syntax">Syntax</a><ul>
+<li><a class="reference internal" href="#scpi_pkg.scest.scest"><code class="docutils literal notranslate"><span class="pre">scest()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li><a class="reference internal" href="#usage">Usage</a></li>
 </ul>
@@ -262,13 +262,13 @@ Synthetic Control Estimators”.</p>
         <li class="right" >
           <a href="scdataMulti.html" title="Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.2.3.
     </div>
   </body>
 </html>

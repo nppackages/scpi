@@ -10,7 +10,6 @@ import pandas
 import numpy
 import random
 import os
-from plotnine import ggsave
 from warnings import filterwarnings
 from scpi_pkg.scdata import scdata
 from scpi_pkg.scdataMulti import scdataMulti
@@ -21,7 +20,6 @@ from scpi_pkg.scplotMulti import scplotMulti
 
 ########################################
 # Load database
-os.chdir('YOUR_PATH_HERE')
 data = pandas.read_csv("scpi_germany.csv")
 
 filterwarnings("ignore")
@@ -63,8 +61,6 @@ print(est_si2)
 ####################################
 # SC - plot results
 plot = scplot(est_si)
-ggsave(filename='germany_est.png', plot=plot)
-
 
 ####################################
 # SC - point estimation with lasso
@@ -113,7 +109,6 @@ print(pi_si)
 ####################################
 # SC - plot results
 plot = scplot(pi_si)
-ggsave(filename='germany_unc.png', plot=plot)
 
 ################################################################################
 # Other examples of data preparation

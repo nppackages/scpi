@@ -26,7 +26,7 @@ copyright = '2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiuni
 author = 'Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '2.0.0'
 
 
 # -- General configuration ---------------------------------------------------

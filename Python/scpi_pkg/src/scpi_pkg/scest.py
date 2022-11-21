@@ -25,7 +25,7 @@ def scest(df, w_constr=None, V="separate", plot=False):
     df : scdata_output
         a class scdata_output object, obtained by calling scdata
 
-    w_constr : dictionary
+    w_constr : dictionary, default {"name": "simplex"}
         a dictionary specifying the constraint set the estimated weights of the donors must belong to.
         w_constr can contain up to four objects:
         - p, a string indicating the norm to be used (p should be one of "no norm", "L1", and "L2")
@@ -150,6 +150,9 @@ def scest(df, w_constr=None, V="separate", plot=False):
 
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
     Synthetic Control Estimators”.
+
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+    Controls with Staggered Treatment Adoption”.
 
     See Also
     --------

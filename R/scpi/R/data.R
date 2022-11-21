@@ -1,4 +1,4 @@
-#' Economic indicators for OECD countries
+#' Replication Dataset for Estimating the Economic Impact of German Reunification
 #'
 #' A dataset containing some economic indicators of 17 OECD countries from 1960
 #' to 2003.

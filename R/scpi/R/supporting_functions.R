@@ -293,7 +293,7 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
                      lambda = w.constr[["lambda"]])
 
   } else if (w.constr[["name"]] == "L1-L2") {
-
+    
     if (!("Q2" %in% names(w.constr))) {
       
       feature.id <- unlist(purrr::map(stringr::str_split(rownames(Z), "\\."), 2))
@@ -326,6 +326,7 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
                      lambda = w.constr[["lambda"]])
     
   } else {
+    
     # if constraint is entirely user specified just check everything is fine
     if (!(all(c('p','dir','Q','lb') %in% names(w.constr)))) {
       stop("If 'name' is not specified, w.constr should be a list whose elements 
@@ -402,9 +403,8 @@ b.est <- function(A, Z, J, KM, w.constr, V) {
   } else {
     Q2 <- NULL
   }
-  
-  x <- CVXR::Variable(J + KM)
 
+  x <- CVXR::Variable(J + KM)
   objective <- CVXR::Minimize(CVXR::quad_form(A - Z %*% x, V))
   
   if (p == "no norm") { # least squares

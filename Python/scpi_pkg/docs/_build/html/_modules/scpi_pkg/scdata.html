@@ -13,6 +13,7 @@
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
@@ -44,6 +45,8 @@
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
 
+<span class="kn">import</span> <span class="nn">pandas</span>
+<span class="n">pandas</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">chained_assignment</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="kn">import</span> <span class="nn">pandas</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">scipy.linalg</span>
@@ -424,6 +427,14 @@
                    <span class="n">columns</span><span class="o">=</span><span class="s1">&#39;__ID&#39;</span><span class="p">,</span>                                <span class="c1"># dimension to wide</span>
                    <span class="n">values</span><span class="o">=</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>                                <span class="c1"># values to be widen</span>
 
+    <span class="k">if</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nan</span> <span class="ow">in</span> <span class="n">B</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+        <span class="n">unitnonan</span> <span class="o">=</span> <span class="p">[</span><span class="n">un</span> <span class="k">for</span> <span class="n">un</span> <span class="ow">in</span> <span class="n">B</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">if</span> <span class="n">un</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">numpy</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">IndexSlice</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="n">unitnonan</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:,</span> <span class="p">:]]</span>
+        <span class="n">B</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;treated_unit&quot;</span><span class="p">,</span> <span class="n">unitnonan</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">B</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;treated_unit&#39;</span><span class="p">,</span> <span class="n">append</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">reorder_levels</span><span class="p">([</span><span class="s1">&#39;treated_unit&#39;</span><span class="p">,</span> <span class="s1">&#39;feature&#39;</span><span class="p">,</span> <span class="s1">&#39;__time&#39;</span><span class="p">])</span>
+
     <span class="c1"># Create list that dictates order of donors</span>
     <span class="n">donor_order</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
@@ -798,7 +809,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.2.3.
     </div>
   </body>
 </html>

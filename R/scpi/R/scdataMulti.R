@@ -1,55 +1,58 @@
-#' @title Data preparation to use before calling \code{scest} or \code{scpi} for point estimation and inference procedures using Synthetic Control with Multiple Treated Units and Staggered Adoption.
+#' @title Data Preparation for \code{scest} or \code{scpi} for Point Estimation and Inference Procedures Using Synthetic Control Methods.
 #'
-#' @description The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}} to implement estimation and inference procedures for Synthetic Control (SC) methods
+#' @description The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}} to implement estimation
+#' and inference procedures for Synthetic Control (SC) methods
 #' in the general case of multiple treated units and staggered adoption. It is a generalization of \code{\link{scdata}}, since this latter prepares
 #' the data in the particular case of a single treated unit.
-#' 
-#' The names of the output matrices follow the terminology proposed in 
+#'
+#' The names of the output matrices follow the terminology proposed in
 #' \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, Palomba and Titiunik (2022)}  (UPDATE LINK).
 #'
-#' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+#' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are
+#' described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 #'
-#' Companion commands are: \link{scdata} for data preparation in the single treated unit case, \link{scest} for point estimation, \link{scpi} for inference procedures, 
+#' Companion commands are: \link{scdata} for data preparation in the single treated unit case, \link{scest} for point estimation,
+#' \link{scpi} for inference procedures,
 #' \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
-#' 
+#'
 #' Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
-#' 
+#'
 #' \href{ https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
-#' 
+#'
 #' For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
-#' 
+#'
 #' @param df a dataframe object.
 #' @param id.var a character with the name of the variable containing units' IDs. The ID variable can be numeric or character.
-#' @param time.var a character with the name of the time variable. The time variable has to be numeric, integer, or Date. In 
-#' case \code{time.var} is Date it should be the output of \code{\link{as.Date}()} function. An integer or 
+#' @param time.var a character with the name of the time variable. The time variable has to be numeric, integer, or Date. In
+#' case \code{time.var} is Date it should be the output of \code{\link{as.Date}()} function. An integer or
 #' numeric time variable is suggested when working with yearly data, whereas for all other formats a Date type
 #' time variable is preferred.
-#' @param outcome.var a character with the name of the outcome variable. The outcome variable has to be numeric. 
+#' @param outcome.var a character with the name of the outcome variable. The outcome variable has to be numeric.
 #' @param treatment.var a character with the name of the variable containing the treatment assignment of each unit. The referenced
 #' variable has to take value 1 if the unit is treated in that period and value 0 otherwise. Please notice that, as common in the SC
 #' literature, we presume that once a unit is treated it remains treated forever. If treatment.var does not comply with this requirement
 #' the command would not work as expected!
 #' @param features a list containing the names of the feature variables used for estimation.
 #' If features is specified, then outcome.var must be included in it. If this option is not specified the
-#' default is \code{features = outcome.var}. 
+#' default is \code{features = outcome.var}.
 #' @param cov.adj a list specifying the names of the covariates to be used for adjustment for each feature.
-#' @param post.est a scalar specifying the number of post-treatment periods or a list specifying the periods 
+#' @param post.est a scalar specifying the number of post-treatment periods or a list specifying the periods
 #' for which treatment effects have to be estimated for each treated unit.
 #' @param units.est a list specifying the treated units for which treatment effects have to be estimated.
-#' @param constant a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}. 
-#' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}. 
-#' @param effect a string indicating the type of treatment effect to be estimated. Options are: 'unit-time', which estimates treatment effects for each 
+#' @param constant a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}.
+#' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}.
+#' @param effect a string indicating the type of treatment effect to be estimated. Options are: 'unit-time', which estimates treatment effects for each
 #' treated unit- post treatment period combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time;
 #' 'time', which estimates the average treatment effect on the treated at various horizons.
-#' @param anticipation a scalar that indicates the number of periods of potential anticipation effects. Default is 0. 
+#' @param anticipation a scalar that indicates the number of periods of potential anticipation effects. Default is 0.
 #' @param verbose if \code{TRUE} prints additional information in the console.
-#' @param sparse.matrices if \code{TRUE} all block diagonal matrices (\eqn{\mathbf{B}}, \eqn{\mathbf{C}}, and \eqn{\mathbf{P}}) 
+#' @param sparse.matrices if \code{TRUE} all block diagonal matrices (\eqn{\mathbf{B}}, \eqn{\mathbf{C}}, and \eqn{\mathbf{P}})
 #' are sparse matrices. This is suggested if the dimension of the dataset is large as it will likely reduce the execution time.
 #' The sparse matrices will be objects of class 'dgCMatrix' or 'lgCMatrix', thus to visualize them they need to be transformed
 #' in matrices, e.g. \code{View(as.matrix(B))}.
 #'
 #' @return
-#' The command returns an object of class 'scpi_data' containing the following
+#' The command returns an object of class 'scdataMulti' containing the following
 #' \item{A}{a matrix containing pre-treatment features of the treated units.}
 #' \item{B}{a matrix containing pre-treatment features of the control units.}
 #' \item{C}{a matrix containing covariates for adjustment.}
@@ -98,39 +101,41 @@
 #' 
 #' @author
 #' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
-#' 
+#'
 #' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
-#' 
+#'
 #' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
-#' 
+#'
 #' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
-#' 
+#'
 #'
 #' @references
 #'\itemize{
 #' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
-#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
+#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+#' \item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+#' Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 #'}
 #'
 #' @seealso \code{\link{scdata}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
 #'
 #' @examples
-#' 
+#'
 #' datager <- scpi_germany
 #'
 #' datager$tr_id <- 0
 #' datager$tr_id[(datager$country == "West Germany" & datager$year > 1990)] <- 1
 #' datager$tr_id[(datager$country == "Italy" & datager$year > 1992)] <- 0
-#' 
+#'
 #' outcome.var <- "gdp"
 #' id.var <- "country"
 #' treatment.var <- "tr_id"
 #' time.var <- "year"
-#' df.unit <- scdataMulti(datager, id.var = id.var, outcome.var = outcome.var, 
+#' df.unit <- scdataMulti(datager, id.var = id.var, outcome.var = outcome.var,
 #'                        treatment.var = treatment.var,
 #'                        time.var = time.var, features = list(c("gdp", "trade")),
 #'                		    cointegrated.data = TRUE, constant = TRUE)
@@ -607,7 +612,7 @@ scdataMulti <- function(df,
                       specs = specs)
   }
 
-  class(df.sc) <- 'scpi_data_multi'
+  class(df.sc) <- 'scdataMulti'
 
   return(df.sc = df.sc)
 }

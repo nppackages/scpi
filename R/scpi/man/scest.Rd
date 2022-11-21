@@ -2,7 +2,7 @@
 % Please edit documentation in R/scest.R
 \name{scest}
 \alias{scest}
-\title{Estimation of Synthetic Control}
+\title{Prediction of Synthetic Control}
 \usage{
 scest(
   data,
@@ -15,7 +15,7 @@ scest(
 )
 }
 \arguments{
-\item{data}{a class 'scpi_data' object, obtained by calling \code{\link{scdata}}, or class 'scpi_data_multi' obtained via \code{\link{scdataMulti}}.}
+\item{data}{a class 'scdata' object, obtained by calling \code{\link{scdata}}, or class 'scdataMulti' obtained via \code{\link{scdataMulti}}.}
 
 \item{w.constr}{a list specifying the constraint set the estimated weights of the donors must belong to.
 \code{w.constr} can contain up to four objects:
@@ -34,7 +34,8 @@ The default is the identity matrix, so equal weight is given to all observations
 (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
 See the \strong{Details} section for more.}
 
-\item{plot}{a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working directory. For more options see \code{\link{scplot}}.}
+\item{plot}{a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working
+directory. For more options see \code{\link{scplot}}.}
 
 \item{plot.name}{a string containing the name of the plot (the format is by default .png). For more options see \code{\link{scplot}}.}
 
@@ -43,7 +44,8 @@ See the \strong{Details} section for more.}
 \item{save.data}{a character specifying the name and the path of the saved dataframe containing the processed data used to produce the plot.}
 }
 \value{
-The function returns an object of class 'scpi_scest' containing two lists. The first list is labeled 'data' and contains used data as returned by \code{\link{scdata}} and some other values.
+The function returns an object of class 'scest' containing two lists. The first list is labeled 'data' and
+contains used data as returned by \code{\link{scdata}} and some other values.
 \item{A}{a matrix containing pre-treatment features of the treated unit.}
 \item{B}{a matrix containing pre-treatment features of the control units.}
 \item{C}{a matrix containing covariates for adjustment.}
@@ -84,10 +86,12 @@ The second list is labeled 'est.results' and contains estimation results.
 \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
 }
 \description{
-The command implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints. For more information see
+The command implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso,
+ridge, or simplex-type constraints. For more information see
 \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 
-Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described
+in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 
 Companion commands are: \link{scdata} and \link{scdataMulti} for data preparation in the single and multiple treated unit(s) cases, respectively,
 \link{scpi} for inference procedures, \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
@@ -157,15 +161,14 @@ which optimizes the pooled fit for the average of the treated units.}
 
 data <- scpi_germany
 
-df <- scdata(df = data, id.var = "country", time.var = "year", 
-             outcome.var = "gdp", period.pre = (1960:1990), 
+df <- scdata(df = data, id.var = "country", time.var = "year",
+             outcome.var = "gdp", period.pre = (1960:1990),
              period.post = (1991:2003), unit.tr = "West Germany",
-             unit.co = unique(data$country)[-7], constant = TRUE,
-             cointegrated.data = TRUE)
-             
+             unit.co = setdiff(unique(data$country), "West Germany"),
+             constant = TRUE, cointegrated.data = TRUE)
+
 result <- scest(df, w.constr = list(name = "simplex", Q = 1))
 result <- scest(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1))
-
 
 }
 \references{
@@ -176,6 +179,8 @@ result <- scest(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1))
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+\item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 }
 }
 \seealso{

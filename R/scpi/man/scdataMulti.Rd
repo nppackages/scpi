@@ -2,7 +2,7 @@
 % Please edit documentation in R/scdataMulti.R
 \name{scdataMulti}
 \alias{scdataMulti}
-\title{Data preparation to use before calling \code{scest} or \code{scpi} for point estimation and inference procedures using Synthetic Control with Multiple Treated Units and Staggered Adoption.}
+\title{Data Preparation for \code{scest} or \code{scpi} for Point Estimation and Inference Procedures Using Synthetic Control Methods.}
 \usage{
 scdataMulti(
   df,
@@ -68,7 +68,7 @@ The sparse matrices will be objects of class 'dgCMatrix' or 'lgCMatrix', thus to
 in matrices, e.g. \code{View(as.matrix(B))}.}
 }
 \value{
-The command returns an object of class 'scpi_data' containing the following
+The command returns an object of class 'scdataMulti' containing the following
 \item{A}{a matrix containing pre-treatment features of the treated units.}
 \item{B}{a matrix containing pre-treatment features of the control units.}
 \item{C}{a matrix containing covariates for adjustment.}
@@ -98,16 +98,19 @@ The command returns an object of class 'scpi_data' containing the following
 \item{\code{donors.list}, list containing the IDs of the donors of each treated unit}}}
 }
 \description{
-The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}} to implement estimation and inference procedures for Synthetic Control (SC) methods
+The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}} to implement estimation
+and inference procedures for Synthetic Control (SC) methods
 in the general case of multiple treated units and staggered adoption. It is a generalization of \code{\link{scdata}}, since this latter prepares
 the data in the particular case of a single treated unit.
 
 The names of the output matrices follow the terminology proposed in
 \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, Palomba and Titiunik (2022)}  (UPDATE LINK).
 
-Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are
+described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 
-Companion commands are: \link{scdata} for data preparation in the single treated unit case, \link{scest} for point estimation, \link{scpi} for inference procedures,
+Companion commands are: \link{scdata} for data preparation in the single treated unit case, \link{scest} for point estimation,
+\link{scpi} for inference procedures,
 \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
 
 Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
@@ -145,7 +148,7 @@ outcome.var <- "gdp"
 id.var <- "country"
 treatment.var <- "tr_id"
 time.var <- "year"
-df.unit <- scdataMulti(datager, id.var = id.var, outcome.var = outcome.var, 
+df.unit <- scdataMulti(datager, id.var = id.var, outcome.var = outcome.var,
                        treatment.var = treatment.var,
                        time.var = time.var, features = list(c("gdp", "trade")),
                		    cointegrated.data = TRUE, constant = TRUE)
@@ -159,6 +162,8 @@ df.unit <- scdataMulti(datager, id.var = id.var, outcome.var = outcome.var,
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+\item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 }
 }
 \seealso{

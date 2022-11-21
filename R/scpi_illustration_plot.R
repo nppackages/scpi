@@ -24,18 +24,18 @@ data <- scpi_germany
 
 ####################################
 ### Set options for data preparation
-id.var      <- "country"                             # ID variable
-time.var    <- "year"                                # Time variable
-period.pre  <- seq(from = 1960, to = 1990, by = 1)   # Pre-treatment period
-period.post <- (1991:2003)                           # Post-treatment period
-unit.tr     <- "West Germany"                        # Treated unit (in terms of id.var)
-unit.co     <- unique(data$country)[-7]              # Donors pool
-outcome.var <- "gdp"                                 # Outcome variable
-cov.adj     <- NULL                                  # Covariates for adjustment
-features    <- c("gdp")                              # No features other than outcome
-constant    <- T                                     # No constant term
-report.missing <- F                                  # To check where missing values are
-cointegrated.data <- T                               # Belief that the data are cointegrated
+id.var      <- "country"                              # ID variable
+time.var    <- "year"                                 # Time variable
+period.pre  <- seq(from = 1960, to = 1990, by = 1)    # Pre-treatment period
+period.post <- (1991:2003)                            # Post-treatment period
+unit.tr     <- "West Germany"                         # Treated unit (in terms of id.var)
+unit.co     <- setdiff(unique(data$country), unit.tr) # Donors pool
+outcome.var <- "gdp"                                  # Outcome variable
+cov.adj     <- NULL                                   # Covariates for adjustment
+features    <- NULL                                   # No features other than outcome
+constant    <- FALSE                                  # No constant term
+report.missing <- FALSE                               # To check where missing values are
+cointegrated.data <- TRUE                             # Belief that the data are cointegrated
 
 
 ####################################

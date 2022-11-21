@@ -1,4 +1,4 @@
-#' @title Plot Synthetic Control Point Estimates and Prediction Interval with Multiple Treated units and Staggered Adoption
+#' @title Plot Synthetic Control Point Estimates and Prediction Interval With Multiple Treated units and Staggered Adoption
 #'
 #' @description The command produces a wide range of plots of Synthetic Control estimates and corresponding prediction intervals. The command allows form multiple treated units and staggered adoption.
 #' Prediction intervals can take into account either in-sample uncertainty only or in-sample and
@@ -16,8 +16,8 @@
 #'
 #' For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
 #'
-#' @param result a class 'scpi_est' object, obtained by calling \code{\link{scest}}, or a class
-#' 'scpi_pi' object, obtained by calling \code{\link{scpi}}. The data object given as input to this command has to be
+#' @param result a class 'scest' object, obtained by calling \code{\link{scest}}, or a class
+#' 'scpi' object, obtained by calling \code{\link{scpi}}. The data object given as input to this command has to be
 #' processed with \code{\link{scdataMulti}}.
 #' @param type a character that specifies the type of plot to be produced. If set to 'treatment' then treatment effects are plotted. 
 #' If set to 'series' (default), the actual and synthetic time series are reported.
@@ -51,6 +51,8 @@
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.} 
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022)},
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+#' \item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+#' Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 #' }
 #'
 #' @seealso \code{\link{scdata}}, \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplotMulti}}

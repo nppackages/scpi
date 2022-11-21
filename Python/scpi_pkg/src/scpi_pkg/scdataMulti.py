@@ -52,7 +52,7 @@ def scdataMulti(df,
         a character with the name of the treatment variable. The treatment variable has to be 1 only in periods
         where a unit is treated.
 
-    features : dict
+    features : dict, default None
         a dictionary whose elements are lists containing the name of the feature variables used for estimation.
         If a dictionary with a single key
         is provided as input, then the same features are used for all treated units. Alternatively, if the user wants to
@@ -177,7 +177,10 @@ def scdataMulti(df,
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
     Synthetic Control Estimators”.
 
-    See Also
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+    Controls with Staggered Treatment Adoption”.
+
+   See Also
     --------
     scdata, scest, scpi, scplot
 

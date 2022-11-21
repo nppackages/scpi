@@ -1,5 +1,5 @@
-*! Date        : 07 Oct 2022
-*! Version     : 2.0
+*! Date        : 21 Nov 2022
+*! Version     : 2.0.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Synthetic control estimation
@@ -177,7 +177,7 @@ def scest_wrapper(p, dir, QQ, lb, name, V, dfname):
 	Matrix.store("bmat", res_est.b.values)
 	names = [ix2rn(row) for row in res_est.b.index.tolist()]
 	Matrix.setRowNames("bmat", names)
-	
+
 	if class_type == "scest_output":
 		Matrix.create("Y_post", len(res_est.Y_post), 1, 0)
 		Matrix.store("Y_post", res_est.Y_post.values)
@@ -244,7 +244,10 @@ def scest_wrapper(p, dir, QQ, lb, name, V, dfname):
 
 	names = res_est.treated_units
 	Matrix.create("Qstar", res_est.iota, 1, 0)
-	Matrix.store("Qstar", [w['Q'] for w in res_est.w_constr.values()])
+	if p == "no norm" or name == "ols":
+		Matrix.store("Qstar", [numpy.nan] * res_est.iota)
+	else:
+		Matrix.store("Qstar", [w['Q'] for w in res_est.w_constr.values()])
 	Matrix.setRowNames("Qstar", names)
 
 	Macro.setLocal("donors", dict2glob(res_est.donors_dict.keys(), res_est.donors_dict.values()))

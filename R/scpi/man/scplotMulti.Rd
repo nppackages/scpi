@@ -2,7 +2,7 @@
 % Please edit documentation in R/scplotMulti.R
 \name{scplotMulti}
 \alias{scplotMulti}
-\title{Plot Synthetic Control Point Estimates and Prediction Interval with Multiple Treated units and Staggered Adoption}
+\title{Plot Synthetic Control Point Estimates and Prediction Interval With Multiple Treated units and Staggered Adoption}
 \usage{
 scplotMulti(
   result,
@@ -19,8 +19,8 @@ scplotMulti(
 )
 }
 \arguments{
-\item{result}{a class 'scpi_est' object, obtained by calling \code{\link{scest}}, or a class
-'scpi_pi' object, obtained by calling \code{\link{scpi}}. The data object given as input to this command has to be
+\item{result}{a class 'scest' object, obtained by calling \code{\link{scest}}, or a class
+'scpi' object, obtained by calling \code{\link{scpi}}. The data object given as input to this command has to be
 processed with \code{\link{scdataMulti}}.}
 
 \item{type}{a character that specifies the type of plot to be produced. If set to 'treatment' then treatment effects are plotted.
@@ -93,6 +93,8 @@ scplotMulti(res.unit, joint = TRUE)
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022)},
 scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+\item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 }
 }
 \seealso{

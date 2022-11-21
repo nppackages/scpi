@@ -4,16 +4,20 @@
 \name{scpi-package}
 \alias{scpi-package}
 \alias{_PACKAGE}
-\title{scpi: A package to compute Synthetic Control Prediction Intervals with Multiple Treated Units and Staggered Adoption}
+\title{\code{scpi}: A Package to Compute Synthetic Control Prediction Intervals With Multiple Treated Units and Staggered Adoption}
 \description{
-The package implements estimation, inference procedures, and produces plots for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type
-constraints. Uncertainty is quantified using prediction intervals according to \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
+The package implements estimation, inference procedures, and produces plots for Synthetic Control (SC) methods
+using least squares, lasso, ridge, or simplex-type
+constraints. Uncertainty is quantified using prediction intervals according to
+\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 
-Included functions are: \link{scdata} and \link{scdataMulti} for data preparation, \link{scest} for point estimation, \link{scpi} for inference procedures, and \link{scplot} and \link{scplotMulti} for plots.
+Included functions are: \link{scdata} and \link{scdataMulti} for data preparation, \link{scest} for point estimation,
+\link{scpi} for inference procedures, and \link{scplot} and \link{scplotMulti} for plots.
 
 \code{print()} and \code{summary()} methods are available for \code{\link{scest}} and \code{\link{scpi}}.
 
-Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in
+\href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 
 Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
 
@@ -29,6 +33,8 @@ For an introduction to synthetic control methods, see \href{https://www.aeaweb.o
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+\item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 }
 }
 \author{

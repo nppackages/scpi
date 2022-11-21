@@ -35,22 +35,22 @@ def scplot(result,
         a class `scest_output' object, obtained by calling scest, or a class
         `scpi_output' object, obtained by calling scpi
 
-    col_dots_t : str
+    col_dots_t : str, default "black"
         string indicating the color of the time series marker for treated unit
 
-    col_line_t : str
+    col_line_t : str, default "black"
         string indicating the color of the time series line for treated unit
 
-    col_dots_s : str
+    col_dots_s : str, default "mediumblue"
         string indicating the color of the time series marker for synthetic control unit
 
-    col_line_s : str
+    col_line_s : str, default "mediumblue"
         string indicating the color of the time series line for synthetic control unit
 
-    x_lab : str
+    x_lab : str, default "Time"
         string indicating x axis title
 
-    y_lab : str
+    y_lab : str, default "Outcome Variable"
         string indicating y axis title
 
     e_out : bool, default True
@@ -63,7 +63,7 @@ def scplot(result,
     e_method : str, default "gaussian"
         a string specifying the type of uncertainty estimation used for out-of-sample uncertainty quantification.
 
-    save_data : str
+    save_data : str, default None
         a string specifying the name (and the folder) of the saved dataframe containing the processed data used to
         produce the plot. The data is saved in .csv format and the folder specified.
 
@@ -82,6 +82,9 @@ def scplot(result,
 
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
     Synthetic Control Estimators”.
+
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+    Controls with Staggered Treatment Adoption”.
 
     See Also
     --------

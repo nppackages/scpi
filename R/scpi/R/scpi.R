@@ -18,8 +18,7 @@
 #'
 #' For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
 #'
-#' @param data a class 'scpi_data' object, obtained by calling \code{\link{scdata}}.
-#'
+#' @param data a class 'scdata' object, obtained by calling \code{\link{scdata}}, or class 'scdataMulti' obtained via \code{\link{scdataMulti}}.
 #' @param w.constr a list specifying the constraint set the estimated weights of the donors must belong to.
 #' \code{w.constr} can contain up to five elements:
 #' - `\code{p}', a scalar indicating the norm to be used (\code{p} should be one of "no norm", "L1", and "L2")
@@ -34,21 +33,21 @@
 #' @param V specifies the weighting matrix to be used when minimizing the sum of squared residuals
 #' \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
 #' The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
-#' (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled". 
+#' (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
 #' See the \strong{Details} section for more.
 #' @param rho a string specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
 #' \code{rho = 'type-1'} (the default), then the tuning parameter is computed based on optimization inequalities. Users can provide a scalar 
 #' with their own value for \code{rho}. Other options are described in the \strong{Details} section.
 #' @param rho.max a scalar indicating the maximum value attainable by the tuning parameter \code{rho}.
 #' @param lgapp selects the way local geometry is approximated in simulation. The options are "generalized"
-#' and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid 
+#' and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid
 #' with linear constraints only.
 #' @param u.missp a logical indicating if misspecification should be taken into account when dealing with \eqn{\mathbf{u}}.
-#' @param u.order a scalar that sets the order of the polynomial in \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{u}}. 
-#' The default is \code{u.order = 1}, however if there is risk of over-fitting, the command automatically sets it 
+#' @param u.order a scalar that sets the order of the polynomial in \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{u}}.
+#' The default is \code{u.order = 1}, however if there is risk of over-fitting, the command automatically sets it
 #' to \code{u.order = 0}. See the \strong{Details} section for more information.
 #' @param u.lags a scalar that sets the number of lags of \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{u}}.
-#' The default is \code{u.lags = 0}, however if there is risk of over-fitting, the command automatically sets it 
+#' The default is \code{u.lags = 0}, however if there is risk of over-fitting, the command automatically sets it
 #' to \code{u.lags = 0}. See the \strong{Details} section for more information.
 #' @param u.design a matrix with the same number of rows of \eqn{\mathbf{A}} and \eqn{\mathbf{B}} and whose columns specify the design matrix
 #' to be used when modeling the estimated pseudo-true residuals \eqn{\mathbf{u}}.
@@ -62,19 +61,21 @@
 #' The default is \code{e.order = 1}, however if there is risk of over-fitting, the command automatically sets it 
 #' to \code{e.order = 0}. See the \strong{Details} section for more information.
 #' @param e.lags a scalar that sets the number of lags of \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{e}}.
-#' The default is \code{e.order = 1}, however if there is risk of over-fitting, the command automatically sets it 
+#' The default is \code{e.order = 1}, however if there is risk of over-fitting, the command automatically sets it
 #' to \code{e.order = 0}. See the \strong{Details} section for more information.
 #' @param e.design a matrix with the same number of rows of \eqn{\mathbf{A}} and \eqn{\mathbf{B}} and whose columns specify the design matrix
 #' to be used when modeling the estimated out-of-sample residuals \eqn{\mathbf{e}}.
 #' @param e.alpha a scalar specifying the confidence level for out-of-sample uncertainty, i.e. 1 - \code{e.alpha} is the confidence level.
 #' @param sims a scalar providing the number of simulations to be used in quantifying in-sample uncertainty.
-#' @param plot a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working directory. For more options see \code{\link{scplot}}.
+#' @param plot a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working
+#' directory. For more options see \code{\link{scplot}}.
 #' @param plot.name a string containing the name of the plot (the format is by default .png). For more options see \code{\link{scplot}}.
-#' @param cores number of cores to be used by the command. The default is the number of cores available minus one.
+#' @param cores number of cores to be used by the command. The default is one.
 #' @param w.bounds a \eqn{N_1\cdot T_1\times 2} matrix with the user-provided bounds on \eqn{\beta}. If \code{w.bounds} is provided, then
 #' the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 #' by filling the other column with \code{NA}s.
-#' @param e.bounds a \eqn{N_1\cdot T_1\times 2} matrix with the user-provided bounds on \eqn{(\widehat{\mathbf{w}},\widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
+#' @param e.bounds a \eqn{N_1\cdot T_1\times 2} matrix with the user-provided bounds on \eqn{(\widehat{\mathbf{w}},
+#' \widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
 #' the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 #' by filling the other column with \code{NA}s.
 #'
@@ -83,7 +84,8 @@
 #' @param verbose if \code{TRUE} prints additional information in the console.
 #'
 #' @return
-#' The function returns an object of class 'scpi_scpi' containing three lists. The first list is labeled 'data' and contains used data as returned by \code{\link{scdata}} and some other values.
+#' The function returns an object of class 'scpi' containing three lists. The first list is labeled 'data' and contains used
+#' data as returned by \code{\link{scdata}} and some other values.
 #' \item{A}{a matrix containing pre-treatment features of the treated unit.}
 #' \item{B}{a matrix containing pre-treatment features of the control units.}
 #' \item{C}{a matrix containing covariates for adjustment.}
@@ -237,7 +239,7 @@
 #' ad-hoc set of variables to form \eqn{\mathbf{D}_e}. Finally, the option \code{e.method} allows the user to select one of three
 #' estimation methods: "gaussian" relies on conditional sub-Gaussian bounds; "ls" estimates conditional bounds using a location-scale
 #' model; "qreg" uses conditional quantile regression of the residuals \eqn{\mathbf{e}} on \eqn{\mathbf{D}_e}.}
-#' 
+#'
 #' \item{\strong{Residual Estimation Over-fitting.} To estimate conditional moments of \eqn{\mathbf{u}} and \eqn{e_t}
 #' we rely on two design matrices, \eqn{\mathbf{D}_u} and \eqn{\mathbf{D}_e} (see above). Let \eqn{d_u} and \eqn{d_e} be the number of 
 #' columns in \eqn{\mathbf{D}_u} and \eqn{\mathbf{D}_e}, respectively. Assuming no missing values and balanced features, the
@@ -245,16 +247,16 @@
 #' Our rule of thumb to avoid over-fitting is to check if \eqn{N_1\cdot T_0\cdot M \geq d_u + 10} or \eqn{T_0 \geq d_e + 10}. If the 
 #' former condition is not satisfied we automatically set \code{u.order = u.lags = 0}, if instead the latter is not met
 #' we automatically set \code{e.order = e.lags = 0}.}
-#' 
+#'
 #' }
-#' 
+#'
 #' @author
 #' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
-#' 
+#'
 #' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
-#' 
+#'
 #' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
-#' 
+#'
 #' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
 #'
 #' @references
@@ -265,20 +267,22 @@
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+#' \item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+#' Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 #' }
 #'
 #' @seealso \code{\link{scdata}}, \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
 #'
 #' @examples
-#' 
+#'
 #' data <- scpi_germany
-#' 
-#' df <- scdata(df = data, id.var = "country", time.var = "year", 
-#'              outcome.var = "gdp", period.pre = (1960:1990), 
+#'
+#' df <- scdata(df = data, id.var = "country", time.var = "year",
+#'              outcome.var = "gdp", period.pre = (1960:1990),
 #'              period.post = (1991:2003), unit.tr = "West Germany",
-#'              unit.co = unique(data$country)[-7], constant = TRUE,
-#'              cointegrated.data = TRUE)
-#'              
+#'              unit.co = setdiff(unique(data$country), "West Germany"),
+#'              constant = TRUE, cointegrated.data = TRUE)
+#'
 #' result <- scpi(df, w.constr = list(name = "simplex", Q = 1), cores = 1, sims = 10)
 #' result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1),
 #'                cores = 1, sims = 10)
@@ -304,7 +308,7 @@ scpi  <- function(data,
                   rho          = NULL,
                   rho.max      = 0.2,
                   lgapp        = "generalized",
-                  cores        = NULL,
+                  cores        = 1,
                   plot         = FALSE,
                   plot.name    = NULL,
                   w.bounds     = NULL,
@@ -313,16 +317,16 @@ scpi  <- function(data,
                   verbose      = TRUE) {
 
 
-  if ( (methods::is(data, "scpi_data") | methods::is(data, "scpi_data_multi")) == FALSE ) {
+  if ( (methods::is(data, "scdata") || methods::is(data, "scdataMulti")) == FALSE ) {
     stop("data should be the object returned by running scdata or scdata_multi!")
   }
-  
-  if (methods::is(data, 'scpi_data') == TRUE) {
+
+  if (methods::is(data, 'scdata') == TRUE) {
     class.type <- 'scpi_data'
-  } else if (methods::is(data, 'scpi_data_multi') == TRUE) {
+  } else if (methods::is(data, 'scdataMulti') == TRUE) {
     class.type <- 'scpi_data_multi'
   }
-  
+
   V.type <- V
 
   #############################################################################
@@ -406,7 +410,7 @@ scpi  <- function(data,
       Prows <- T1.tot
       Pcols <- Jtot + KMI
     }
-    
+
     if (nrow(P) != Prows) {
       stop(paste("The matrix P currently has",nrow(P),"rows when instead",Prows,"were expected
                  (i.e. the number of post-intervention periods)!"))
@@ -746,6 +750,11 @@ scpi  <- function(data,
 
   # Estimate degrees of freedom to be used for V[u|H] (note that w is pre-regularization)
   df <- df.EST(w.constr = w.constr.list[[1]], w = w, B = B, J = Jtot, KM = KMI)
+  if (df >= TT) {
+    df <- TT - 1
+    warning(paste0("The current specification uses more degrees of freedom than observations. We suggest to increase the level of ",
+                   "sparsity or consider using a smaller donor pool."), immediate. = TRUE, call. = FALSE)
+  }
 
   # Use HC inference to estimate V[u|H]
   result <- u.sigma.est(u.mean = u.mean, u.sigma = u.sigma, res = res.na,
@@ -994,7 +1003,6 @@ scpi  <- function(data,
   ## Simultaneous Prediction Intervals (for each unit)
   #############################################################################
   #############################################################################
-  
   if (sc.effect == "unit-time") { # joint within unit
     joint.bounds <- simultaneousPredGet(vsig, T1, nrow(P.na), I, u.alpha, e.alpha, 
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est,
@@ -1044,15 +1052,15 @@ scpi  <- function(data,
   if (sc.pred$data$specs$effect == "time") rownames(P.na) <- paste0("aggregate.", rownames(P.na))
   rownames(CI.0) <- rownames(P.na)
 
-  if (is.null(sc.l.1) == FALSE) {
+  if (e.method == "gaussian" || e.method == "all") {
     CI.1 <- cbind(sc.l.1, sc.r.1, len.1)
     colnames(CI.1) <- c("Left Bound", "Right Bound", "Length")
     rownames(CI.1) <- rownames(P.na)
   } else {
     CI.1 <- NULL
   }
-
-  if (is.null(sc.l.2) == FALSE) {
+  
+  if (e.method == "ls" || e.method == "all") {
     CI.2 <- cbind(sc.l.2, sc.r.2, len.2)
     colnames(CI.2) <- c("Left Bound", "Right Bound", "Length")
     rownames(CI.2) <- rownames(P.na)
@@ -1060,7 +1068,7 @@ scpi  <- function(data,
     CI.2 <- NULL
   }
 
-  if (is.null(sc.l.3) == FALSE) {
+  if (e.method == "qreg" || e.method == "all") {
     CI.3 <- cbind(sc.l.3, sc.r.3, len.3)
     colnames(CI.3) <- c("Left Bound", "Right Bound", "Length")
     rownames(CI.3) <- rownames(P.na)
@@ -1108,7 +1116,7 @@ scpi  <- function(data,
   result <- list( data               = sc.pred$data,
                   est.results        = sc.pred$est.results,
                   inference.results  = inference.results)
-  
+
   class(result) <- 'scpi'
   if (class.type == 'scpi_data') {
     result$data$specs$class.type <- 'scpi_scpi'    
@@ -1119,14 +1127,14 @@ scpi  <- function(data,
   #############################################################################
   #############################################################################
   ## Plot
-  
+
   if (plot == TRUE) {
     if (is.null(plot.name) == FALSE) {
       fig.name = plot.name
     } else {
       fig.name = "scpi_default_plot"
     }
-    
+
     if (class.type == "scpi_data") {
 
       scplot(result = result, fig.path = getwd(),

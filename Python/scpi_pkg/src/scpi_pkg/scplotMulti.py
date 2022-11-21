@@ -67,17 +67,17 @@ def scplotMulti(result,
     ncols : int, default 3
         an integer controlling the number of columns in the plot.
 
-    e_method_input : str
+    e_method_input : str, default None
         a string specifying the type of uncertainty estimation used for out-of-sample uncertainty quantification.
         To be used only when scpi received the option "e_method='all'" and the user wants to choose among the three
         techniques to quantify out-of-sample uncertainty.
 
-    save_data : str
+    save_data : str, default None
         a string specifying the name (and the folder) of the saved dataframe containing the processed data used to
         produce the plot. The data is saved in .csv format and the folder specified.
 
     verbose : bool, default True
-        if True prints additional information in the console.
+        if False prevents printing additional information in the console.
 
     Returns
     ----------
@@ -94,6 +94,9 @@ def scplotMulti(result,
 
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
     Synthetic Control Estimators”.
+
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+    Controls with Staggered Treatment Adoption”.
 
     See Also
     --------

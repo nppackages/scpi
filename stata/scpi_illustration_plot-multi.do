@@ -16,11 +16,11 @@
 use "scpi_germany.dta", clear
 
 * suppose a second unit was treated
-replace status = 1 if country == "Italy" & year >= 1994
+replace status = 1 if country == "Italy" & year >= 1992
 
 ** Prepare data
 scdatamulti gdp, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
-				 treatment(status) cointegrated(True)
+				 treatment(status) cointegrated(True) constant(True)
 
 ** SC - Inference 
 set seed 8894

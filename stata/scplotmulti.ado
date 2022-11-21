@@ -1,5 +1,5 @@
-*! Date        : 07 Oct 2022
-*! Version     : 2.0
+*! Date        : 21 Nov 2022
+*! Version     : 2.0.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Plot Synthetic Control
@@ -188,7 +188,9 @@ version 17.0
 	foreach tr of local tr_units {
 		
 		local ++plotname 
-		
+		if "`ptype'" == "treatment" {
+			cap drop Tdate_y
+		}
 		qui su Tdate if ID == "`tr'" & Time < Tdate
 		local tline = r(mean) + 1/2
 

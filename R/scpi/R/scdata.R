@@ -1,25 +1,28 @@
-#' @title Data preparation to use before calling \code{scest} or \code{scpi} for point estimation and inference procedures using Synthetic Control.
+#' @title Data Preparation for \code{scest} or \code{scpi} for Point Estimation and Inference Procedures Using Synthetic Control Methods.
 #'
-#' @description The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}} to implement estimation and inference procedures for Synthetic Control (SC) methods.
+#' @description The command prepares the data to be used by \code{\link{scest}} or \code{\link{scpi}} to implement estimation and
+#' inference procedures for Synthetic Control (SC) methods.
 #' It allows the user to specify the outcome variable, the features of the treated unit to be
 #' matched, and covariate-adjustment feature by feature. The names of the output matrices
 #' follow the terminology proposed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 #'
-#' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
+#' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in
+#' \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
 #'
-#' Companion commands are: \link{scdataMulti} for data preparation in the multiple treated units case with staggered adoption, 
-#' \link{scest} for point estimation, \link{scpi} for inference procedures, \link{scplot} and \link{scplotMulti} for plots in the single and multiple treated unit(s) cases, respectively.
-#' 
+#' Companion commands are: \link{scdataMulti} for data preparation in the multiple treated units case with staggered adoption,
+#' \link{scest} for point estimation, \link{scpi} for inference procedures, \link{scplot} and \link{scplotMulti} for plots in
+#' the single and multiple treated unit(s) cases, respectively.
+#'
 #' Related Stata, R, and Python packages useful for inference in SC designs are described in the following website:
-#' 
+#'
 #' \href{https://nppackages.github.io/scpi/}{ https://nppackages.github.io/scpi/}
-#' 
+#'
 #' For an introduction to synthetic control methods, see \href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie (2021)} and references therein.
-#' 
+#'
 #' @param df a dataframe object.
 #' @param id.var a character or numeric scalar with the name of the variable containing units' IDs. The ID variable can be numeric or character.
-#' @param time.var a character with the name of the time variable. The time variable has to be numeric, integer, or Date. In 
-#' case \code{time.var} is Date it should be the output of \code{\link{as.Date}()} function. An integer or 
+#' @param time.var a character with the name of the time variable. The time variable has to be numeric, integer, or Date. In
+#' case \code{time.var} is Date it should be the output of \code{\link{as.Date}()} function. An integer or
 #' numeric time variable is suggested when working with yearly data, whereas for all other formats a Date type
 #' time variable is preferred.
 #' @param outcome.var a character with the name of the outcome variable. The outcome variable has to be numeric.
@@ -32,12 +35,13 @@
 #' default is \code{features = outcome.var}.
 #' @param cov.adj a list specifying the names of the covariates to be used for adjustment for each feature. See the \strong{Details} section for more.
 #' @param constant a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}.
-#' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}.  See the \strong{Details} section for more.
+#' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not.
+#' The default value is \code{FALSE}.  See the \strong{Details} section for more.
 #' @param anticipation a scalar that indicates the number of periods of potential anticipation effects. Default is 0.
 #' @param verbose if \code{TRUE} prints additional information in the console.
 #'
 #' @return
-#' The command returns an object of class 'scpi_data' containing the following
+#' The command returns an object of class 'scdata' containing the following
 #' \item{A}{a matrix containing pre-treatment features of the treated unit.}
 #' \item{B}{a matrix containing pre-treatment features of the control units.}
 #' \item{C}{a matrix containing covariates for adjustment.}
@@ -70,10 +74,10 @@
 #' Alternatively, if multiple features are specified, then the user has two possibilities:
 #' \itemize{
 #' \item{provide a list with one element, then the same covariates are used for
-#' adjustment for each feature. For example, if there are two features specified and the user inputs 
+#' adjustment for each feature. For example, if there are two features specified and the user inputs
 #' \code{cov.adj = list(c("constant","trend"))}, then a constant term and a linear trend are for adjustment for both features.}
 #' \item{provide a list with as many elements as the number of features specified, then
-#' feature-specific covariate adjustment is implemented. For example, 
+#' feature-specific covariate adjustment is implemented. For example,
 #' \code{cov.adj = list('f1' = c("constant","trend"), 'f2' = c("trend"))}. In this case the name of each element
 #' of the list should be one (and only one) of the features specified.}}
 #'
@@ -99,12 +103,15 @@
 #'
 #' @references
 #'\itemize{
-#' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
+#' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}.
+#' Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
-#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
+#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
+#' \item{\href{https://arxiv.org/abs/2210.05026}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
+#' Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 #'}
 #'
 #' @seealso \code{\link{scdataMulti}}, \code{\link{scest}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
@@ -113,11 +120,11 @@
 #'
 #' data <- scpi_germany
 #'
-#' df <- scdata(df = data, id.var = "country", time.var = "year", 
-#'              outcome.var = "gdp", period.pre = (1960:1990), 
+#' df <- scdata(df = data, id.var = "country", time.var = "year",
+#'              outcome.var = "gdp", period.pre = (1960:1990),
 #'              period.post = (1991:2003), unit.tr = "West Germany",
-#'              unit.co = unique(data$country)[-7], constant = TRUE,
-#'              cointegrated.data = TRUE)
+#'              unit.co = setdiff(unique(data$country), "West Germany"),
+#'              constant = TRUE, cointegrated.data = TRUE)
 #'
 #' @export
 
@@ -139,24 +146,24 @@ scdata <- function(df,
   ############################################################################
   ############################################################################
   ### Error Checking
-  
+
   # Safe copy
   data <- df
-  
+
   # Store variable names and variable class
   var.names   <- names(data)              # Var names in dataframe
   var.class   <- sapply(data, class)      # Var types in dataframe
-  
+
   # Check main input is a dataframe
   if (is.data.frame(data) == FALSE) {
     stop("Data input should be a dataframe object!")
   }
-  
+
   # Convert from tibble to proper dataframe object
   if (tibble::is_tibble(data) == TRUE) {
     data <- as.data.frame(data)
   }
-  
+
   # Check inputs are string
   if (is.character(id.var) == FALSE) {
     stop("You should specify the name of id.var as a character! (eg. id.var = 'ID')")
@@ -721,7 +728,7 @@ scdata <- function(df,
              Y.donors = Y.donors,
                 specs = specs)
 
-  class(df.sc) <- 'scpi_data'
+  class(df.sc) <- 'scdata'
 
   return(df.sc = df.sc)
 
