@@ -60,17 +60,17 @@ and <a class="reference external" href="https://arxiv.org/abs/2210.05026">Cattan
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>result</strong> (<em>scest_output/scpi_output</em>) – a class <a href="#id1"><span class="problematic" id="id2">`</span></a>scest_output’ object, obtained by calling scest, or a class
 <a href="#id3"><span class="problematic" id="id4">`</span></a>scpi_output’ object, obtained by calling scpi</p></li>
-<li><p><strong>col_dots_t</strong> (<em>str</em>) – string indicating the color of the time series marker for treated unit</p></li>
-<li><p><strong>col_line_t</strong> (<em>str</em>) – string indicating the color of the time series line for treated unit</p></li>
-<li><p><strong>col_dots_s</strong> (<em>str</em>) – string indicating the color of the time series marker for synthetic control unit</p></li>
-<li><p><strong>col_line_s</strong> (<em>str</em>) – string indicating the color of the time series line for synthetic control unit</p></li>
-<li><p><strong>x_lab</strong> (<em>str</em>) – string indicating x axis title</p></li>
-<li><p><strong>y_lab</strong> (<em>str</em>) – string indicating y axis title</p></li>
+<li><p><strong>col_dots_t</strong> (<em>str</em><em>, </em><em>default &quot;black&quot;</em>) – string indicating the color of the time series marker for treated unit</p></li>
+<li><p><strong>col_line_t</strong> (<em>str</em><em>, </em><em>default &quot;black&quot;</em>) – string indicating the color of the time series line for treated unit</p></li>
+<li><p><strong>col_dots_s</strong> (<em>str</em><em>, </em><em>default &quot;mediumblue&quot;</em>) – string indicating the color of the time series marker for synthetic control unit</p></li>
+<li><p><strong>col_line_s</strong> (<em>str</em><em>, </em><em>default &quot;mediumblue&quot;</em>) – string indicating the color of the time series line for synthetic control unit</p></li>
+<li><p><strong>x_lab</strong> (<em>str</em><em>, </em><em>default &quot;Time&quot;</em>) – string indicating x axis title</p></li>
+<li><p><strong>y_lab</strong> (<em>str</em><em>, </em><em>default &quot;Outcome Variable&quot;</em>) – string indicating y axis title</p></li>
 <li><p><strong>e_out</strong> (<em>bool</em><em>, </em><em>default True</em>) – a logical specifying whether out-of-sample uncertainty should be included in the plot(s).</p></li>
 <li><p><strong>joint</strong> (<em>bool</em><em>, </em><em>default False</em>) – a logical specifying whether simultaneous prediction intervals should be included in the plot(s).
 It requires e_out = True.</p></li>
 <li><p><strong>e_method</strong> (<em>str</em><em>, </em><em>default &quot;gaussian&quot;</em>) – a string specifying the type of uncertainty estimation used for out-of-sample uncertainty quantification.</p></li>
-<li><p><strong>save_data</strong> (<em>str</em>) – a string specifying the name (and the folder) of the saved dataframe containing the processed data used to
+<li><p><strong>save_data</strong> (<em>str</em><em>, </em><em>default None</em>) – a string specifying the name (and the folder) of the saved dataframe containing the processed data used to
 produce the plot. The data is saved in .csv format and the folder specified.</p></li>
 </ul>
 </dd>
@@ -88,6 +88,8 @@ Aspects,” Journal of Economic Literature, 59, 391-425.</p>
 Methods,” Journal of the American Statistical Association, 116, 1865-1880.</p>
 <p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
 Synthetic Control Estimators”.</p>
+<p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+Controls with Staggered Treatment Adoption”.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><code class="xref py py-obj docutils literal notranslate"><span class="pre">scdata</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scdataMulti</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scest</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scpi</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplotMulti</span></code></p>

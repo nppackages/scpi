@@ -151,11 +151,11 @@ def ECOS_get_b(Q1, p, dire):
     return b
 
 
-def ECOS_get_G(Jtot, KMI, J, iota, a, Q, p, dire, ns, red):
+def ECOS_get_G(Jtot, KMI, J, iota, a, Q, p, dire, ns, red, scale):
 
     if p == "L1" and dire == "==":
 
-        G = numpy.concatenate((numpy.reshape(numpy.append(a, 1), (1, len(a) + ns)),                                    # linear part of QF
+        G = numpy.concatenate((numpy.reshape(numpy.append(a, scale), (1, len(a) + ns)),                                # linear part of QF
                                numpy.concatenate((-numpy.diag([1] * Jtot), numpy.zeros((Jtot, KMI + ns))), axis=1),    # lower bounds on w
                                numpy.array([[0] * (Jtot + KMI) + [-1]]),                                               # SOC definition (||sqrt(Q)beta|| <= t)
                                numpy.array([[0] * (Jtot + KMI) + [1]]),
@@ -164,7 +164,7 @@ def ECOS_get_G(Jtot, KMI, J, iota, a, Q, p, dire, ns, red):
 
     elif p == "L1" and dire == "<=":  # x= (beta, z, t)
 
-        G = numpy.concatenate((numpy.reshape(numpy.concatenate((a, numpy.zeros(ns - 1), numpy.array([1]))),          # linear part of QF
+        G = numpy.concatenate((numpy.reshape(numpy.concatenate((a, numpy.zeros(ns - 1), numpy.array([scale]))),      # linear part of QF
                                              (1, len(a) + ns)),
                                numpy.concatenate((numpy.diag([1] * Jtot), numpy.zeros((Jtot, KMI)),                  # lower bounds on w
                                                   numpy.diag([1] * Jtot), numpy.zeros((Jtot, 1))), axis=1),
@@ -178,7 +178,7 @@ def ECOS_get_G(Jtot, KMI, J, iota, a, Q, p, dire, ns, red):
 
     elif p == "L2" and dire == "<=":  # x= (beta, s, t)
 
-        G = numpy.concatenate((numpy.reshape(numpy.concatenate((a, numpy.zeros(iota), numpy.array([1]))),          # linear part of QF
+        G = numpy.concatenate((numpy.reshape(numpy.concatenate((a, numpy.zeros(iota), numpy.array([scale]))),      # linear part of QF
                                              (1, len(a) + ns)),
                                numpy.concatenate((numpy.zeros((iota, Jtot + KMI)), numpy.diag([1] * iota),         # s <= Q1^2
                                                   numpy.zeros((iota, 1))), axis=1),
@@ -190,7 +190,7 @@ def ECOS_get_G(Jtot, KMI, J, iota, a, Q, p, dire, ns, red):
 
     elif p == "L1-L2":  # x= (beta, s, t)
 
-        G = numpy.concatenate((numpy.reshape(numpy.concatenate((a, numpy.zeros(iota), numpy.array([1]))),              # linear part of QF
+        G = numpy.concatenate((numpy.reshape(numpy.concatenate((a, numpy.zeros(iota), numpy.array([scale]))),          # linear part of QF
                                              (1, len(a) + ns)),
                                numpy.concatenate((-numpy.diag([1] * Jtot), numpy.zeros((Jtot, KMI + ns))), axis=1),    # lower bounds on w
                                numpy.concatenate((numpy.zeros((iota, Jtot + KMI)), numpy.diag([1] * iota),             # s <= Q1^2
@@ -203,7 +203,7 @@ def ECOS_get_G(Jtot, KMI, J, iota, a, Q, p, dire, ns, red):
 
     elif p == "no norm":
 
-        G = numpy.concatenate((numpy.reshape(numpy.append(a, 1), (1, len(a) + ns)),                                    # linear part of QF
+        G = numpy.concatenate((numpy.reshape(numpy.append(a, scale), (1, len(a) + ns)),                                # linear part of QF
                                numpy.array([[0] * (Jtot + KMI) + [-1]]),                                               # SOC definition (||sqrt(Q)beta|| <= t)
                                numpy.array([[0] * (Jtot + KMI) + [1]]),
                                -2 * numpy.concatenate((Q, numpy.zeros((Jtot + KMI - red, 1))), axis=1)),
@@ -844,7 +844,7 @@ def cond_pred(y, x, xpreds, method, tau=None):
     return pred
 
 
-def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, dimred, P, J, Jtot, KM, KMI, iota, w_lb_est,
+def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, J, Jtot, KM, KMI, iota, w_lb_est,
                   w_ub_est, p, p_int, QQ, QQ2, dire, lb, cores):
 
     zeta = numpy.random.normal(loc=0, scale=1, size=len(beta))
@@ -854,7 +854,7 @@ def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, dimred, P, J, Jtot
     a = -2 * G - 2 * beta.T.dot(Q)
     d = 2 * G.dot(beta) + beta.dot(Q.dot(beta))
 
-    dataEcos['G'] = ECOS_get_G(Jtot, KMI, J, iota, a, Qreg, p, dire, ns, dimred)
+    dataEcos['G'] = ECOS_get_G(Jtot, KMI, J, iota, a, Qreg, p, dire, ns, dimred, scale)
     dataEcos['h'] = ECOS_get_h(d, lb, J, Jtot, KMI, iota, p, dire, QQ, QQ2, dimred)
 
     res_ub = []
@@ -929,13 +929,8 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
     dataEcos = {}
     ns = ECOS_get_n_slacks(p, dire, Jtot, iota)
 
-    Qreg = matRegularize(Q)
+    scale, Qreg = matRegularize(Q)
     dimred = numpy.shape(Q)[0] - numpy.shape(Qreg)[0]
-
-    regul = True
-    if dimred == 0:
-        regul = False
-        Qreg = sqrtm(Q)
 
     dataEcos['dims'] = ECOS_get_dims(Jtot, Jval, KMI, p, dire, iota, dimred)
     dataEcos['A'] = ECOS_get_A(Jval, Jtot, KMI, iota, p, dire, ns)
@@ -948,7 +943,7 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
             rem = (i + 1) % iters
             perc = printIter(i, rem, perc, pass_stata, verbose, sims)
 
-            res = scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, dimred, P, Jval, Jtot, KMval, KMI, iota,
+            res = scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, Jval, Jtot, KMval, KMI, iota,
                                 w_lb_est, w_ub_est, p, p_int, Qval, Q2val, dire, lb, cores)
             sims_res.append(res)
 
@@ -963,7 +958,7 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
         config.set(scheduler='multiprocessing')
         client = Client(n_workers=cores)
         for i in range(sims):
-            res = delayed(scpi_in_simul)(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, dimred, P, Jval, Jtot, KMval, KMI, iota, w_lb_est,
+            res = delayed(scpi_in_simul)(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, Jval, Jtot, KMval, KMI, iota, w_lb_est,
                                          w_ub_est, p, p_int, Qval, Q2val, dire, lb, cores)
             sims_res.append(res)
 
@@ -1420,12 +1415,42 @@ def printIter(i, rem, perc, pass_stata, verbose, sims):
 
     return perc
 
-def matRegularize(mat, threshold=1e-08):
+def matRegularize(P, cond=None):
 
-    ww, vv = eigh(mat)
-    sel = ww > threshold
-    U = vv[:, sel]
-    D = numpy.diag(numpy.sqrt(ww[sel]))
-    matreg = numpy.dot(D, U.transpose())
+    w, V = eigh(P)
 
-    return matreg
+    if cond is None:
+        cond = 1e6 * numpy.finfo(float).eps
+
+    scale = max(abs(w))
+
+    if scale < cond:
+        scale = 0
+        Qreg = None
+
+        return scale, Qreg
+
+    w_scaled = w / scale
+    maskp = w_scaled > cond
+    maskn = w_scaled < -cond
+
+    if maskp.any() and maskn.any():
+        raise Exception("Forming a non-convex expression QuadForm(x, indefinite)")
+
+    if sum(maskp) <= 1:
+        M1 = V[:, maskp] * numpy.sqrt(w_scaled[maskp])
+    else:
+        M1 = numpy.dot(V[:, maskp], numpy.diag(numpy.sqrt(w_scaled[maskp])))
+
+    if sum(maskn) <= 1:
+        M2 = V[:, maskn] * numpy.sqrt(-w_scaled[maskn])
+    else:
+        M2 = numpy.dot(V[:, maskn], numpy.diag(numpy.sqrt(-w_scaled[maskn])))
+
+    if numpy.prod(M1.shape) > 0:
+        Qreg = M1.transpose()
+    elif numpy.prod(M2.shape) > 0:
+        scale = -scale
+        Qreg = M2.transpose()
+
+    return scale, Qreg

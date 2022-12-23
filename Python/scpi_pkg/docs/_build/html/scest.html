@@ -57,7 +57,7 @@ The names of the output matrices follow the notation proposed in <a class="refer
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>df</strong> (<em>scdata_output</em>) – a class scdata_output object, obtained by calling scdata</p></li>
-<li><p><strong>w_constr</strong> (<em>dictionary</em>) – a dictionary specifying the constraint set the estimated weights of the donors must belong to.
+<li><p><strong>w_constr</strong> (<em>dictionary</em><em>, </em><em>default {&quot;name&quot;: &quot;simplex&quot;}</em>) – a dictionary specifying the constraint set the estimated weights of the donors must belong to.
 w_constr can contain up to four objects:
 - p, a string indicating the norm to be used (p should be one of “no norm”, “L1”, and “L2”)
 - dir, a string indicating whether the constraint on the norm is an equality (“==”) or inequality (“&lt;=”)
@@ -116,6 +116,8 @@ Aspects,” Journal of Economic Literature, 59, 391-425.</p>
 Methods,” Journal of the American Statistical Association, 116, 1865-1880.</p>
 <p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
 Synthetic Control Estimators”.</p>
+<p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+Controls with Staggered Treatment Adoption”.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><code class="xref py py-obj docutils literal notranslate"><span class="pre">scdata</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scdataMulti</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scpi</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplot</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplotMulti</span></code></p>

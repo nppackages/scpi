@@ -120,11 +120,11 @@ ECOS_get_b <- function(Q1, Q2, w.constr) {
   return(b)
 }
 
-ECOS_get_G <- function(Jtot, KMI, J, I, a, Q, w.constr, ns, red) {
+ECOS_get_G <- function(Jtot, KMI, J, I, a, Q, w.constr, ns, red, scale) {
     
   if (w.constr[["p"]] == "L1" & w.constr[["dir"]] == "==") { # simplex
     
-    G <- rbind(c(a, 1),                                                                  # linear part of QF
+    G <- rbind(c(a, scale),                                                              # linear part of QF
                cbind(-diag(1,Jtot), matrix(0, Jtot, KMI), matrix(0, Jtot, ns)),          # lower bounds on w
                c(rep(0, Jtot+KMI),-1),                                                   # SOC definition (||sqrt(Q)beta|| <= t)
                c(rep(0, Jtot+KMI), 1),                                                   
@@ -132,7 +132,7 @@ ECOS_get_G <- function(Jtot, KMI, J, I, a, Q, w.constr, ns, red) {
     
   } else if (w.constr[["p"]] == "L1" & w.constr[["dir"]] == "<=") { # lasso, x = (beta, z, t)
     
-    G <- rbind(c(a, rep(0, ns-1), 1),                                                    # linear part of QF
+    G <- rbind(c(a, rep(0, ns-1), scale),                                                # linear part of QF
                cbind(diag(1, Jtot), matrix(0, Jtot, KMI), diag(1, Jtot), rep(0, Jtot)),  # z >= -w
                cbind(-diag(1, Jtot), matrix(0, Jtot, KMI), diag(1, Jtot), rep(0, Jtot)), # z >= w
                -blockdiag(I, Jtot, J, KMI, ns, TRUE),                                    # norm-inequality constraint 
@@ -142,7 +142,7 @@ ECOS_get_G <- function(Jtot, KMI, J, I, a, Q, w.constr, ns, red) {
     
   } else if (w.constr[["p"]] == "L2" & w.constr[["dir"]] == "<=") { # ridge, x = (beta, s, t)
     
-    G <- rbind(c(a, rep(0, I), 1),                                                       # linear part of QF
+    G <- rbind(c(a, rep(0, I), scale),                                                   # linear part of QF
                cbind(matrix(0, I, Jtot+KMI), diag(1, I, I), rep(0, I)),                  # s <= Q1^2
                blockdiagRidge(Jtot, J, KMI, I),                                          # SOC definition (||w|| <= s)
                c(rep(0, Jtot+KMI), rep(0, I), -1),                                       # SOC definition (||sqrt(Q)beta|| <= t)
@@ -151,7 +151,7 @@ ECOS_get_G <- function(Jtot, KMI, J, I, a, Q, w.constr, ns, red) {
     
   } else if (w.constr[["p"]] == "L1-L2") { # L1-L2, x = (beta, s, t)
 
-    G <- rbind(c(a, rep(0, ns-1), 1),                                                    # linear part of QF
+    G <- rbind(c(a, rep(0, ns-1), scale),                                                # linear part of QF
                cbind(-diag(1,Jtot), matrix(0, Jtot, KMI), matrix(0, Jtot, ns)),          # lower bounds on w
                cbind(matrix(0, I, Jtot+KMI), diag(1, I, I), rep(0, I)),                  # s <= Q2^2
                blockdiagRidge(Jtot, J, KMI, I),                                          # SOC definition (||w||_2 <= s)
@@ -161,7 +161,7 @@ ECOS_get_G <- function(Jtot, KMI, J, I, a, Q, w.constr, ns, red) {
     
   } else if (w.constr[["p"]] == "no norm") { # ols
     
-    G <- rbind(c(a, 1),                                                                  # linear part of QF
+    G <- rbind(c(a, scale),                                                              # linear part of QF
                c(rep(0, Jtot+KMI),-1),                                                   # SOC definition (||sqrt(Q)beta|| <= t) 
                c(rep(0, Jtot+KMI), 1),                                                  
                cbind(-2*Q, rep(0, Jtot+KMI-red)))
@@ -856,12 +856,10 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
 
   # simulate
   ns <- ECOS_get_n_slacks(w.constr.inf, Jtot, I)
-  Qreg <- matRegularize(Q)
+  decomp <- matRegularize(Q)
+  Qreg <- decomp$Qreg
+  scale <- decomp$scale
   dimred <- nrow(Q) - nrow(Qreg)
-
-  if (dimred==0) {
-    Qreg <- sqrtm(Q)
-  }
 
   data <- list()
   data[["dims"]] <- ECOS_get_dims(Jtot, J, KMI, w.constr.inf, I, dimred)
@@ -885,12 +883,11 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
       a <- -2 * G - 2 * c(t(beta) %*% Q)
       d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
       
-      data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred)
+      data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
       data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
       
       for (hor in seq_len(jj)) {
         xt <- P.na[hor, ]
-        
         # minimization
         if (w.lb.est == TRUE) {
           data[["c"]] <- ECOS_get_c(-xt, ns)
@@ -958,7 +955,7 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
                              .export   = c('ECOS_get_G', 'ECOS_get_h', 'ECOS_get_h', 'ECOS_get_c',
                                            'blockdiag', 'blockdiagRidge', 'sqrtm'),
                              .combine  = rbind,
-                             .options.snow = opts) %dorng% {
+                             .options.snow = opts) %dopar% {
                                
                                ub.sim <- lb.sim <- c()
                                
@@ -968,7 +965,7 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
                                a <- -2 * G - 2 * c(t(beta) %*% Q)
                                d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
                                
-                               data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred)
+                               data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
                                data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
                                
                                for (hor in seq_len(jj)) {
@@ -1579,14 +1576,46 @@ aggregateUnits <- function(xx, labels) {
   return(x.mean)
 }
 
-# sqrtm regularizer for symmetric positive definite matrices
-matRegularize <- function(mat, threshold = 1e-08) {
-
-  matsvd <- eigen(mat)
-  sel <- matsvd$values > threshold
-  U <- matsvd$vectors[, sel]
-  D <- diag(sqrt(matsvd$values[sel]))
-  matreg <- D %*% t(U) 
-
-  return(matreg)
+# regularizer for symmetric positive definite matrices
+matRegularize <- function(P, cond = NA) {
+  eig <- eigen(P, only.values = FALSE)
+  w <- eig$values
+  V <- eig$vectors
+  
+  if(is.na(cond))
+    cond <- 1e6 * .Machine$double.eps   # All real numbers are stored as double precision in R
+  
+  scale <- max(abs(w))
+  
+  if(scale < cond) {
+    return(list(scale = 0, M1 = V[,FALSE], M2 = V[,FALSE]))
+  }
+  
+  w_scaled <- w / scale
+  maskp <- w_scaled > cond
+  maskn <- w_scaled < -cond
+    
+  if(any(maskp) && any(maskn)) {
+    warning("Forming a non-convex expression QuadForm(x, indefinite)")
+  }
+  
+  if(sum(maskp) <= 1) {
+    M1 <- as.matrix(V[,maskp] * sqrt(w_scaled[maskp]))
+  } else {
+    M1 <- V[,maskp] %*% diag(sqrt(w_scaled[maskp]))
+  }
+  
+  if(sum(maskn) <= 1){
+    M2 <- as.matrix(V[,maskn]) * sqrt(-w_scaled[maskn])
+  } else {
+    M2 <- V[,maskn] %*% diag(sqrt(-w_scaled[maskn]))
+  }
+  
+  if(!is.null(dim(M1)) && prod(dim(M1)) > 0) {
+    Qreg <- t(M1)
+  } else if (!is.null(dim(M2)) && prod(dim(M2)) > 0) {
+    scale <- -scale
+    Qreg <- t(M2)
+  }    
+  return(list(scale = scale, Qreg = Qreg))
 }

@@ -59,7 +59,6 @@
 #' @import abind
 #' @import CVXR
 #' @import doSNOW
-#' @import doRNG
 #' @import ECOSolveR
 #' @import foreach
 #' @import ggplot2

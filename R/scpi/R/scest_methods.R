@@ -1,7 +1,7 @@
 ################################################################################
 #' Print Method for Synthetic Control Methods
 #'
-#' @description The print method for synthetic control prediction objects.
+#' @description The print method for synthetic control prediction fitted objects.
 #'
 #' @param x Class "scest" object, obtained by calling \code{\link{scest}}.
 #' @param ... Other arguments.
@@ -19,7 +19,7 @@
 #'
 #' @seealso \code{\link{scest}} for synthetic control prediction.
 #'
-#' Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}.
+#' Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}, \code{\link{coef.scest}}.
 #'
 #'
 #' @export
@@ -91,7 +91,7 @@ print.scest <- function(x, ...) {
 ################################################################################
 #' Summary Method for Synthetic Control Prediction
 #'
-#' @description The summary method for synthetic control prediction objects.
+#' @description The summary method for synthetic control prediction fitted objects.
 #'
 #' @param object Class "scest" object, obtained by calling \code{\link{scest}}.
 #' @param ... Additional arguments
@@ -100,16 +100,16 @@ print.scest <- function(x, ...) {
 #'
 #' @author
 #' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
-#' 
+#'
 #' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
-#' 
+#'
 #' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
-#' 
+#'
 #' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
-#' 
+#'
 #' @seealso \code{\link{scest}}
 #'
-#' Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}.
+#' Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}, \code{\link{coef.scest}}.
 #'
 #' @export
 
@@ -197,4 +197,63 @@ summary.scest <- function(object, ...) {
  }
 
   print.scest(object)
+}
+
+
+################################################################################
+#' Coef Method for Synthetic Control Methods
+#'
+#' @description The coef method for synthetic control prediction fitted objects.
+#'
+#' @param object Class "scest" object, obtained by calling \code{\link{scest}}.
+#' @param ... Other arguments (eg. \code{ncols}).
+#'
+#' @return No return value, called to show \code{\link{scest}} constructed weights.
+#'
+#' @author
+#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#'
+#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#'
+#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#'
+#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+#'
+#' @seealso \code{\link{scest}} for synthetic control prediction.
+#'
+#' Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}, \code{\link{coef.scest}}.
+#'
+#'
+#' @export
+#'
+
+coef.scest <- function(object, ...) {
+
+  args <- list(...)
+  I <- object$data$specs$I
+
+  if (is.null(args[['ncols']])) {
+    ncols <- 1 * (I <= 3) + 1 * (I > 3) + 1 * (I > 6)
+  } else {
+    ncols <- args[['ncols']]
+  }
+
+  w <- object$est.results$w
+  aux <- data.frame(w = w,
+                    donor = unlist(lapply(strsplit(names(w), "\\."), "[[", 2)),
+                    treated = unlist(lapply(strsplit(names(w), "\\."), "[[", 1)))
+
+  ggplot() +
+    geom_point(data = aux, aes(x = .data$donor, y = .data$w, size = abs(.data$w))) +
+    geom_hline(yintercept = 0, linetype = "dotted") +
+    facet_wrap(~treated, ncol = ncols) +
+    xlab("") + ylab("Weight") +
+    theme(legend.position = "none",
+          strip.background = element_blank(),
+          axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.2, size = 10),
+          axis.text.y = element_text(size=13),
+          axis.title.x = element_text(size = 13),
+          axis.title.y = element_text(size = 13),
+          panel.grid.minor = element_blank())
+
 }

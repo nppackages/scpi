@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>scpi_pkg.scpi &#8212; scpi-pkg 0.1 documentation</title>
+    <title>scpi_pkg.scpi &#8212; scpi-pkg 2.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
@@ -23,7 +23,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scpi</a></li> 
       </ul>
@@ -95,7 +95,7 @@
 <span class="sd">    data : scdata_output</span>
 <span class="sd">        a class scdata_output object, obtained by calling scdata</span>
 
-<span class="sd">    w_constr : dict</span>
+<span class="sd">    w_constr : dict, default {&quot;name&quot;: &quot;simplex&quot;}</span>
 <span class="sd">        a dictionary specifying the constraint set the estimated weights of the donors must belong to.</span>
 <span class="sd">        w_constr can contain up to five objects:</span>
 <span class="sd">        1. p, a scalar indicating the norm to be used (p should be one of &quot;no norm&quot;, &quot;L1&quot;, and &quot;L2&quot;)</span>
@@ -179,20 +179,20 @@
 <span class="sd">        a logical specifying whether scplot should be called and a plot saved in the current working directory.</span>
 <span class="sd">        For more options see scplot.</span>
 
-<span class="sd">    w_bounds : numpy.array</span>
+<span class="sd">    w_bounds : numpy.array, default None</span>
 <span class="sd">        a T1 x 2 array with the user-provided bounds on beta. If w_bounds is provided, then</span>
 <span class="sd">        the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the</span>
 <span class="sd">        upper bound by filling the other column with NAs.</span>
 
-<span class="sd">    e_bounds : numpy.array</span>
+<span class="sd">    e_bounds : numpy.array, default None</span>
 <span class="sd">        a T1 x 2 array with the user-provided bounds on e. If e_bounds is provided, then</span>
 <span class="sd">        the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or</span>
 <span class="sd">        the upper bound by filling the other column with NAs.</span>
 
-<span class="sd">    verbose : bool</span>
-<span class="sd">        if True prints additional information in the console.</span>
+<span class="sd">    verbose : bool, default True</span>
+<span class="sd">        if False prevents printing additional information in the console.</span>
 
-<span class="sd">    pass_stat : bool</span>
+<span class="sd">    pass_stat : bool, default False</span>
 <span class="sd">        for internal use only.</span>
 
 <span class="sd">    Returns</span>
@@ -392,6 +392,9 @@
 
 <span class="sd">    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for</span>
 <span class="sd">    Synthetic Control Estimators”.</span>
+
+<span class="sd">    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic</span>
+<span class="sd">    Controls with Staggered Treatment Adoption”.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -843,6 +846,10 @@
 
     <span class="c1"># Use HC inference to estimate V[u|H] (note that w is pre-regularization)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">df_EST</span><span class="p">(</span><span class="n">w_constr</span><span class="o">=</span><span class="n">w_constr</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">Jtot</span><span class="p">,</span> <span class="n">KM</span><span class="o">=</span><span class="n">KMI</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">df</span> <span class="o">&gt;=</span> <span class="n">TT</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">TT</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;The current specification uses more degrees of freedom than observations. We suggest to increase the level of &quot;</span> <span class="o">+</span>
+                      <span class="s2">&quot;sparsity or consider using a smaller donor pool.&quot;</span><span class="p">)</span>
 
     <span class="n">Sigma</span><span class="p">,</span> <span class="n">Omega</span> <span class="o">=</span> <span class="n">u_sigma_est</span><span class="p">(</span><span class="n">u_mean</span><span class="o">=</span><span class="n">u_mean</span><span class="p">,</span> <span class="n">u_sigma</span><span class="o">=</span><span class="n">u_sigma</span><span class="p">,</span>
                                <span class="n">res</span><span class="o">=</span><span class="n">res_na</span><span class="p">,</span> <span class="n">Z</span><span class="o">=</span><span class="n">Z_na</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="n">V_na</span><span class="p">,</span>
@@ -1825,7 +1832,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scpi</a></li> 
       </ul>

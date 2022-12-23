@@ -15,12 +15,12 @@
 No return value, called to print \code{\link{scest}} results.
 }
 \description{
-The print method for synthetic control prediction objects.
+The print method for synthetic control prediction fitted objects.
 }
 \seealso{
 \code{\link{scest}} for synthetic control prediction.
 
-Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}.
+Supported methods: \code{\link{print.scest}}, \code{\link{summary.scest}}, \code{\link{coef.scest}}.
 }
 \author{
 Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.

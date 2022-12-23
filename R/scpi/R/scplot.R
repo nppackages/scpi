@@ -178,7 +178,6 @@ scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png"
 
     period.pre  <- result$data$specs$period.pre
     period.post <- result$data$specs$period.post
-
     T0 <- period.pre[length(period.pre)] # intercept
 
     if (is.null(plot.range)) {
@@ -258,7 +257,8 @@ scplot  <- function(result, fig.path = NULL, fig.name = NULL, fig.format = "png"
   } else if (result$data$specs$class.type == "scpi_scpi") {    # Result comes from scpi
 
     e.method <- result$inference.results$e.method
-
+    period.post <- result$data$specs$period.post
+    
     if (save.plot == TRUE) {
       if (!fig.format %in% c("eps","ps","tex","pdf","jpeg","tiff","png","bmp","svg","wmf")) {
         stop("The specified format is not valid. See ?ggsave to check valid formats.")

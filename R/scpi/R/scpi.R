@@ -778,7 +778,7 @@ scpi  <- function(data,
                                     w.constr.inf[[1]], Q.star, Q2.star, lb, TT, sims, cores, verbose, 
                                     w.lb.est, w.ub.est)
 
-    vsig <- vsigg[rowSums(is.na(vsigg)) < ncol(vsigg),] # remove simulations were SOCP was not solve at any horizon
+    vsig <- vsigg[rowSums(is.na(vsigg)) < ncol(vsigg),] # remove simulations were SOCP was not solved at any horizon
   }
 
   if (w.lb.est == TRUE) {

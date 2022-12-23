@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>scpi_pkg.scplotMulti &#8212; scpi-pkg 0.1 documentation</title>
+    <title>scpi_pkg.scplotMulti &#8212; scpi-pkg 2.0.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
@@ -23,7 +23,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scplotMulti</a></li> 
       </ul>
@@ -104,17 +104,17 @@
 <span class="sd">    ncols : int, default 3</span>
 <span class="sd">        an integer controlling the number of columns in the plot.</span>
 
-<span class="sd">    e_method_input : str</span>
+<span class="sd">    e_method_input : str, default None</span>
 <span class="sd">        a string specifying the type of uncertainty estimation used for out-of-sample uncertainty quantification.</span>
 <span class="sd">        To be used only when scpi received the option &quot;e_method=&#39;all&#39;&quot; and the user wants to choose among the three</span>
 <span class="sd">        techniques to quantify out-of-sample uncertainty.</span>
 
-<span class="sd">    save_data : str</span>
+<span class="sd">    save_data : str, default None</span>
 <span class="sd">        a string specifying the name (and the folder) of the saved dataframe containing the processed data used to</span>
 <span class="sd">        produce the plot. The data is saved in .csv format and the folder specified.</span>
 
 <span class="sd">    verbose : bool, default True</span>
-<span class="sd">        if True prints additional information in the console.</span>
+<span class="sd">        if False prevents printing additional information in the console.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    ----------</span>
@@ -131,6 +131,9 @@
 
 <span class="sd">    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for</span>
 <span class="sd">    Synthetic Control Estimators”.</span>
+
+<span class="sd">    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic</span>
+<span class="sd">    Controls with Staggered Treatment Adoption”.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -615,7 +618,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scplotMulti</a></li> 
       </ul>

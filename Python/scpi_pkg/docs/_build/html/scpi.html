@@ -57,7 +57,7 @@ The names of the output matrices follow the notation proposed in <a class="refer
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>data</strong> (<em>scdata_output</em>) – a class scdata_output object, obtained by calling scdata</p></li>
-<li><p><strong>w_constr</strong> (<em>dict</em>) – a dictionary specifying the constraint set the estimated weights of the donors must belong to.
+<li><p><strong>w_constr</strong> (<em>dict</em><em>, </em><em>default {&quot;name&quot;: &quot;simplex&quot;}</em>) – a dictionary specifying the constraint set the estimated weights of the donors must belong to.
 w_constr can contain up to five objects:
 1. p, a scalar indicating the norm to be used (p should be one of “no norm”, “L1”, and “L2”)
 2. dir, a string indicating whether the constraint on the norm is an equality (“==”) or inequality (“&lt;=”)
@@ -101,14 +101,14 @@ with linear constraints only.</p></li>
 <li><p><strong>cores</strong> (<em>integer</em><em>, </em><em>default multiprocessing.cpu_count</em><em>(</em><em>) </em><em>- 1</em>) – number of cores to be used by the command. The default is half the cores available.</p></li>
 <li><p><strong>plot</strong> (<em>bool</em><em>, </em><em>default False</em>) – a logical specifying whether scplot should be called and a plot saved in the current working directory.
 For more options see scplot.</p></li>
-<li><p><strong>w_bounds</strong> (<em>numpy.array</em>) – a T1 x 2 array with the user-provided bounds on beta. If w_bounds is provided, then
+<li><p><strong>w_bounds</strong> (<em>numpy.array</em><em>, </em><em>default None</em>) – a T1 x 2 array with the user-provided bounds on beta. If w_bounds is provided, then
 the quantification of in-sample uncertainty is skipped. It is possible to provide only the lower bound or the
 upper bound by filling the other column with NAs.</p></li>
-<li><p><strong>e_bounds</strong> (<em>numpy.array</em>) – a T1 x 2 array with the user-provided bounds on e. If e_bounds is provided, then
+<li><p><strong>e_bounds</strong> (<em>numpy.array</em><em>, </em><em>default None</em>) – a T1 x 2 array with the user-provided bounds on e. If e_bounds is provided, then
 the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or
 the upper bound by filling the other column with NAs.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em>) – if True prints additional information in the console.</p></li>
-<li><p><strong>pass_stat</strong> (<em>bool</em>) – for internal use only.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>default True</em>) – if False prevents printing additional information in the console.</p></li>
+<li><p><strong>pass_stat</strong> (<em>bool</em><em>, </em><em>default False</em>) – for internal use only.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -189,6 +189,8 @@ Aspects,” Journal of Economic Literature, 59, 391-425.</p>
 Methods,” Journal of the American Statistical Association, 116, 1865-1880.</p>
 <p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
 Synthetic Control Estimators”.</p>
+<p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+Controls with Staggered Treatment Adoption”.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><code class="xref py py-obj docutils literal notranslate"><span class="pre">scdata</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scdataMulti</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scest</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">splot</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplotMulti</span></code></p>

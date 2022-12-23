@@ -75,12 +75,12 @@ It requires e_out=True.</p></li>
 or free in one dimension (“free_x”, “free_y”)?</p></li>
 <li><p><strong>point_size</strong> (<em>float</em><em>, </em><em>default 1.5</em>) – a scalar controlling the size of points in the scatter plot. Default is 1.5.</p></li>
 <li><p><strong>ncols</strong> (<em>int</em><em>, </em><em>default 3</em>) – an integer controlling the number of columns in the plot.</p></li>
-<li><p><strong>e_method_input</strong> (<em>str</em>) – a string specifying the type of uncertainty estimation used for out-of-sample uncertainty quantification.
+<li><p><strong>e_method_input</strong> (<em>str</em><em>, </em><em>default None</em>) – a string specifying the type of uncertainty estimation used for out-of-sample uncertainty quantification.
 To be used only when scpi received the option “e_method=’all’” and the user wants to choose among the three
 techniques to quantify out-of-sample uncertainty.</p></li>
-<li><p><strong>save_data</strong> (<em>str</em>) – a string specifying the name (and the folder) of the saved dataframe containing the processed data used to
+<li><p><strong>save_data</strong> (<em>str</em><em>, </em><em>default None</em>) – a string specifying the name (and the folder) of the saved dataframe containing the processed data used to
 produce the plot. The data is saved in .csv format and the folder specified.</p></li>
-<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>default True</em>) – if True prints additional information in the console.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>default True</em>) – if False prevents printing additional information in the console.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -97,6 +97,8 @@ Aspects,” Journal of Economic Literature, 59, 391-425.</p>
 Methods,” Journal of the American Statistical Association, 116, 1865-1880.</p>
 <p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
 Synthetic Control Estimators”.</p>
+<p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+Controls with Staggered Treatment Adoption”.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><code class="xref py py-obj docutils literal notranslate"><span class="pre">scdata</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scdataMulti</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scest</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scpi</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplot</span></code></p>

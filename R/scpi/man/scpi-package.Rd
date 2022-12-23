@@ -37,6 +37,13 @@ scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:220
 Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, \emph{arXiv}:2210.05026.}
 }
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://nppackages.github.io/scpi/}
+}
+
+}
 \author{
 Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
 

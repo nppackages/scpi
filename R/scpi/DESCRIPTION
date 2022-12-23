@@ -1,6 +1,6 @@
 Package: scpi
 Title: Prediction Intervals for Synthetic Control Methods with Multiple Treated Units and Staggered Adoption
-Version: 2.0.1
+Version: 2.1.0
 Authors@R: 
   c(person(given = "Matias",
            family = "Cattaneo",
@@ -15,13 +15,13 @@ Authors@R:
     person(given = "Rocio",
            family = "Titiunik",
            role = "aut"))
-Description: Implementation of estimation and inference procedures for Synthetic Control methods using least square, lasso, ridge, or simplex-type constraints. Uncertainty is quantified with prediction intervals as developed in Cattaneo, Feng, and Titiunik (2021) <https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf>.
+URL: https://nppackages.github.io/scpi/
+Description: Implementation of prediction and inference procedures for Synthetic Control methods using least square, lasso, ridge, or simplex-type constraints. Uncertainty is quantified with prediction intervals as developed in Cattaneo, Feng, and Titiunik (2021) <https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf>.
 Depends: R (>= 4.1.0)
 License: GPL-2
 Encoding: UTF-8
 Imports: abind       (>= 1.4.5),
          CVXR        (>= 1.0-10),
-         doRNG       (>= 1.8.2),
          doSNOW      (>= 1.0.19),
          dplyr       (>= 1.0.7),
          ECOSolveR   (>= 0.5.4),
@@ -29,7 +29,7 @@ Imports: abind       (>= 1.4.5),
          foreach     (>= 1.5.1),
          ggplot2     (>= 3.3.3),
          magrittr    (>= 2.0.1),
-	  MASS        (>= 7.3),
+	       MASS        (>= 7.3),
          Matrix      (>= 1.3.3),
          methods     (>= 4.1.0),
          parallel    (>= 4.1.0),
@@ -44,7 +44,7 @@ Imports: abind       (>= 1.4.5),
          utils       (>= 4.1.1)
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

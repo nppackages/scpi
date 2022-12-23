@@ -63,8 +63,8 @@ summary.scdata <- function(object, ...) {
     KM      <- object$specs$KM
     T0      <- object$specs$T0.features
     tr.unit <- colnames(object$A)
-    pt.in   <- strsplit(rownames(object$Y.pre)[1], "\\.")[2]
-    pt.fi   <- strsplit(rownames(object$Y.pre)[length(object$Y.pre)], "\\.")[2]
+    pt.in   <- strsplit(rownames(object$Y.pre)[1], "\\.")[[1]][2]
+    pt.fi   <- strsplit(rownames(object$Y.pre)[length(object$Y.pre)], "\\.")[[1]][2]
 
     cat("\n")
     cat(paste0("Synthetic Control - Setup\n"))

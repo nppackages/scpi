@@ -68,10 +68,10 @@ yearly data, whereas for all other frequencies either pandas.Timestamp or numpy.
 <li><p><strong>period_post</strong> (<em>array</em>) – a numeric vector that identifies the post-treatment period in time_var.</p></li>
 <li><p><strong>unit_tr</strong> (<em>int</em>) – a scalar that identifies the treated unit in id_var.</p></li>
 <li><p><strong>unit_co</strong> (<em>array</em>) – a numeric vector that identifies the donor pool in id_var.</p></li>
-<li><p><strong>features</strong> (<em>list</em>) – <dl class="simple">
+<li><p><strong>features</strong> (<em>list</em><em>, </em><em>default None</em>) – <dl class="simple">
 <dt>a character list containing the name of the feature variables used for estimation.</dt><dd><p>If this option is not specified the default is features = outcome_var.</p>
 </dd>
-<dt>cov_adj<span class="classifier">list</span></dt><dd><p>a list specifying the names of the covariates to be used for adjustment for each feature. If the user wants
+<dt>cov_adj<span class="classifier">list, default None</span></dt><dd><p>a list specifying the names of the covariates to be used for adjustment for each feature. If the user wants
 to specify the same set of covariates for all features, a single list should be provided. If instead a
 different set of covariates per feature has to be specified, then a list of lists should be provided. Note that
 in this latter case the number of sub-lists must be equal to the number of features. Moreover, the order of the
@@ -123,6 +123,8 @@ Aspects,” Journal of Economic Literature, 59, 391-425.</p>
 Methods,” Journal of the American Statistical Association, 116, 1865-1880.</p>
 <p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
 Synthetic Control Estimators”.</p>
+<p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+Controls with Staggered Treatment Adoption”.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <p><code class="xref py py-obj docutils literal notranslate"><span class="pre">scdataMulti</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scest</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scpi</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplot</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplotMulti</span></code></p>
