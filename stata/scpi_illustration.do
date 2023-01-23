@@ -32,7 +32,7 @@ use "scpi_germany.dta", clear
 ** prepare data - one feature, cointegrated data
 *****************************************************************************************
 scdata gdp, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
-			treatment(status) cointegrated constant
+			treatment(status) cointegrated constant 
 
 *****************************************************************************************
 ** SC - point estimation with simplex

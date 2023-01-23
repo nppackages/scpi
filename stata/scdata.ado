@@ -1,12 +1,12 @@
-*! Date        : 21 Nov 2022
-*! Version     : 2.0.1
+*! Date        : 20 Jan 2023
+*! Version     : 2.1.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Data preparation for scest or scpi
 
 capture program drop scdata
 program define scdata, eclass         
-version 17.0           
+version 16.0           
 		
 	syntax varlist [if] [in], id(varname) time(varname) outcome(varname) treatment(varname) dfname(string) ///
 							  [covadj(string) anticipation(integer 0) cointegrated pypinocheck constant]

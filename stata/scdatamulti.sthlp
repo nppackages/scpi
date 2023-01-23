@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 0.3 2022-03-07}{...}
+{* *!version 2.2.0 2023-01-23}{...}
 {viewerjumpto "Syntax" "scdatamulti##syntax"}{...}
 {viewerjumpto "Description" "scdatamulti##description"}{...}
 {viewerjumpto "Options" "scdatamulti##options"}{...}
@@ -30,6 +30,7 @@
 {cmd:effect(}{it:string}{cmd:)}
 {cmd:post_est(}{it:string}{cmd:)}
 {cmd:units_est(}{it:string}{cmd:)}
+{cmd:donors_est(}{it:string}{cmd:)}
 {cmd:pypinocheck}]{p_end}
 
 {synoptset 28 tabbed}{...}
@@ -103,7 +104,10 @@ See Details section for more.{p_end}
 
 {p 4 8}{cmd:units_est(}{it:string}{cmd:)} a string specifying the treated units for which treatment effects have to be estimated. Treated 
         units must be separated by commas, e.g. {cmd:units_est("unit1, unit2, unit3")}.{p_end}
-        
+
+{p 4 8}{cmd:donors_est(}{it:string}{cmd:)} a string specifying the donors units to be used. Note that all treated units share the same
+        potential donors. If this is not desired, the donor pool can be separately specified for each treated unit. See Details section for more.{p_end}
+
 {dlgtab:Others}
 
 {p 4 8}{cmd:dfname(}{it:string}{cmd:)} specifies the name of the Python object that is saved and that will be passed to {help scest:scest} or {help scpi:scpi}.{p_end}
@@ -155,6 +159,7 @@ term for the second unit.{p_end}
 
 {p 8 8}{cmd:global coint_spec = "(unit1: True) (unit2: True)"}{p_end}
 {p 8 8}{cmd:global ant_spec = "(unit1: 0) (unit2: 1)"}{p_end}
+{p 8 8}{cmd:global donors_spec = "(unit1: donor1 donor2) (unit2: donor2 donor3)"}{p_end}
 
 {marker examples}{...}
 {title:Example: Germany Data}

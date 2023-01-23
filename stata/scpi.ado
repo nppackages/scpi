@@ -1,17 +1,12 @@
-*! Date        : 21 Nov 2022
-*! Version     : 2.0.1
+*! Date        : 20 Jan 2023
+*! Version     : 2.1.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Synthetic control inference
 
-/*
-To do:
-- implement P
-*/
-
 capture program drop scpi
 program define scpi, eclass         
-version 17.0           
+version 16.0           
 
 	syntax , dfname(string) [p(integer 1) direc(string) q(real -11.92) lb(string) V(string) name(string) u_missp u_sigma(string) u_order(integer 1) u_lags(integer 0) u_alpha(real 0.05) sims(integer 200) ///
 			 e_method(string) e_order(integer 1) e_lags(integer 0) e_alpha(real 0.05) lgapp(string) rho(real -11) rho_max(real -11) cores(integer 1) pypinocheck]

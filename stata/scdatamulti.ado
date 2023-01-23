@@ -1,16 +1,16 @@
-*! Date        : 21 Nov 2022
-*! Version     : 2.0.1
+*! Date        : 20 Jan 2023
+*! Version     : 2.1.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Data preparation for scest or scpi
 
 capture program drop scdatamulti
 program define scdatamulti, eclass         
-version 17.0           
+version 16.0           
 		
 	syntax anything [if] [in], id(varname) time(varname) outcome(varname) treatment(varname) dfname(string) ///
 							  [covadj(string) cointegrated(string) constant(string) anticipation(string)    ///
-							  post_est(string) units_est(string) effect(string) pypinocheck]
+							  post_est(string) units_est(string) donors_est(string) effect(string) pypinocheck]
 
 	local features "`anything'"  // backup copy
 
@@ -38,6 +38,10 @@ version 17.0
 		local post_est "None"
 	}
 
+	if mi("`donors_est'") {
+		local donors_est "None"
+	}
+
 	if mi("`effect'") {
 		local effect "unit-time"
 	}
@@ -58,7 +62,7 @@ version 17.0
 	
 	qui export delimited using "__scpi__data_to_python.csv", replace
 
-	python: scdatamulti_wrapper("`features'", "`id'", "`time'", "`outcome'", "`treatment'", "`covadj'", "`anticipation'", "`cointegrated'", "`constant'", "`dfname'", "`effect'", "`post_est'", "`units_est'")
+	python: scdatamulti_wrapper("`features'", "`id'", "`time'", "`outcome'", "`treatment'", "`covadj'", "`anticipation'", "`cointegrated'", "`constant'", "`dfname'", "`effect'", "`post_est'", "`units_est'", "`donors_est'")
 	
 	erase "__scpi__data_to_python.csv"
 	
@@ -91,7 +95,7 @@ from scpi_pkg import version as lver
 from sfi import Scalar, Matrix, Macro
 
 
-def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, covadj, anticipation, cointegrated, constant, dfname, effect, post_est, units_est):
+def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, covadj, anticipation, cointegrated, constant, dfname, effect, post_est, units_est, donors_est):
 	
 	# Create dataframe
 	df = pandas.read_csv('__scpi__data_to_python.csv')
@@ -272,6 +276,35 @@ def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, cova
 	else:
 		antic_dict = int(anticipation)
 
+	## Parse donor pools
+	if donors_est == "None":
+		d_dict = None
+	else:
+		if donors_est[0] != "(":  # common spec
+			aux = donors_est.split()
+			d_list = [don.strip() for don in aux]
+			d_dict = {'donors': d_list}
+			
+		else: # unit by unit specification
+			
+			parsed_donors = re.findall('\(.*?\)', donors_est)
+			
+			i = 1
+			for don in parsed_donors:
+				aux = re.sub(char_rem, "", don).split(":")
+				# name of treated unit
+				tr_name = aux[0].strip()
+				
+				# list of features of treated unit
+				tr_don = aux[1].strip().split()
+				
+				if i == 1:
+					d_dict = {tr_name: tr_don}
+				else:
+					d_dict[tr_name] = tr_don
+				i += 1
+
+
 	## Parse post_est and units_est
 	if post_est == "None":
 		post_est = None
@@ -284,7 +317,7 @@ def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, cova
 		units_est = [tr.strip() for tr in units_est.split(',')]
 
 	data_prep = scdataMulti(df=df, id_var=id_var, time_var=time_var, outcome_var=outcome_var, treatment_var=treatment,
-							features=f_dict, cov_adj=cov_dict, constant=cons_dict, anticipation=antic_dict,
+							features=f_dict, cov_adj=cov_dict, constant=cons_dict, anticipation=antic_dict, donors_est=d_dict,
 							cointegrated_data=coint_dict, effect=effect, post_est=post_est, units_est=units_est)
 
 	# Save data and store matrices in stata

@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 0.3 2022-03-07}{...}
+{* *!version 2.2.0 2023-01-23}{...}
 {viewerjumpto "Syntax" "scest##syntax"}{...}
 {viewerjumpto "Description" "scest##description"}{...}
 {viewerjumpto "Options" "scest##options"}{...}

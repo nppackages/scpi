@@ -778,7 +778,7 @@ scpi  <- function(data,
                                     w.constr.inf[[1]], Q.star, Q2.star, lb, TT, sims, cores, verbose, 
                                     w.lb.est, w.ub.est)
 
-    vsig <- vsigg[rowSums(is.na(vsigg)) < ncol(vsigg),] # remove simulations were SOCP was not solved at any horizon
+    vsig <- vsigg[rowSums(is.na(vsigg)) < ncol(vsigg), ] # remove simulations were SOCP was not solved at any horizon
   }
 
   if (w.lb.est == TRUE) {
@@ -792,7 +792,7 @@ scpi  <- function(data,
   }
 
   if (w.ub.est == TRUE) {
-    w.ub    <- apply(vsig[, (nrow(P.na) + 1):(2 * nrow(P.na)), drop = FALSE], 2, quantile, 
+    w.ub    <- apply(vsig[, (nrow(P.na) + 1):(2 * nrow(P.na)), drop = FALSE], 2, quantile,
                      probs = (1 - u.alpha / 2), na.rm = TRUE)
     fail.ub <- apply(vsigg[, (nrow(P.na) + 1):(2 * nrow(P.na)), drop = FALSE], 2, function(x) sum(is.na(x))/sims*100)
 
@@ -995,7 +995,7 @@ scpi  <- function(data,
 
     sc.l.3 <- sc.l.0 + e.lb.qreg - epsk
     sc.r.3 <- sc.r.0 + e.ub.qreg + epsk
-    len.3  <- sc.r.3 - sc.l.3 
+    len.3  <- sc.r.3 - sc.l.3
   }
 
   #############################################################################
@@ -1004,49 +1004,49 @@ scpi  <- function(data,
   #############################################################################
   #############################################################################
   if (sc.effect == "unit-time") { # joint within unit
-    joint.bounds <- simultaneousPredGet(vsig, T1, nrow(P.na), I, u.alpha, e.alpha, 
+    joint.bounds <- simultaneousPredGet(vsig, T1, nrow(P.na), I, u.alpha, e.alpha,
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est,
                                         w.bounds, w.constr.inf[[1]]["name"],
                                         sc.pred$data$specs$effect)
-    
+
   } else if (sc.effect == "unit") { # joint across units
-    joint.bounds <- simultaneousPredGet(vsig, nrow(P.na), nrow(P.na), I = 1, u.alpha, e.alpha, 
+    joint.bounds <- simultaneousPredGet(vsig, nrow(P.na), nrow(P.na), I = 1, u.alpha, e.alpha,
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est, w.bounds,
                                         w.constr.inf[[1]]["name"], sc.pred$data$specs$effect)
-    
+
   } else if (sc.effect == "time") { # joint within aggregate unit
-    joint.bounds <- simultaneousPredGet(vsig, min(unlist(T1)), nrow(P.na), 1, u.alpha, e.alpha, 
+    joint.bounds <- simultaneousPredGet(vsig, min(unlist(T1)), nrow(P.na), 1, u.alpha, e.alpha,
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est,
                                         w.bounds, w.constr.inf[[1]]["name"],
                                         sc.pred$data$specs$effect)
   }
-  
+
   ML <- joint.bounds$ML
   MU <- joint.bounds$MU
-  
+
   names(ML) <- rownames(P.na)
   names(MU) <- rownames(P.na)
-  
+
   if (sc.pred$data$specs$effect == "time") {
     rownames(Wlb) <- paste0("aggregate.", rownames(Wlb))
     rownames(Wub) <- paste0("aggregate.", rownames(Wub))
     names(ML) <- paste0("aggregate.", names(ML))
     names(MU) <- paste0("aggregate.", names(MU))
   }
-  
+
   ## Store all bounds
   bounds <- list("insample" = cbind(Wlb, Wub),
                  "subgaussian" = cbind(Wlb + e.lb.gau - epsk, Wub + e.ub.gau + epsk),
                  "ls" = cbind(Wlb + e.lb.ls - epsk, Wub + e.ub.ls + epsk),
                  "qreg" = cbind(Wlb + e.lb.qreg - epsk, Wub + e.ub.qreg + epsk),
                  "joint" = cbind(ML - epsk.j, MU + epsk.j))
-  
+
   #############################################################################
   #############################################################################
   ## Return objects
   #############################################################################
   #############################################################################
-  
+
   CI.0 <- cbind(sc.l.0, sc.r.0, len.0)
   colnames(CI.0) <- c("Left Bound", "Right Bound", "Length")
   if (sc.pred$data$specs$effect == "time") rownames(P.na) <- paste0("aggregate.", rownames(P.na))
@@ -1059,7 +1059,7 @@ scpi  <- function(data,
   } else {
     CI.1 <- NULL
   }
-  
+
   if (e.method == "ls" || e.method == "all") {
     CI.2 <- cbind(sc.l.2, sc.r.2, len.2)
     colnames(CI.2) <- c("Left Bound", "Right Bound", "Length")
@@ -1075,10 +1075,10 @@ scpi  <- function(data,
   } else {
     CI.3 <- NULL
   }
-  
+
   u.user <- is.null(u.design) == FALSE # True if user provided the design matrix for in-sample inference
   e.user <- is.null(e.design) == FALSE # True if user provided the design matrix for out-of-sample inference
-  
+
   inference.results <- list(  CI.in.sample    = CI.0,
                               CI.all.gaussian = CI.1,
                               CI.all.ls       = CI.2,
@@ -1119,9 +1119,9 @@ scpi  <- function(data,
 
   class(result) <- 'scpi'
   if (class.type == 'scpi_data') {
-    result$data$specs$class.type <- 'scpi_scpi'    
+    result$data$specs$class.type <- 'scpi_scpi'
   } else if (class.type == 'scpi_data_multi') {
-    result$data$specs$class.type <- 'scpi_scpi_multi'    
+    result$data$specs$class.type <- 'scpi_scpi_multi'
   }
 
   #############################################################################
@@ -1130,9 +1130,9 @@ scpi  <- function(data,
 
   if (plot == TRUE) {
     if (is.null(plot.name) == FALSE) {
-      fig.name = plot.name
+      fig.name <- plot.name
     } else {
-      fig.name = "scpi_default_plot"
+      fig.name <- "scpi_default_plot"
     }
 
     if (class.type == "scpi_data") {
@@ -1149,4 +1149,3 @@ scpi  <- function(data,
 
   return(result)
 }
-

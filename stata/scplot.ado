@@ -1,5 +1,5 @@
-*! Date        : 21 Nov 2022
-*! Version     : 2.0.1
+*! Date        : 20 Jan 2023
+*! Version     : 2.1.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Plot Synthetic Control
@@ -7,7 +7,7 @@
 
 capture program drop scplot
 program define scplot, eclass         
-version 17.0           
+version 16.0           
 
 	syntax , [scest uncertainty(string) joint dots_tr_col(string) dots_tr_symb(string) dots_tr_size(string)     ///
 											  dots_sc_col(string) dots_sc_symb(string) dots_sc_size(string)     ///

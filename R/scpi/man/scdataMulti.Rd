@@ -15,6 +15,7 @@ scdataMulti(
   cointegrated.data = FALSE,
   post.est = NULL,
   units.est = NULL,
+  donors.est = NULL,
   anticipation = 0,
   effect = "unit-time",
   constant = FALSE,
@@ -48,13 +49,17 @@ default is \code{features = outcome.var}.}
 \item{cointegrated.data}{a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}.}
 
 \item{post.est}{a scalar specifying the number of post-treatment periods or a list specifying the periods
-for which treatment effects have to be estimated for each treated unit.}
+for which treatment effects have to be computed for each treated unit.}
 
-\item{units.est}{a list specifying the treated units for which treatment effects have to be estimated.}
+\item{units.est}{a list specifying the treated units for which treatment effects have to be computed.}
+
+\item{donors.est}{a list specifying the donors units to be used. If the list has length 1, then all treated units share the same
+potential donors. Otherwise, if the user requires different donor pools for different treated units, the list must be of the same
+length of the number of treated units and each element has to be named with one treated unit's name as specified in id.var.}
 
 \item{anticipation}{a scalar that indicates the number of periods of potential anticipation effects. Default is 0.}
 
-\item{effect}{a string indicating the type of treatment effect to be estimated. Options are: 'unit-time', which estimates treatment effects for each
+\item{effect}{a string indicating the type of treatment effect to be computed. Options are: 'unit-time', which estimates treatment effects for each
 treated unit- post treatment period combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time;
 'time', which estimates the average treatment effect on the treated at various horizons.}
 

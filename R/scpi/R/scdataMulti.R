@@ -37,11 +37,14 @@
 #' default is \code{features = outcome.var}.
 #' @param cov.adj a list specifying the names of the covariates to be used for adjustment for each feature.
 #' @param post.est a scalar specifying the number of post-treatment periods or a list specifying the periods
-#' for which treatment effects have to be estimated for each treated unit.
-#' @param units.est a list specifying the treated units for which treatment effects have to be estimated.
+#' for which treatment effects have to be computed for each treated unit.
+#' @param units.est a list specifying the treated units for which treatment effects have to be computed.
+#' @param donors.est a list specifying the donors units to be used. If the list has length 1, then all treated units share the same
+#' potential donors. Otherwise, if the user requires different donor pools for different treated units, the list must be of the same
+#' length of the number of treated units and each element has to be named with one treated unit's name as specified in id.var.
 #' @param constant a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}.
 #' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}.
-#' @param effect a string indicating the type of treatment effect to be estimated. Options are: 'unit-time', which estimates treatment effects for each
+#' @param effect a string indicating the type of treatment effect to be computed. Options are: 'unit-time', which estimates treatment effects for each
 #' treated unit- post treatment period combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time;
 #' 'time', which estimates the average treatment effect on the treated at various horizons.
 #' @param anticipation a scalar that indicates the number of periods of potential anticipation effects. Default is 0.
@@ -86,19 +89,19 @@
 #' \itemize{
 #' \item{\strong{Covariate-adjustment.} See the \strong{Details} section in \code{\link{scdata}} for further information on how
 #' to specify covariate-adjustment feature-by-feature.}
-#' 
+#'
 #' \item{\strong{Cointegration.} \code{cointegrated.data} allows the user to model the belief that \eqn{\mathbf{A}} and \eqn{\mathbf{B}} form a
 #' cointegrated system. In practice, this implies that when dealing with the pseudo-true
 #' residuals \eqn{\mathbf{u}}, the first-difference of \eqn{\mathbf{B}} are used rather than the levels.}
-#' 
-#' \item{\strong{Effect.} \code{effect} allows the user to select between two causal quantities. The default 
-#' option, \code{effect = "unit-time"}, prepares the data for estimation of 
-#' \deqn{\tau_{ik},\quad k\geq, i=1,\ldots,N_1,} 
-#' whereas the option \code{effect = "unit"} prepares the data for estimation of 
+#'
+#' \item{\strong{Effect.} \code{effect} allows the user to select between two causal quantities. The default
+#' option, \code{effect = "unit-time"}, prepares the data for estimation of
+#' \deqn{\tau_{ik},\quad k\geq, i=1,\ldots,N_1,}
+#' whereas the option \code{effect = "unit"} prepares the data for estimation of
 #' \deqn{\tau_{\cdot k}=\frac{1}{N_1} \sum_{i=1}^{N_1} \tau_{i k}}
 #' which is the average effect on the treated unit across multiple post-treatment periods.}
 #' }
-#' 
+#'
 #' @author
 #' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
 #'
@@ -142,19 +145,20 @@
 #'
 #' @export
 
-scdataMulti <- function(df, 
-                        id.var, 
-                        time.var, 
+scdataMulti <- function(df,
+                        id.var,
+                        time.var,
                         outcome.var,
                         treatment.var,
-                        features = NULL, 
+                        features = NULL,
                         cov.adj = NULL,
                         cointegrated.data = FALSE,
                         post.est = NULL,
                         units.est = NULL,
+                        donors.est = NULL,
                         anticipation = 0,
                         effect = "unit-time",
-                        constant = FALSE, 
+                        constant = FALSE,
                         verbose = TRUE,
                         sparse.matrices = FALSE) {
 
@@ -162,7 +166,7 @@ scdataMulti <- function(df,
   ############################################################################
   ### Error Checking
   ID <- Treatment <- Time <- NULL
-  
+
   data <- df
 
   # Store variable names and variable class
@@ -201,7 +205,7 @@ scdataMulti <- function(df,
       stop("The argument cov.adj should be a list!")
     }
   }
-  
+
   if (is.null(features) == FALSE) {
     if (is.list(features) == FALSE) {
       stop("The argument features should be a list!")
@@ -241,7 +245,7 @@ scdataMulti <- function(df,
 
   if (!var.class[var.names == treatment.var] %in% c("numeric","integer")) {
     stop("Outcome variable (treatment.var) must be numeric!")
-  }  
+  }
 
   if (is.character(effect) == FALSE) {
     stop("The option 'effect' must be a character (eg. effect = 'unit-time')!")
@@ -263,7 +267,7 @@ scdataMulti <- function(df,
   Y.df <- data[c("ID", "Time", "Treatment", outcome.var)]
 
   # Identify treated units
-  treated.count <- aggregate(data[,"Treatment"], by=list(unit=data[,"ID"]), FUN=sum)
+  treated.count <- aggregate(data[, "Treatment"], by = list(unit = data[, "ID"]), FUN = sum)
   treated.units <- treated.count$unit[treated.count$x > 0]
   treated.post <- treated.units
 
@@ -278,7 +282,7 @@ scdataMulti <- function(df,
     units.est <- treated.units
   }
 
-  # Control covariates for adjustment and matching features 
+  # Control covariates for adjustment and matching features
   if (is.null(cov.adj) == FALSE) {
     cov.adj.list <- list()
     for (i in treated.units) {
@@ -298,18 +302,18 @@ scdataMulti <- function(df,
   # Control other boolean options and anticipation effect
   constant.list <- rep(constant, length(treated.units))
   names(constant.list) <- treated.units
-    
+
   cointegrated.data.list <- rep(cointegrated.data, length(treated.units))
   names(cointegrated.data.list) <- treated.units
-    
+
   anticipation.list <- rep(anticipation, length(treated.units))
   names(anticipation.list) <- treated.units
-  
+
   if (is.null(post.est) == FALSE) {
-    if (is.list(post.est) == FALSE & is.numeric(post.est) == FALSE) {
+    if (is.list(post.est) == FALSE && is.numeric(post.est) == FALSE) {
       stop("The object post.est has to be a list or an integer!")
     }
-    
+
     if (is.list(post.est) == TRUE) {
       if (length(post.est) != length(treated.units)) {
         stop(paste0("The object post.est must have the same number of elements as the number of treated units: ",
@@ -318,17 +322,36 @@ scdataMulti <- function(df,
       if (!all(names(post.est) %in% treated.units)) {
         stop("The elements of post.est must be named with the identifier of the treated units in id.var!")
       }
-    } 
+    }
   }
 
-  
+  if (!is.null(donors.est)) {
+    if (!is.list(donors.est)) {
+      stop("The option 'donors.est' must be a list!")
+    }
+
+    if (!(length(donors.est) %in% c(1, length(treated.units)))) {
+      stop(paste0("The option 'donors.est' must be a list of either length 1 or ", length(treated.units),
+      " (the number of treated units for which treatment effects have to be computed)!"))
+    }
+
+    if (length(donors.est) > 1) {
+      if (!all(names(donors.est) %in% treated.units)) {
+        stop("If length(donors.est) > 1, all the names of the elements have to be values of 'id.var'!")
+      }
+    } else {
+      donors.est <- rep(donors.est, length(treated.units))
+      names(donors.est) <- treated.units
+    }
+  }
+
   ############################################################################
   ############################################################################
   ### Data preparation
-  
+
   # For each treated unit identify the pre- and post-treatment periods and the donor pool
-  treated.periods <- subset(data, Treatment == 1, select=c(Time, ID)) # post treatment period for each treated unit
-  
+  treated.periods <- subset(data, Treatment == 1, select = c(Time, ID)) # post treatment period for each treated unit
+
   J.list <- list()
   K.list <- list()
   KM.list <- list()
@@ -339,7 +362,7 @@ scdataMulti <- function(df,
   T1.list <- list()
   out.in.features.list <- list()
   donors.list <- list()
-  
+
   rownames.A <- c()
   colnames.B <- c()
   colnames.C <- c()
@@ -347,16 +370,19 @@ scdataMulti <- function(df,
   colnames.P <- c()
   rownames.Y.donors <- c()
   colnames.Y.donors <- c()
-  
+
   tr.count <- 1
   for (treated.unit in treated.units) {
     treated.unit <- as.character(treated.unit)  # handle numeric identifier for treated units
     treated.unit.T0 <- min(treated.periods$Time[treated.periods$ID == treated.unit])   # get first treatment period of treated unit
-    #donors <- subset(data, ID != treated.unit & Time < treated.unit.T0, select=c(ID, Treatment))   # get all other units before treatment of treated unit
-    donors <- subset(data, !(ID %in% treated.post) & Time < treated.unit.T0, select=c(ID, Treatment))   # get all other units before treatment of treated unit
-    if (nrow(donors) == 0) stop(paste0("The current specification for ", treated.unit," does not have observations!"))
+    donors <- subset(data, !(ID %in% treated.post) & Time < treated.unit.T0, select = c(ID, Treatment))   # get all other units before treatment of treated unit
+    if (nrow(donors) == 0) stop(paste0("The current specification for ", treated.unit, " does not have observations!"))
     donors.count <- aggregate(donors[,"Treatment"], by=list(unit=donors$ID), FUN=sum) # number of periods units have been treated before treatment of treated unit
     donors.units <- donors.count$unit[donors.count$x == 0] # donors are those unit that have never been treated before treatment of treated unit
+
+    if (!is.null(donors.est)) {
+      donors.units <- donors.units[donors.units %in% donors.est[[treated.unit]]]
+    }
 
     if (is.null(post.est) == FALSE) {
       if (is.list(post.est)) {
@@ -364,23 +390,23 @@ scdataMulti <- function(df,
       } else {
         T1.last <- treated.unit.T0 + post.est
       }
-      
-      treated.donors <- subset(data, ID %in% treated.post & Time < T1.last, select=c(ID, Treatment))   # get all other units before treatment of treated unit
+
+      treated.donors <- subset(data, ID %in% treated.post & Time < T1.last, select = c(ID, Treatment))   # get all other units before treatment of treated unit
       tr.donors.count <- aggregate(treated.donors[,"Treatment"], by=list(unit=treated.donors$ID), FUN=sum) # number of periods units have been treated before treatment of treated unit
       tr.donors.units <- tr.donors.count$unit[tr.donors.count$x == 0] # donors are those unit that have never been treated before treatment of treated unit
-      
-      donors.units <- sort(c(donors.units, tr.donors.units)) 
-    }    
-    
+
+      donors.units <- sort(c(donors.units, tr.donors.units))
+    }
+
     df.aux <- subset(data, ID %in% c(donors.units, treated.unit)) # subset dataset
     time.vec <- unique(data["Time"])
-    
+
     period.pre <- time.vec[time.vec < treated.unit.T0]
     period.post <- time.vec[time.vec >= treated.unit.T0]
-    
+
     if (is.null(post.est) == FALSE) {
       if (is.list(post.est)) {
-        sel.post <- period.post %in% post.est[[treated.unit]] 
+        sel.post <- period.post %in% post.est[[treated.unit]]
       } else {
         sel.post <- period.post < T1.last
       }
@@ -492,12 +518,12 @@ scdataMulti <- function(df,
     colnames.P <- c(colnames.P, c(colnames(B.tr), colnames(C.tr)))
     colnames.Y.donors <- c(colnames.Y.donors, colnames(Y.donors.tr))
     rownames.Y.donors <- c(rownames.Y.donors, rownames(Y.donors.tr))
-    
+
     if (effect == "time") {
       P.tr <- cbind(c(1:nrow(P.tr)), P.tr)
       colnames(P.tr) <- c("aux_id", colnames(P.tr)[-1])
     }
-    
+
     if (tr.count == 1) {
       A.stacked <- A.tr
       B.stacked <- B.tr
@@ -507,7 +533,7 @@ scdataMulti <- function(df,
       } else {
         P.stacked <- P.tr
       }
-      
+
       Pd.stacked <- P.diff
       Y.donors.stacked <- Y.donors.tr
 
@@ -536,7 +562,7 @@ scdataMulti <- function(df,
     donors.list[[treated.unit]] <- scdata.out$specs$donors.units
     tr.count <- tr.count + 1
   }
-  
+
   # Handle names of stacked matrices
   rownames(A.stacked) <- rownames.A
   rownames(B.stacked) <- rownames.A
@@ -547,7 +573,7 @@ scdataMulti <- function(df,
   } else {
     rownames(P.stacked) <- rownames.P
   }
-  
+
   colnames(A.stacked) <- "A"
   colnames(B.stacked) <- colnames.B
   colnames(C.stacked) <- colnames.C

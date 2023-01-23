@@ -243,6 +243,15 @@ def scdata(df,
     else:
         data.rename(columns={id_var: '__ID'}, inplace=True)
 
+    # CVXR does not like _ symbols
+    if pandas.api.types.is_string_dtype(data['__ID']) is False:  # convert to string if not string
+        data['__ID'] = data['__ID'].astype(str)
+        unit_co = [str(co) for co in unit_co]
+        unit_tr = str(unit_tr)
+    data['__ID'] = data['__ID'].str.replace('_', ' ')
+    unit_co = [s.replace('_', ' ') for s in unit_co]
+    unit_tr = unit_tr.replace('_', ' ')
+
     if time_var in indexes:
         data['__time'] = data.index.get_level_values(time_var)
     else:

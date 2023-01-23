@@ -26,7 +26,7 @@ from math import sqrt, log, ceil, floor
 from copy import deepcopy
 from sklearn.preprocessing import PolynomialFeatures
 from scipy import sparse
-from scipy.linalg import sqrtm, eigh
+from scipy.linalg import eigh
 
 
 def complete_cases(x):
@@ -407,15 +407,6 @@ def b_est(A, Z, J, KM, w_constr, V):
     dire = w_constr['dir']
     p = w_constr['p']
 
-    if p == "no norm":
-        pp = 0
-    elif p == "L1":
-        pp = 1
-    elif p == "L2":
-        pp = 2
-    elif p == "L1-L2":
-        pp = None
-
     Zarr = numpy.array(Z)
 
     x = cvxpy.Variable((J + KM, 1))
@@ -452,7 +443,9 @@ def b_est(A, Z, J, KM, w_constr, V):
     if alert is True:
         raise Exception("Estimation algorithm not converged! The algorithm returned the value: " +
                         str(prob.status) + ". To check to what errors it corresponds" +
-                        "go to 'https://www.cvxpy.org/tutorial/intro/index.html'.")
+                        "go to 'https://www.cvxpy.org/tutorial/intro/index.html'. " +
+                        " Typically, this occurs because the problem is badly-scaled." +
+                        "If so, scaling the data fixes the issue.")
 
     return b
 
@@ -849,7 +842,6 @@ def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, 
 
     zeta = numpy.random.normal(loc=0, scale=1, size=len(beta))
     G = Sigma_root.dot(zeta)
-    Dtot = Jtot + KMI
 
     a = -2 * G - 2 * beta.T.dot(Q)
     d = 2 * G.dot(beta) + beta.dot(Q.dot(beta))
@@ -1177,6 +1169,7 @@ def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
         ssr = (res - res.mean())**2
         sigma_u = sqrt(ssr.mean())
         sigma_bj = min(B.std(axis=0))
+        denomCheck(sigma_bj)
         CC = sigma_u / sigma_bj
 
     elif rho == 'type-2':
@@ -1184,10 +1177,12 @@ def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
         sigma_u = sqrt(ssr.mean())
         sigma_bj2 = min(B.var(axis=0))
         sigma_bj = max(B.var(axis=0))
+        denomCheck(sigma_bj2)
         CC = sigma_u * sigma_bj / sigma_bj2
 
     elif rho == 'type-3':
         sigma_bj2 = min(B.var(axis=0))
+        denomCheck(sigma_bj2)
         tempdf = pandas.concat([res, B], axis=1)
         sigma_bju = max(tempdf.cov().iloc[:, 0])
         CC = sigma_bju / sigma_bj2
@@ -1204,6 +1199,9 @@ def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
 
     return rho
 
+def denomCheck(den):
+    if abs(den) == 0:
+        raise Exception("One of your donors has no variation in the pre-treatment period!")
 
 def regularize_check(w, index_w, rho, verbose):
     # If regularization is ill-behaved just select the first weight
@@ -1280,7 +1278,7 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
     return w_constr, w_star, index_w.values, rho, Q_star, Q2_star
 
 def localgeom2step(w, r, rho_dict, w_constr, Q, treated_units):
-    beta = pandas.concat([w, r], axis=0)
+
     w_dict = mat2dict(w, cols=False)
     rhoj_dict = {}
     lb = []

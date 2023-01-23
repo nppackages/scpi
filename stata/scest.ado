@@ -1,12 +1,12 @@
-*! Date        : 21 Nov 2022
-*! Version     : 2.0.1
+*! Date        : 20 Jan 2023
+*! Version     : 2.1.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Synthetic control estimation
 
 capture program drop scest
 program define scest, eclass         
-version 17.0           
+version 16.0           
 
 	syntax , dfname(string) [name(string) p(integer 1) direc(string) q(real -11.92) lb(string) V(string) pypinocheck]
 	

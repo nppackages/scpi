@@ -26,6 +26,7 @@ def scdataMulti(df,
                 cointegrated_data=False,
                 post_est=None,
                 units_est=None,
+                donors_est=None,
                 anticipation=0,
                 effect="unit-time",
                 constant=False,
@@ -35,10 +36,10 @@ def scdataMulti(df,
     Parameters
     ----------
     df : pandas.DataFrame
-        a dataframe object containing the data to be processed
+        a dataframe object containing the data to be processed.
 
     id_var : str
-        a character with the name of the variable containing units' IDs
+        a character with the name of the variable containing units' IDs.
 
     time_var : str
         a character with the name of the time variable. The time variable has to be numpy.int64, or one of
@@ -82,6 +83,12 @@ def scdataMulti(df,
 
     units_est : list, default None
         a list specifying the treated units for which treatment effects have to be estimated.
+
+    donors_est : dict, default None
+        a dictionary specifying the donors units to be used. If the dictionary has length 1, then all treated units share the same
+        potential donors. Otherwise, if the user requires different donor pools for different treated units, the dictionary must
+        be of the same length of the number of treated units and each element has to be named with one treated unit's name as
+        specified in id_var.
 
     constant : bool/dict, default False
         a logical which controls the inclusion of a constant term across features. If the user wants to specify this
@@ -214,6 +221,8 @@ def scdataMulti(df,
     if features is not None:
         if not isinstance(features, dict):
             raise Exception("The object 'features' should be a dictionary!")
+        features = {k.replace('_', ' '): v for k, v in features.items()}
+
     else:
         features = {'features': [outcome_var]}
 
@@ -246,6 +255,11 @@ def scdataMulti(df,
         data['__ID'] = data.index.get_level_values(id_var)
     else:
         data.rename(columns={id_var: '__ID'}, inplace=True)
+
+    # CVXR does not like _ symbols
+    if pandas.api.types.is_string_dtype(data['__ID']) is False:  # convert to string if not string
+        data['__ID'] = data['__ID'].astype(str)
+    data['__ID'] = data['__ID'].str.replace('_', ' ')
 
     if time_var in indexes:
         data['__time'] = data.index.get_level_values(time_var)
@@ -282,6 +296,9 @@ def scdataMulti(df,
                                 " for each treated unit, make sure that 'cov.adj' has" +
                                 " the same number of elements as there are treated" +
                                 " units (" + str(len(treated_units)) + ")!")
+
+            cov_adj = {k.replace('_', ' '): v for k, v in cov_adj.items()}
+
             names_dict = []
             for n, v in cov_adj.items():
                 names_dict.append(n)
@@ -363,6 +380,22 @@ def scdataMulti(df,
             raise Exception("There is no match in the object 'anticipation' for the " +
                             "following treated units: " + tr_print)
 
+    if donors_est is not None:
+        if not isinstance(donors_est, dict):
+            raise Exception("The option 'donors_est' must be of type dictionary!")
+
+        if len(donors_est) != 1 and len(donors_est) != len(treated_units):
+            raise Exception("The option 'donors_est' must be a dictionary of either length 1" +
+                            " or " + str(len(treated_units)) + " (the number of treated units" +
+                            " for which treatment effects have to be computed)!")
+
+        if len(donors_est) > 1:
+            names_dict = []
+            for n, v in donors_est.items():
+                names_dict.append(n)
+            if not all(tr in names_dict for tr in treated_units):
+                raise Exception("If len(donors.est) > 1, all the names of the elements have to be values of 'id_var'!")
+
     # Data preparation
     # Get first treated period of each treated unit
     aux = data.loc[data['__Treatment'] == 1, ['__ID', '__time']]
@@ -423,6 +456,14 @@ def scdataMulti(df,
             donors_units.extend(tr_donors_units)
             donors_units = (list(set(donors_units)))
             donors_units.sort()
+
+        if donors_est is not None:
+            if len(donors_est) == 1:
+                donors_filter = donors_est[list(donors_est.keys())[0]]
+            else:
+                donors_filter = donors_est[treated_unit]
+
+            donors_units = list(set(donors_units) & set(donors_filter))
 
         # subset dataset selecting treated units and proper donors
         df_aux = data[data['__ID'].isin(donors_units + [treated_unit])]
