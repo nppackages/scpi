@@ -62,7 +62,7 @@ end
 
 
 
-version 17.0
+version 16.0
 python:
 import pandas, pickle, numpy, urllib, luddite
 from scpi_pkg.scdata import scdata

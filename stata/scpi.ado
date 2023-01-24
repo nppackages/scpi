@@ -168,7 +168,7 @@ version 16.0
 end
 
 
-version 17.0
+version 16.0
 python:
 import pickle, numpy, urllib, luddite
 from scpi_pkg.scpi import scpi
