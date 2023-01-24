@@ -43,7 +43,12 @@ There are at least two ways to install Python:
 1. Download and install Python directly from [https://realpython.com/installing-python/](https://realpython.com/installing-python/).
 2. Download and install Anaconda for [Windows](https://docs.anaconda.com/anaconda/install/windows/), [macOS](https://docs.anaconda.com/anaconda/install/mac-os/), or [Linux](https://docs.anaconda.com/anaconda/install/linux/).
 
-After Python is installed, please install the `scpi` package in Python using the instructions above.
+After Python is installed, please run the following two commands via the Python command line:
+
+```
+pip install luddite
+pip install scpi_pkg
+```
 
 ### How to link Stata and Python
 Stata (16.0 or newer) and Python (>=3.8) can be linked following the [official tutorial](https://blog.stata.com/2020/08/18/stata-python-integration-part-1-setting-up-stata-to-use-python/) on the Stata blog.
