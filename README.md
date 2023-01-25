@@ -55,7 +55,8 @@ Stata (16.0 or newer) and Python (>=3.8) can be linked following the [official t
 
 ### To install/update in Stata type:
 ```
-net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/stata) replace
+net install grc1leg, from("http://www.stata.com/users/vwiggins/") replace force
+net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/stata) replace force
 ```
 
 - Help: [scdata](stata/scdata.pdf), [scest](/stata/scest.pdf), [scpi](stata/scpi.pdf), [scplot](stata/scplot.pdf).
