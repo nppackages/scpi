@@ -10,6 +10,7 @@ import pandas
 import numpy
 import random
 import os
+from copy import deepcopy
 from warnings import filterwarnings
 from scpi_pkg.scdata import scdata
 from scpi_pkg.scdataMulti import scdataMulti
@@ -126,3 +127,33 @@ data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
                    period_post=period_post, unit_tr=unit_tr,
                    unit_co=unit_co, features=['gdp', 'trade'], cov_adj=[['constant', 'trend'], []],
                    cointegrated_data=cointegrated_data, constant=constant)
+
+################################################################################
+# Specifying features for different pre-treatment periods or just use pre-treatment averages
+
+# I) we want to include "trade" just for some selected periods, i.e., 1960, 1970, 1980, 1990
+tradeUnselPeriods = [t for t in range(1960, 1991) if t not in [1960, 1970, 1980, 1990]]
+data['tradeAux'] = data['trade']
+data.loc[data['year'].isin(tradeUnselPeriods), 'tradeAux'] = numpy.nan
+
+data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
+                   outcome_var=outcome_var, period_pre=period_pre,
+                   period_post=period_post, unit_tr=unit_tr,
+                   unit_co=unit_co, features=['gdp', 'tradeAux'],
+                   cointegrated_data=cointegrated_data, constant=constant)
+
+data_prep.B
+
+# II) we want to include just the pre-treatment average of "infrate"
+dataAux = data[data["year"] <= 1990].groupby(['country'])[['infrate']].mean()
+dataAux.rename(columns={"infrate": "infrateAvg"}, inplace=True)
+data = data.merge(dataAux, on="country")
+data.loc[data['year'] != 1990, "infrateAvg"] = numpy.nan
+
+data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
+                   outcome_var=outcome_var, period_pre=period_pre,
+                   period_post=period_post, unit_tr=unit_tr,
+                   unit_co=unit_co, features=['gdp', 'infrateAvg'],
+                   cointegrated_data=cointegrated_data, constant=constant)
+
+data_prep.B

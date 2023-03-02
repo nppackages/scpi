@@ -1,13 +1,13 @@
 ################################################################################
 ## SCPI R Package
 ## R-file for Empirical Illustration - Single Treated Unit
-## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik  
+## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik
 ################################################################################
 ### Clear R environment
-rm(list=ls(all=TRUE))
+rm(list = ls(all = TRUE))
 
 ### Install R library
-#install.packages('scpi')
+# install.packages('scpi')
 
 ### Load SCPI package
 library(scpi)
@@ -152,14 +152,14 @@ for (l in 1:length(time)) {
   ssc.l.1 <- ssc.r.1 <- c()
   e.mean <- emean[time[l]-1990]
   sig <- esig[time[l]-1990]
-  sig.seq <- sens*sig
-  
+  sig.seq <- sens * sig
+
   for (s in 1:length(sig.seq)) {
     eps  <- sqrt(-log(e.alpha/2)*2*(sig.seq[s]^2))
     ssc.l.1[s] <- sc.l.0[time[l]-1990] + e.mean - eps
     ssc.r.1[s] <- sc.r.0[time[l]-1990] + e.mean + eps
   }
-  
+
   sen.dat <- data.frame(t=c(1:5), lb1=ssc.l.1, ub1=ssc.r.1,
                         lb=rep(sc.l.0[time[l]-1990], 5),
                         ub=rep(sc.r.0[time[l]-1990], 5),
@@ -198,3 +198,34 @@ df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = o
                 unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "trade"), 
                 cov.adj = list('gdp' = c("constant","trend"), 'trade' = c("constant")),
                 constant = constant, cointegrated.data = cointegrated.data)
+
+
+## Specifying features for different pre-treatment periods or just use pre-treatment averages
+
+# I) we want to include "trade" just for some selected periods, i.e., 1960, 1970, 1980, 1990
+tradeUnselPeriods <- setdiff(period.pre, seq(1960, 1990, by = 10))  # period NOT to be included
+data$tradeAux <- data$trade                                         # copy of the feature of interest
+data$tradeAux[data$year %in% tradeUnselPeriods] <- NA
+
+df <- scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
+             period.pre = period.pre, period.post = period.post,
+             unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "tradeAux"), 
+             cov.adj = list('gdp' = c("constant","trend"), 'tradeAux' = c("constant")),
+             constant = constant, cointegrated.data = cointegrated.data)
+
+df$B
+
+# II) we want to include just the pre-treatment average of "infrate"
+dataAux <- subset(data, year <= 1990) # select just pre-treatment periods
+dataAuxAgg <- aggregate(dataAux$infrate, by = list(dataAux$country), FUN = mean, na.rm = TRUE) # take average
+names(dataAuxAgg) <- c("country", "infrateAvg")
+data <- merge(data, dataAuxAgg, by = c("country")) # merge back
+data$infrateAvg[data$year != 1990] <- NA # any period would work, 1990 is arbitrary
+
+df <- scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
+             period.pre = period.pre, period.post = period.post,
+             unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "infrateAvg"),
+             cov.adj = list("gdp" = c("constant", "trend")),
+             constant = constant, cointegrated.data = cointegrated.data)
+
+df$B

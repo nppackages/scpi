@@ -32,7 +32,7 @@ use "scpi_germany.dta", clear
 ** prepare data - one feature, cointegrated data
 *****************************************************************************************
 scdata gdp, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
-			treatment(status) cointegrated constant 
+			treatment(status) cointegrated constant
 
 *****************************************************************************************
 ** SC - point estimation with simplex
@@ -92,9 +92,28 @@ scplot, gphoptions("ytitle(GDP per capita) xtitle(Year)")
 scdata gdp trade, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
 				  treatment(status) cointegrated				  
 				  
-* multiple features and feature-specific covariate adjustement 
-scdata gdp infrate, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
-				  treatment(status) cointegrated covadj("constant, trend; constant")
+*****************************************************************************************
+** Features for different pre-treatment periods or just use pre-treatment averages 
+*****************************************************************************************
+
+* I) we want to include "trade" just for some selected periods, i.e., 1960, 1970, 1980, 1990
+
+g tradeAux = trade 
+replace tradeAux = . if !inlist(year, 1960, 1970, 1980, 1990)
+
+scdata gdp tradeAux, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
+				  treatment(status) cointegrated covadj("constant, trend; constant") pypinocheck
+
+mat list e(B)
+		
+* II) we want to include just the pre-treatment average of "infrate"
+
+bysort country: egen infrateAvg = mean(infrate) if year <= 1990 
+replace infrateAvg = . if year != 1990 // any other pre-treatment period works 
+scdata gdp infrateAvg, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
+				  treatment(status) cointegrated pypinocheck
+
+mat list e(B)
 
 erase "python_scdata.obj"
 erase "__scest__output.obj"
