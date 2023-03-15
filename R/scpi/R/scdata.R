@@ -4,7 +4,7 @@
 #' inference procedures for Synthetic Control (SC) methods.
 #' It allows the user to specify the outcome variable, the features of the treated unit to be
 #' matched, and covariate-adjustment feature by feature. The names of the output matrices
-#' follow the terminology proposed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
+#' follow the terminology proposed in \href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 #'
 #' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in
 #' \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
@@ -31,8 +31,7 @@
 #' @param unit.tr a character or numeric scalar that identifies the treated unit in \code{id.var}.
 #' @param unit.co a character or numeric vector that identifies the donor pool in \code{id.var}.
 #' @param features a character vector containing the name of the feature variables used for estimation.
-#' If features is specified, then outcome.var must be included in it. If this option is not specified the
-#' default is \code{features = outcome.var}.
+#' If this option is not specified the default is \code{features = outcome.var}.
 #' @param cov.adj a list specifying the names of the covariates to be used for adjustment for each feature. See the \strong{Details} section for more.
 #' @param constant a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}.
 #' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not.
@@ -106,7 +105,7 @@
 #' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}.
 #' Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
-#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
+#' \item{\href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
@@ -178,14 +177,14 @@ scdata <- function(df,
   }
 
 
-  if (is.null(cov.adj) == FALSE){
+  if (is.null(cov.adj) == FALSE) {
     if (is.list(cov.adj) == FALSE) {
       stop("The argument cov.adj should be a list!")
     }
 
     # Check all covariates other than constant and trend are in dataframe
     unique.covs <- unique(unlist(cov.adj))
-    unique.covs <- unique.covs[!unique.covs %in% c("constant","trend")]
+    unique.covs <- unique.covs[!unique.covs %in% c("constant", "trend")]
 
     if (length(unique.covs > 0)) { # not only constant and trend specified
       if (!all(unique.covs %in% var.names)) {
@@ -201,7 +200,7 @@ scdata <- function(df,
       aux <- table(cc)
 
       if (any(aux > 1)) {
-        stop(paste(c("Equation ", j," contains more than once the same covariate!")))
+        stop(paste(c("Equation ", j, " contains more than once the same covariate!")))
       }
     }
   }
@@ -219,19 +218,19 @@ scdata <- function(df,
     stop("Outcome variable (outcome.var) not found in the input dataframe!")
   }
 
-  time.var.class = var.class[var.names == time.var]
-  if (!time.var.class %in% c("numeric","integer","Date")) {
+  time.var.class <- var.class[var.names == time.var]
+  if (!time.var.class %in% c("numeric", "integer", "Date")) {
     stop("Time variable (time.var) must be either numeric or character!")
   }
 
-  if (!var.class[var.names == outcome.var] %in% c("numeric","integer")) {
+  if (!var.class[var.names == outcome.var] %in% c("numeric", "integer")) {
     stop("Outcome variable (outcome.var) must be numeric!")
   }
 
   if (is.null(features) ==  TRUE) {
     features <- outcome.var
   }
-  
+
   if (!(all(is.character(features)))) {
     stop("The object features should contain only character entries!")
   }
@@ -247,15 +246,15 @@ scdata <- function(df,
   } else {
     out.in.features <- FALSE
   }
-  
+
   # Error checking when the user specifies the adj eq-by-eq
   if (length(cov.adj) > 1)  {
-    
+
     if (is.null(names(cov.adj))) {
       stop("You should specify the name of the feature each covariate adjustment refers to!
            (eg. cov.adj = list('feature1' = c('cov1','cov2'), 'feature2' = c('constant','cov1')))")
     }
-    
+
     if (!all(names(cov.adj) %in% features)) {
       stop(paste(c("When specifying covariate adjustment separately for each feature make sure
          that there is a one-to-one match between equation names and feature names.")))
@@ -263,19 +262,19 @@ scdata <- function(df,
 
     if (length(cov.adj) != length(features)) {
       stop(paste(c("When specifying covariate adjustment separately for each feature make sure
-         to do it for all features! You specified covariate adjustment for ", length(cov.adj)," features
+         to do it for all features! You specified covariate adjustment for ", length(cov.adj), " features
                  when you currently have ", length(features), " features!")))
     }
   }
 
-  if ((length(features) == 1) & (constant == TRUE) & ("constant" %in% unlist(cov.adj))) {
+  if ((length(features) == 1) && (constant == TRUE) && ("constant" %in% unlist(cov.adj))) {
     stop("When specifying just one feature you either specify constant == TRUE or include 'constant' in
          cov.adj!")
   }
 
   period.pre  <- sort(period.pre, decreasing = FALSE)
   period.post <- sort(period.post, decreasing = FALSE)
-  
+
   # Create ID and time variables
   if (is.numeric(data[id.var])) {
     data[id.var] <- as.character(data[id.var])
@@ -296,7 +295,7 @@ scdata <- function(df,
     stop(paste(c("The following control unit(s) are not in the input dataframe:",
                  co.not.found), collapse = " "))
   }
-  
+
   if (unit.tr %in% unit.co) {
     stop("The treated unit is also contained in the donor pool!")
   }
@@ -317,16 +316,16 @@ scdata <- function(df,
     stop(paste(c("The following post-treatment period(s) are not in the input dataframe:",
                  post.not.found), collapse = " "))
   }
-  
+
   if (any(period.pre %in% period.post)) {
     stop("There is an overlap between the pre-treatment period and post-treatment period!")
   }
-  
+
   # Consider eventual anticipation effect
   if (!is.numeric(anticipation)) {
     stop("The object 'anticipation' has to be an integer!")
   }
-  
+
   if (anticipation > 0) {
     t0 <- length(period.pre); d <- anticipation
     period.post <- c(period.pre[(t0-d+1):t0], period.post)
@@ -455,11 +454,11 @@ scdata <- function(df,
 
       # Feature specific covariate adjustment
     } else if (length(cov.adj) > 1) {
-      
+
       for (m in seq_len(length(features))) {
         C.m          <- NULL                # Create empty block
         feature.covs <- cov.adj[[m]]        # select feature-specific list
-        
+
         # Check that constant/time trend are required by the user
         if ("constant" %in% feature.covs) {
           feature.covs <- feature.covs[feature.covs != "constant"]
@@ -489,7 +488,7 @@ scdata <- function(df,
     colnames.C <- list()
 
     for (j in seq_len(length(features))) {
-      if (length(cov.adj) == 1){
+      if (length(cov.adj) == 1) {
         cc <- cov.adj[[1]]
       } else {
         cc           <- cov.adj[[j]]
@@ -515,11 +514,11 @@ scdata <- function(df,
     colnames(C) <- unlist(colnames.C)
 
   }
-  
+
   ############################################################################
   ##############################################################################
   ### Prediction Data
-  
+
   ## Actual post-treatment series
   Y.post <- as.matrix(data.bal[rows.tr.post, outcome.var])
   rownames(Y.post) <- paste(unit.tr, as.character(data.bal[rows.tr.post, "Time"]), sep = ".")
@@ -528,13 +527,13 @@ scdata <- function(df,
   ## Prediction Matrix
   # Select series of donors
   aux    <- data.bal[rows.co.post, c(outcome.var, "ID", "Time")] # Select rows and columns
-  
+
   # make the df wide so that countries are one next to the other
   aux <- stats::reshape(aux,
                  direction = "wide",
                  idvar     = "Time",
                  timevar   = "ID")
-  
+
   P <- as.matrix(aux[, names(aux) != "Time"])
   rownames(P) <- paste(unit.tr, as.character(aux[,'Time']), sep = ".")
 

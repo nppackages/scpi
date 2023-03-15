@@ -2,7 +2,7 @@
 #'
 #' @description The command produces a wide range of plots of Synthetic Control estimates and corresponding prediction intervals. The command allows form multiple treated units and staggered adoption.
 #' Prediction intervals can take into account either in-sample uncertainty only or in-sample and
-#' out-of-sample uncertainty using the techniques developed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}. \code{\link{scpi}}.
+#' out-of-sample uncertainty using the techniques developed in \href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}. \code{\link{scpi}}.
 #' The input object should come from the command \code{\link{scest}} or from the command \code{\link{scpi}}.
 #'
 #' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
@@ -47,7 +47,7 @@
 #' \itemize{
 #' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
-#' \item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
+#' \item{\href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R. 
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.} 
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022)},
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
@@ -262,7 +262,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
     if (type == "series") {
       toplot <- merge(toplot, ci2df(result$inference.results$CI.in.sample, type = "insample"),
                       by = c("ID", "Time"), all = TRUE)
-  
+
       if (e.method %in% c("all", "gaussian")) {
         toplot <- merge(toplot, ci2df(result$inference.results$CI.all.gaussian, type = "gaussian"),
                         by = c("ID", "Time"), all = TRUE)

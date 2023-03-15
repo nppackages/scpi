@@ -60,9 +60,9 @@ follow the notation proposed in <a class="reference external" href="https://catt
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – a dataframe object containing the data to be processed</p></li>
 <li><p><strong>id_var</strong> (<em>str</em>) – a character with the name of the variable containing units’ IDs</p></li>
-<li><p><strong>time_var</strong> (<em>str</em>) – a character with the name of the time variable. The time variable has to be numpy.int64, or one of
-pandas.Timestamp and numpy.datetime64. Input a numeric time variable is suggested when working with
-yearly data, whereas for all other frequencies either pandas.Timestamp or numpy.datetime64 types are preferred.</p></li>
+<li><p><strong>time_var</strong> (<em>str</em>) – a character with the name of the time variable. The time variable has to be numpy.int64 or
+numpy.datetime64. Input a numeric time variable is suggested when working with
+yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.</p></li>
 <li><p><strong>outcome_var</strong> (<em>str</em>) – a character with the name of the outcome variable. The outcome variable has to be numeric.</p></li>
 <li><p><strong>period_pre</strong> (<em>array</em>) – a numeric vector that identifies the pre-treatment period in time_var.</p></li>
 <li><p><strong>period_post</strong> (<em>array</em>) – a numeric vector that identifies the post-treatment period in time_var.</p></li>
@@ -112,6 +112,7 @@ See the Details section for more.</p></li>
 <li><p><strong>effect</strong> (<em>str</em>) – for internal use only</p></li>
 <li><p><strong>glob_cons</strong> (<em>bool</em>) – for internal use only</p></li>
 <li><p><strong>out_in_features</strong> (<em>bool</em>) – for internal use only</p></li>
+<li><p><strong>timeConvert</strong> (<em>bool</em>) – for internal use only</p></li>
 </ul>
 </p>
 </dd>

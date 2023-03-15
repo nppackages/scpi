@@ -11,11 +11,13 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import pandas
 pandas.options.mode.chained_assignment = None
 import numpy
-from plotnine import ggplot, aes, geom_point, geom_errorbar, geom_vline, geom_line, geom_hline, theme, theme_bw
+from plotnine import ggplot, aes, geom_point, geom_errorbar, geom_vline, geom_line, geom_hline, theme, theme_bw, scale_x_datetime
 from plotnine import element_blank, labs, guide_legend, scale_color_manual, ggtitle, facet_wrap, coord_flip, geom_ribbon
 from copy import deepcopy
-from .funs import CIrename
-from math import ceil
+from .funs import CIrename, ix2rn
+from math import ceil, floor
+from mizani.breaks import date_breaks
+from mizani.formatters import date_format
 
 def scplotMulti(result,
                 ptype="series",
@@ -26,6 +28,8 @@ def scplotMulti(result,
                 scales="fixed",
                 point_size=1.5,
                 ncols=3,
+                dateBreaks='10 years',
+                dateFormat='%Y',
                 e_method_input=None,
                 save_data=None,
                 verbose=True):
@@ -72,6 +76,16 @@ def scplotMulti(result,
         To be used only when scpi received the option "e_method='all'" and the user wants to choose among the three
         techniques to quantify out-of-sample uncertainty.
 
+    dateBreaks: str, default "10 years"
+        a string specifying the breaks in the x-axis label. It is
+        an interval specification, one of "sec", "min", "hour", "day", "week", "month", "year".
+        Can be specified as an integer and a space, or followed by "s". Fractional seconds are supported.
+        Some examples are "10 years", "2 months", etc. To be used only if time_var is not an integer!
+
+    dateFormat: str, default "%Y"
+        a string specifying the date/time format using standard POSIX specification.
+        To be used only if time_var is not an integer!
+
     save_data : str, default None
         a string specifying the name (and the folder) of the saved dataframe containing the processed data used to
         produce the plot. The data is saved in .csv format and the folder specified.
@@ -83,6 +97,9 @@ def scplotMulti(result,
     ----------
     plot : plotnine
         plotnine object that can be further modified.
+
+    plotdata : dataframe
+        dataframe object containing the processed data used to produce the plot.
 
     References
     ----------
@@ -106,9 +123,6 @@ def scplotMulti(result,
 
     class_input = result.__class__.__name__
 
-    def ix2rn(s):
-        return str(s).replace('(', '').replace(')', '').replace("'", '')
-
     if class_input not in ['scest_multi_output', 'scpi_multi_output']:
         raise Exception("The object 'result' should be the output of scest or scpi " +
                         "when the data have been processed through scdataMulti!")
@@ -116,8 +130,9 @@ def scplotMulti(result,
     if ptype not in ["series", "treatment"]:
         raise Exception("'type' should be either 'series' or 'treatment'!")
 
-    plot_type = result.effect
-    iota = result.iota
+    plot_type = deepcopy(result.effect)
+    iota = deepcopy(result.iota)
+
     if plot_type == "time":
         iota = 1
 
@@ -127,18 +142,41 @@ def scplotMulti(result,
                       "files at https://nppackages.github.io/scpi/, and reproduce the same graph for just" +
                       " a fraction of the sample at a time!")
 
-    Y_pre_fit = result.Y_pre_fit
-    Y_post_fit = result.Y_post_fit
-    synth_mat = pandas.concat([Y_pre_fit, Y_post_fit], axis=0)
-    if plot_type != "time":
-        synth_mat.index = synth_mat.index.rename(['ID', 'Time'])
-        synth_mat.columns = ['Synthetic']
+    Y_pre_fit = deepcopy(result.Y_pre_fit)
+    Y_post_fit = deepcopy(result.Y_post_fit)
 
-    Y_df = result.Y_df
+    Y_df = deepcopy(result.Y_df)
     Y_df.columns = ['ID', 'Time', 'Treatment', 'Actual']
 
     sel_units = [i in result.units_est for i in Y_df['ID']]
     res_df = deepcopy(Y_df[sel_units])
+
+    # create hash maps if required
+    if result.timeConvert is True:
+        time_unique_ts = sorted(set(Y_df['Time'].tolist()))
+        if plot_type != "time":
+            int2ts = {i: time_unique_ts[i] for i in range(len(time_unique_ts))}
+            ts2int = {time_unique_ts[i]: i for i in range(len(time_unique_ts))}
+        else:
+            ts2int = {time_unique_ts[i]: i + 2000 for i in range(len(time_unique_ts))}
+
+        Y_df['Time'] = Y_df['Time'].map(ts2int)
+        res_df = deepcopy(Y_df[sel_units])
+
+        Y_pre_fit.reset_index(drop=False, inplace=True)
+        Y_pre_fit['Time'] = Y_pre_fit['Time'].map(ts2int)
+        Y_pre_fit.set_index(['ID', 'Time'], drop=True, inplace=True)
+
+        if plot_type != "time":
+            Y_post_fit.reset_index(drop=False, inplace=True)
+            Y_post_fit['Time'] = Y_post_fit['Time'].map(ts2int)
+            Y_post_fit.set_index(['ID', 'Time'], drop=True, inplace=True)
+
+    synth_mat = pandas.concat([Y_pre_fit, Y_post_fit], axis=0)
+
+    if plot_type != "time":
+        synth_mat.index = synth_mat.index.rename(['ID', 'Time'])
+        synth_mat.columns = ['Synthetic']
 
     if plot_type == "unit":
         Y_actual_pre = res_df[res_df['Treatment'] == 0]
@@ -229,6 +267,17 @@ def scplotMulti(result,
         toplot['Time'] = toplot['Time'] + 1
 
     toplot['Effect'] = toplot['Actual'] - toplot['Synthetic']
+
+    if result.timeConvert is True and result.effect != "time":
+        toplot.reset_index(drop=False, inplace=True)
+        toplot['Time'] = toplot['Time'].map(int2ts)
+        toplot.set_index(['ID', 'Time'], drop=True, inplace=True)
+        tr_recp_ts = []
+        for dd in treated_reception['Tdate'].values:
+            avgtime = (int2ts[floor(dd)].asm8.astype(numpy.int64) + int2ts[ceil(dd)].asm8.astype(numpy.int64)) / 2
+            tr_recp_ts.append(pandas.Timestamp(avgtime.astype('<M8[ns]')))
+        treated_reception['Tdate'] = tr_recp_ts
+
     if plot_type != "time":
         toplot.reset_index(drop=False, inplace=True)
 
@@ -253,6 +302,9 @@ def scplotMulti(result,
                             subplots_adjust={'bottom': 0.2}) +
                       labs(x="Date", y="Outcome"))
 
+        if result.timeConvert is True and result.effect != "time":
+            plot_struc = (plot_struc + scale_x_datetime(breaks=date_breaks(dateBreaks), labels=date_format(dateFormat)))
+
         plot = (plot_struc +
                 geom_line(mapping=aes(x='Time', y='Outcome', colour='Type')) +
                 geom_point(mapping=aes(x='Time', y='Outcome', colour='Type'), size=point_size) +
@@ -271,6 +323,9 @@ def scplotMulti(result,
                             legend_title=element_blank(),
                             subplots_adjust={'bottom': 0.2}) +
                       labs(x="Date", y="Effect"))
+
+        if result.timeConvert is True and result.effect != "time":
+            plot_struc = (plot_struc + scale_x_datetime(breaks=date_breaks(dateBreaks), labels=date_format(dateFormat)))
 
         plot = (plot_struc +
                 geom_line(mapping=aes(x='Time', y='Effect'), colour=col_synth) +
@@ -302,6 +357,9 @@ def scplotMulti(result,
                             legend_title=element_blank(),
                             subplots_adjust={'bottom': 0.2}) +
                       labs(x="Date", y="Outcome"))
+
+        if result.timeConvert is True:
+            plot_struc = (plot_struc + scale_x_datetime(breaks=date_breaks(dateBreaks), labels=date_format(dateFormat)))
 
         plot = (plot_struc +
                 geom_line(data=toplot[toplot['Time'] < toplot['Tdate']],
@@ -425,7 +483,7 @@ def scplotMulti(result,
                            geom_errorbar(data=toplot,
                                          mapping=aes(x='Time', ymin='Lower_gaussian', ymax='Upper_gaussian'),
                                          colour=col_synth, width=0.5, linetype="solid") +
-                           ggtitle("In and Out of Sample Uncertianty - Subgaussian Bounds"))
+                           ggtitle("In and Out of Sample Uncertainty - Subgaussian Bounds"))
 
             if joint is True and plot_type == "unit-time":
                 if ptype == "treatment":

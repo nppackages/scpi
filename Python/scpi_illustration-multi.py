@@ -7,19 +7,16 @@
 ########################################
 # Load SCPI_PKG package
 import pandas
-import numpy
-import random
 import os
 from warnings import filterwarnings
-from scpi_pkg.scdata import scdata
 from scpi_pkg.scdataMulti import scdataMulti
 from scpi_pkg.scest import scest
 from scpi_pkg.scpi import scpi
-from scpi_pkg.scplot import scplot
 from scpi_pkg.scplotMulti import scplotMulti
 
 ########################################
 # Load database
+os.chdir("/Users/fpalomba/Dropbox (Princeton)/projects/scpi/packages/fixed_bugs")
 data = pandas.read_csv("scpi_germany.csv")
 
 filterwarnings("ignore")

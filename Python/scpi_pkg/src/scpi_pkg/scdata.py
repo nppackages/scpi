@@ -44,9 +44,9 @@ def scdata(df,
         a character with the name of the variable containing units' IDs
 
     time_var : str
-        a character with the name of the time variable. The time variable has to be numpy.int64, or one of
-        pandas.Timestamp and numpy.datetime64. Input a numeric time variable is suggested when working with
-        yearly data, whereas for all other frequencies either pandas.Timestamp or numpy.datetime64 types are preferred.
+        a character with the name of the time variable. The time variable has to be numpy.int64 or
+        numpy.datetime64. Input a numeric time variable is suggested when working with
+        yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.
 
     outcome_var : str
         a character with the name of the outcome variable. The outcome variable has to be numeric.
@@ -156,6 +156,9 @@ def scdata(df,
     out_in_features : bool
         for internal use only
 
+    timeConvert : bool
+        for internal use only
+
     References
     ----------
     Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
@@ -234,14 +237,31 @@ def scdata(df,
     if (time_var not in var_names) and (time_var not in indexes):
         raise Exception("Time variable (time_var) not found in the input df neither as a variable nor as an index!")
 
-    if outcome_var not in var_names:
-        raise Exception("Outcome variable (outcome_var) not found in the input dataframe!")
-
     # Make time and id columns if these variables are indexes of the dataframe
     if id_var in indexes:
         data['__ID'] = data.index.get_level_values(id_var)
     else:
         data.rename(columns={id_var: '__ID'}, inplace=True)
+
+    if time_var in indexes:
+        data['__time'] = data.index.get_level_values(time_var)
+    else:
+        data.rename(columns={time_var: '__time'}, inplace=True)
+
+    timeConvert = False
+    dd = data.iloc[0, data.columns.get_loc('__time')]
+    if not isinstance(dd, (numpy.int64, numpy.int32, numpy.int16, pandas.Timestamp, numpy.datetime64)):
+        raise Exception("The object time_var should be of type int, numpy.datetime64, or pandas.Timestamp!")
+
+    elif isinstance(dd, (pandas.Timestamp, numpy.datetime64)):
+        time_unique_ts = sorted(set(data['__time'].tolist()))
+        int2ts = {i: time_unique_ts[i] for i in range(len(time_unique_ts))}
+        ts2int = {time_unique_ts[i]: i for i in range(len(time_unique_ts))}
+        data['__time'] = data['__time'].map(ts2int)
+        timeConvert = True
+
+    if outcome_var not in var_names:
+        raise Exception("Outcome variable (outcome_var) not found in the input dataframe!")
 
     # CVXR does not like _ symbols
     if pandas.api.types.is_string_dtype(data['__ID']) is False:  # convert to string if not string
@@ -252,19 +272,10 @@ def scdata(df,
     unit_co = [s.replace('_', ' ') for s in unit_co]
     unit_tr = unit_tr.replace('_', ' ')
 
-    if time_var in indexes:
-        data['__time'] = data.index.get_level_values(time_var)
-    else:
-        data.rename(columns={time_var: '__time'}, inplace=True)
-
     data['treated_unit'] = unit_tr
 
     # Create index
     data.set_index(['treated_unit', '__ID', '__time'], drop=False, inplace=True)
-
-    dd = data.iloc[0, data.columns.get_loc('__time')]
-    if not isinstance(dd, (numpy.int64, numpy.int32, numpy.int16, pandas.Timestamp, numpy.datetime64)):
-        raise Exception("The object time_var should be of type int, numpy.datetime64, or pandas.Timestamp!")
 
     if not isinstance(period_pre, numpy.ndarray):
         raise Exception("The object period_pre should be of type numpy.ndarray (eg. use numpy.arange or numpy.array)!")
@@ -705,7 +716,46 @@ def scdata(df,
     P.columns = unit_tr + '_' + P.columns
     Y_donors.columns = unit_tr + '_' + Y_donors.columns
 
-    return scdata_output(A=A_na, B=B_na, C=C_na, P=P, P_diff=None, Y_pre=Y_pre,
+    # convert indices from integer to ts if necessary
+    if timeConvert is True:
+        A_na.reset_index(drop=False, inplace=True)
+        A_na['__time'] = A_na['__time'].map(int2ts)
+        A_na.set_index(['treated_unit', 'feature', '__time'], drop=True, inplace=True)
+
+        B_na.set_index(A_na.index, inplace=True)
+        if len(C_na.columns) > 0:
+            C_na.set_index(A_na.index, inplace=True)
+
+        P.reset_index(drop=False, inplace=True)
+        P['__time'] = P['__time'].map(int2ts)
+        P.set_index(['treated_unit', '__time'], drop=True, inplace=True)
+
+        Y_pre.reset_index(drop=False, inplace=True)
+        Y_pre['__time'] = Y_pre['__time'].map(int2ts)
+        Y_pre.set_index(['treated_unit', '__time'], drop=True, inplace=True)
+
+        Y_post.reset_index(drop=False, inplace=True)
+        Y_post['__time'] = Y_post['__time'].map(int2ts)
+        Y_post.set_index(['treated_unit', '__time'], drop=True, inplace=True)
+
+        Y_donors.reset_index(drop=False, inplace=True)
+        Y_donors['__time'] = Y_donors['__time'].map(int2ts)
+        Y_donors.set_index(['treated_unit', '__time'], drop=True, inplace=True)
+
+        period_pre = pandas.Series(period_pre).map(int2ts).to_numpy()
+        period_post = pandas.Series(period_post).map(int2ts).to_numpy()
+
+    # make all index names homogenous
+    A_na.index.names = ['ID', 'feature', 'Time']
+    B_na.index.names = ['ID', 'feature', 'Time']
+    if len(C_na.columns) > 0:
+        C_na.index.names = ['ID', 'feature', 'Time']
+    P.index.names = ['ID', 'Time']
+    Y_pre.index.names = ['ID', 'Time']
+    Y_post.index.names = ['ID', 'Time']
+    Y_donors.index.names = ['ID', 'Time']
+
+    return scdata_output(A=A_na, B=B_na, C=C_na, P=P, Y_pre=Y_pre,
                          Y_post=Y_post, Y_donors=Y_donors, J=J, K=K,
                          KM=KM, KMI=KM, M=M, iota=1, cointegrated_data=cointegrated_data,
                          period_pre=period_pre, period_post=period_post,
@@ -713,19 +763,19 @@ def scdata(df,
                          outcome_var=outcome_var, features=features,
                          glob_cons=constant, out_in_features=out_in_features,
                          treated_units=[unit_tr], donors_units=unit_co_eff, units_est=[unit_tr],
-                         anticipation={unit_tr: anticipation}, effect="unit-time")
+                         anticipation={unit_tr: anticipation}, effect="unit-time",
+                         timeConvert=timeConvert)
 
 class scdata_output:
-    def __init__(self, A, B, C, P, P_diff, Y_pre, Y_post, Y_donors, J, K, KM, KMI, M, iota,
+    def __init__(self, A, B, C, P, Y_pre, Y_post, Y_donors, J, K, KM, KMI, M, iota,
                  cointegrated_data, period_pre, period_post, T0_features,
                  T1_outcome, outcome_var, features, glob_cons, out_in_features,
-                 treated_units, donors_units, units_est, anticipation, effect):
+                 treated_units, donors_units, units_est, anticipation, effect, timeConvert):
 
         self.A = A
         self.B = B
         self.C = C
         self.P = P
-        self.P_diff = P_diff
         self.Y_pre = Y_pre
         self.Y_post = Y_post
         self.Y_donors = Y_donors
@@ -749,3 +799,4 @@ class scdata_output:
         self.units_est = units_est
         self.anticipation = anticipation
         self.effect = effect
+        self.timeConvert = timeConvert

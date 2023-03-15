@@ -62,9 +62,9 @@ follow the notation proposed in <a class="reference external" href="https://arxi
 </dd>
 <dt>id_var<span class="classifier">str</span></dt><dd><p>a character with the name of the variable containing units’ IDs.</p>
 </dd>
-<dt>time_var<span class="classifier">str</span></dt><dd><p>a character with the name of the time variable. The time variable has to be numpy.int64, or one of
-pandas.Timestamp and numpy.datetime64. Input a numeric time variable is suggested when working with
-yearly data, whereas for all other frequencies either pandas.Timestamp or numpy.datetime64 types are preferred.</p>
+<dt>time_var<span class="classifier">str</span></dt><dd><p>a character with the name of the time variable. The time variable has to be numpy.int64 or
+numpy.datetime64. Input a numeric time variable is suggested when working with
+yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.</p>
 </dd>
 <dt>outcome_var<span class="classifier">str</span></dt><dd><p>a character with the name of the outcome variable. The outcome variable has to be numeric.</p>
 </dd>
@@ -92,8 +92,10 @@ sub-lists matters, in the sense that the first sub-list is interpreted as the se
 feature, and so on. Finally, the user can specify ‘constant’ and ‘trend’ as covariates even if they are not
 present in the loaded dataframe.</p>
 </dd>
-<dt>post_est<span class="classifier">int, default None</span></dt><dd><p>an integer specifying the number of post-treatment periods for which treatment effects have to be estimated for each treated unit. If
-effect = “unit” it indicates the number of periods over which the average post-treatment effect is computed.</p>
+<dt>post_est<span class="classifier">int/str, default None</span></dt><dd><p>an integer or string specifying the number of post-treatment periods for which treatment effects have to be estimated for each
+treated unit. It must be an integer when time_var is integer, otherwise it must be a string of the form “10 years”, “2 months”,
+“1 day” and so on. Possible options are: ‘year(s)’, ‘month(s)’, ‘week(s)’, ‘day(s), and ‘hour(s)’.
+If effect = “unit” it indicates the number of periods over which the average post-treatment effect is computed.</p>
 </dd>
 <dt>units_est<span class="classifier">list, default None</span></dt><dd><p>a list specifying the treated units for which treatment effects have to be estimated.</p>
 </dd>
@@ -135,6 +137,12 @@ Each key must correspond to the identifier (id_var) of one treated unit.</p>
 </dd>
 <dt>Y_df<span class="classifier">pandas.DataFrame</span></dt><dd><p>a dataframe containing the outcome variable for all units.</p>
 </dd>
+<dt>Y_pre: pandas.DataFrame</dt><dd><p>a dataframe containing the actual pre-treatment outcome for the treated unit(s). Note that this is the raw data,
+therefore if effect is specified, Y_pre will not contain the aggregated data.</p>
+</dd>
+<dt>Y_post: pandas.DataFrame</dt><dd><p>a dataframe containing the actual post-treatment outcome for the treated unit(s). Note that this is the raw data,
+therefore if effect is specified, Y_pre will not contain the aggregated data.</p>
+</dd>
 <dt>Y_donors<span class="classifier">pandas.DataFrame</span></dt><dd><p>a dataframe containing the pre-treatment outcome of the control units.</p>
 </dd>
 <dt>J<span class="classifier">dict</span></dt><dd><p>a dictionary containing the number of donors for each treated unit</p>
@@ -161,6 +169,8 @@ treated unit</p>
 <dt>glob_cons<span class="classifier">bool</span></dt><dd><p>for internal use only</p>
 </dd>
 <dt>out_in_features<span class="classifier">bool</span></dt><dd><p>for internal use only</p>
+</dd>
+<dt>timeConvert<span class="classifier">bool</span></dt><dd><p>for internal use only</p>
 </dd>
 </dl>
 <p>Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological

@@ -86,9 +86,16 @@ options see scplot.</p></li>
 <li><p><strong>A</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the treated unit.</p></li>
 <li><p><strong>B</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the control units.</p></li>
 <li><p><strong>C</strong> (<em>pandas.DataFrame</em>) – a dataframe containing covariates for adjustment.</p></li>
-<li><p><strong>P</strong> (<em>pandas.DataFrame</em>) – a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.</p></li>
-<li><p><strong>Y_pre</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre-treatment outcome of the treated unit.</p></li>
-<li><p><strong>Y_post</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the post-treatment outcome of the treated unit.</p></li>
+<li><p><strong>P</strong> (<em>pandas.DataFrame</em>) – a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit(s).</p></li>
+<li><p><strong>Y_pre</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre-treatment outcome of the treated unit(s). If multiple treated units are present and the desired
+predictand involves aggregation (e.g., effect = “time” or effect = “unit) then it contains only the raw data before aggregation.
+For the aggregated data see ‘Y_actual’.</p></li>
+<li><p><strong>Y_post</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the post-treatment outcome of the treated unit(s). If multiple treated units are present and the desired
+predictand involves aggregation (e.g., effect = “time” or effect = “unit) then it contains only the raw data before aggregation.
+For the aggregated data see ‘Y_actual’.</p></li>
+<li><p><strong>Y_actual</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre- and post-treatment outcome of the treated unit(s). If the desired predictand
+involves aggregation (e.g., effect = “time” or effect = “unit) then it contains the data after aggregation.
+For the disaggregated data see ‘Y_pre’ and ‘Y_post’.</p></li>
 <li><p><strong>Y_donors</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre-treatment outcome of the control units.</p></li>
 <li><p><strong>J</strong> (<em>int</em>) – the number of control units</p></li>
 <li><p><strong>K</strong> (<em>array</em>) – a numeric array with the number of covariates used for adjustment for each feature</p></li>

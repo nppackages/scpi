@@ -79,9 +79,9 @@
 <span class="sd">        a character with the name of the variable containing units&#39; IDs.</span>
 
 <span class="sd">    time_var : str</span>
-<span class="sd">        a character with the name of the time variable. The time variable has to be numpy.int64, or one of</span>
-<span class="sd">        pandas.Timestamp and numpy.datetime64. Input a numeric time variable is suggested when working with</span>
-<span class="sd">        yearly data, whereas for all other frequencies either pandas.Timestamp or numpy.datetime64 types are preferred.</span>
+<span class="sd">        a character with the name of the time variable. The time variable has to be numpy.int64 or</span>
+<span class="sd">        numpy.datetime64. Input a numeric time variable is suggested when working with</span>
+<span class="sd">        yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.</span>
 
 <span class="sd">    outcome_var : str</span>
 <span class="sd">        a character with the name of the outcome variable. The outcome variable has to be numeric.</span>
@@ -114,9 +114,11 @@
 <span class="sd">        feature, and so on. Finally, the user can specify &#39;constant&#39; and &#39;trend&#39; as covariates even if they are not</span>
 <span class="sd">        present in the loaded dataframe.</span>
 
-<span class="sd">    post_est : int, default None</span>
-<span class="sd">        an integer specifying the number of post-treatment periods for which treatment effects have to be estimated for each treated unit. If</span>
-<span class="sd">        effect = &quot;unit&quot; it indicates the number of periods over which the average post-treatment effect is computed.</span>
+<span class="sd">    post_est : int/str, default None</span>
+<span class="sd">        an integer or string specifying the number of post-treatment periods for which treatment effects have to be estimated for each</span>
+<span class="sd">        treated unit. It must be an integer when time_var is integer, otherwise it must be a string of the form &quot;10 years&quot;, &quot;2 months&quot;,</span>
+<span class="sd">        &quot;1 day&quot; and so on. Possible options are: &#39;year(s)&#39;, &#39;month(s)&#39;, &#39;week(s)&#39;, &#39;day(s), and &#39;hour(s)&#39;.</span>
+<span class="sd">        If effect = &quot;unit&quot; it indicates the number of periods over which the average post-treatment effect is computed.</span>
 
 <span class="sd">    units_est : list, default None</span>
 <span class="sd">        a list specifying the treated units for which treatment effects have to be estimated.</span>
@@ -170,6 +172,14 @@
 <span class="sd">    Y_df : pandas.DataFrame</span>
 <span class="sd">        a dataframe containing the outcome variable for all units.</span>
 
+<span class="sd">    Y_pre: pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the actual pre-treatment outcome for the treated unit(s). Note that this is the raw data,</span>
+<span class="sd">        therefore if effect is specified, Y_pre will not contain the aggregated data.</span>
+
+<span class="sd">    Y_post: pandas.DataFrame</span>
+<span class="sd">        a dataframe containing the actual post-treatment outcome for the treated unit(s). Note that this is the raw data,</span>
+<span class="sd">        therefore if effect is specified, Y_pre will not contain the aggregated data.</span>
+
 <span class="sd">    Y_donors : pandas.DataFrame</span>
 <span class="sd">        a dataframe containing the pre-treatment outcome of the control units.</span>
 
@@ -208,6 +218,9 @@
 <span class="sd">        for internal use only</span>
 
 <span class="sd">    out_in_features : bool</span>
+<span class="sd">        for internal use only</span>
+
+<span class="sd">    timeConvert : bool</span>
 <span class="sd">        for internal use only</span>
 
 <span class="sd">    References</span>
@@ -283,17 +296,13 @@
     <span class="k">if</span> <span class="n">treatment_var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">var_names</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Treatment variable (treatment_var) not found in the input dataframe!&quot;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">post_est</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">post_est</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify post_est as an integer!&quot;</span><span class="p">)</span>
-
     <span class="c1"># Make time and id columns if these variables are indexes of the dataframe and rename variables</span>
     <span class="k">if</span> <span class="n">id_var</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">:</span>
         <span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="n">id_var</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">id_var</span><span class="p">:</span> <span class="s1">&#39;__ID&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="c1"># CVXR does not like _ symbols</span>
+    <span class="c1"># CVXR does not like &#39;_&#39; symbols</span>
     <span class="k">if</span> <span class="n">pandas</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_string_dtype</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>  <span class="c1"># convert to string if not string</span>
         <span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
@@ -306,6 +315,37 @@
     <span class="n">data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">treatment_var</span><span class="p">:</span> <span class="s1">&#39;__Treatment&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">Y_df</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s1">&#39;__ID&#39;</span><span class="p">,</span> <span class="s1">&#39;__time&#39;</span><span class="p">,</span> <span class="s1">&#39;__Treatment&#39;</span><span class="p">,</span> <span class="n">outcome_var</span><span class="p">]]</span>
+
+    <span class="c1"># Check time_var type and eventually convert it</span>
+    <span class="n">timeConvert</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">dd</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">get_loc</span><span class="p">(</span><span class="s1">&#39;__time&#39;</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dd</span><span class="p">,</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int16</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object time_var should be of type int, pandas.Timestamp, or numpy.datetime64!&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dd</span><span class="p">,</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">)):</span>
+        <span class="n">time_unique_ts</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
+        <span class="n">int2ts</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="n">time_unique_ts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_unique_ts</span><span class="p">))}</span>
+        <span class="n">ts2int</span> <span class="o">=</span> <span class="p">{</span><span class="n">time_unique_ts</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_unique_ts</span><span class="p">))}</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">ts2int</span><span class="p">)</span>
+        <span class="n">timeConvert</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">post_est</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">post_est</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify post_est as an integer or a string!&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dd</span><span class="p">,</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">datetime64</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">post_est</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify post_est as an integer!&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">post_est</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify post_est as a string!&quot;</span><span class="p">)</span>
+            <span class="n">aux</span> <span class="o">=</span> <span class="n">post_est</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aux</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You should specify post_est as a string of the form (e.g.) &#39;10 years&#39;!&quot;</span><span class="p">)</span>
+            <span class="n">post_est_delta</span> <span class="o">=</span> <span class="n">aux</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">post_est_freq</span> <span class="o">=</span> <span class="n">aux</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">post_est_freq</span> <span class="o">==</span> <span class="s2">&quot;H&quot;</span><span class="p">:</span>
+                <span class="n">post_est_freq</span> <span class="o">=</span> <span class="s2">&quot;h&quot;</span>
 
     <span class="c1"># Identify treated units</span>
     <span class="n">periods_treated</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s1">&#39;__Treatment&#39;</span><span class="p">,</span> <span class="s1">&#39;__ID&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;__ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
@@ -485,7 +525,11 @@
         <span class="n">donors_units</span> <span class="o">=</span> <span class="n">donors_count</span><span class="p">[</span><span class="n">donors_count</span><span class="p">[</span><span class="s1">&#39;__Treatment&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">post_est</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">T1_last</span> <span class="o">=</span> <span class="n">treated_unit_T0</span> <span class="o">+</span> <span class="n">post_est</span>
+            <span class="k">if</span> <span class="n">timeConvert</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="n">T1_last</span> <span class="o">=</span> <span class="n">treated_unit_T0</span> <span class="o">+</span> <span class="n">post_est</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">T1_last</span> <span class="o">=</span> <span class="n">treated_unit_T0</span> <span class="o">+</span> <span class="n">numpy</span><span class="o">.</span><span class="n">timedelta64</span><span class="p">(</span><span class="n">post_est_delta</span><span class="p">,</span> <span class="n">post_est_freq</span><span class="p">)</span>
+
             <span class="n">treated_donors</span> <span class="o">=</span> <span class="n">data</span><span class="p">[(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">treated_post</span><span class="p">))</span> <span class="o">&amp;</span>
                                   <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">T1_last</span><span class="p">)]</span>
             <span class="n">tr_donors_count</span> <span class="o">=</span> <span class="n">treated_donors</span><span class="p">[[</span><span class="s1">&#39;__ID&#39;</span><span class="p">,</span> <span class="s1">&#39;__Treatment&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;__ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
@@ -513,6 +557,9 @@
         <span class="k">if</span> <span class="n">post_est</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sel_post</span> <span class="o">=</span> <span class="n">period_post</span> <span class="o">&lt;</span> <span class="n">T1_last</span>
             <span class="n">period_post</span> <span class="o">=</span> <span class="n">period_post</span><span class="p">[</span><span class="n">sel_post</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">timeConvert</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>  <span class="c1"># convert back to time series format to trigger hash maps in scdata</span>
+            <span class="n">df_aux</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_aux</span><span class="p">[</span><span class="s1">&#39;__time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">int2ts</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">scdata_out</span> <span class="o">=</span> <span class="n">scdata</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df_aux</span><span class="p">,</span>
@@ -545,7 +592,9 @@
         <span class="n">P_tr</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">P</span>
 
         <span class="k">if</span> <span class="n">effect</span> <span class="o">==</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
-            <span class="n">time</span> <span class="o">=</span> <span class="n">P_tr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s1">&#39;__time&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="n">P_tr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s1">&#39;Time&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">timeConvert</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">time</span> <span class="o">=</span> <span class="p">[</span><span class="n">ts2int</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">time</span><span class="p">]</span>
             <span class="n">time</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">time</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">time</span><span class="p">]</span>
             <span class="n">P_tr</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">P_tr</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
                                     <span class="n">index</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
@@ -572,7 +621,7 @@
                     <span class="n">aux</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">P_diff</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)])</span>
                     <span class="n">time</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_post</span><span class="p">[</span><span class="n">ceil</span><span class="p">(</span><span class="n">scdata_out</span><span class="o">.</span><span class="n">T1_outcome</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
                     <span class="n">idx</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="n">treated_unit</span><span class="p">],</span> <span class="p">[</span><span class="n">time</span><span class="p">]],</span>
-                                                         <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;treated_unit&#39;</span><span class="p">,</span> <span class="s1">&#39;__time&#39;</span><span class="p">])</span>
+                                                         <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">])</span>
                     <span class="n">P_diff</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">aux</span><span class="p">,</span>
                                               <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
                                               <span class="n">columns</span><span class="o">=</span><span class="n">P_diff</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
@@ -580,7 +629,7 @@
             <span class="n">aux</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">P_tr</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)])</span>
             <span class="n">time</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_post</span><span class="p">[</span><span class="n">ceil</span><span class="p">(</span><span class="n">scdata_out</span><span class="o">.</span><span class="n">T1_outcome</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="n">treated_unit</span><span class="p">],</span> <span class="p">[</span><span class="n">time</span><span class="p">]],</span>
-                                                 <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;treated_unit&#39;</span><span class="p">,</span> <span class="s1">&#39;__time&#39;</span><span class="p">])</span>
+                                                 <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">])</span>
             <span class="n">P_tr</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">aux</span><span class="p">,</span>
                                     <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
                                     <span class="n">columns</span><span class="o">=</span><span class="n">P_tr</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
@@ -597,6 +646,8 @@
             <span class="n">K_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">K</span><span class="p">}</span>
             <span class="n">KM_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">KM</span><span class="p">}</span>
             <span class="n">M_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">M</span><span class="p">}</span>
+            <span class="n">Y_pre_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">Y_pre</span><span class="p">}</span>
+            <span class="n">Y_post_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">Y_post</span><span class="p">}</span>
             <span class="n">period_pre_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_pre</span><span class="p">}</span>
             <span class="n">period_post_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_post</span><span class="p">}</span>
             <span class="n">T0_features_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">treated_unit</span><span class="p">:</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">T0_features</span><span class="p">}</span>
@@ -623,6 +674,8 @@
             <span class="n">K_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">K</span>
             <span class="n">KM_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">KM</span>
             <span class="n">M_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">M</span>
+            <span class="n">Y_pre_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">Y_pre</span>
+            <span class="n">Y_post_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">Y_post</span>
             <span class="n">period_pre_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_pre</span>
             <span class="n">period_post_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">period_post</span>
             <span class="n">T0_features_dict</span><span class="p">[</span><span class="n">treated_unit</span><span class="p">]</span> <span class="o">=</span> <span class="n">scdata_out</span><span class="o">.</span><span class="n">T0_features</span>
@@ -657,23 +710,42 @@
     <span class="n">iota</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">)</span>
     <span class="n">KMI</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">C_stacked</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
 
+    <span class="c1"># transform outcome dictionaries in dataframes</span>
+    <span class="n">Y_pre_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Actual&#39;</span><span class="p">])</span>
+    <span class="n">Y_post_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Actual&#39;</span><span class="p">])</span>
+    <span class="n">ix_pre</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ix_post</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span><span class="p">:</span>
+        <span class="n">temp_df_pre</span> <span class="o">=</span> <span class="n">Y_pre_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">]</span>
+        <span class="n">temp_df_pre</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">tr</span><span class="p">:</span> <span class="s2">&quot;Actual&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">temp_df_post</span> <span class="o">=</span> <span class="n">Y_post_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">]</span>
+        <span class="n">temp_df_post</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">tr</span><span class="p">:</span> <span class="s2">&quot;Actual&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ix_pre</span> <span class="o">=</span> <span class="n">temp_df_pre</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">ix_pre</span><span class="p">)</span>
+        <span class="n">ix_post</span> <span class="o">=</span> <span class="n">temp_df_post</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">ix_post</span><span class="p">)</span>
+        <span class="n">Y_pre_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_pre_df</span><span class="p">,</span> <span class="n">temp_df_pre</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+        <span class="n">Y_post_df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">Y_post_df</span><span class="p">,</span> <span class="n">temp_df_post</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+
+    <span class="n">Y_pre_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">ix_pre</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Y_post_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">ix_post</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="n">scdata_multi_output</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A_stacked</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="n">B_stacked</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="n">C_stacked</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="n">P_stacked</span><span class="p">,</span> <span class="n">P_diff</span><span class="o">=</span><span class="n">Pd_stacked</span><span class="p">,</span>
-                               <span class="n">Y_df</span><span class="o">=</span><span class="n">Y_df</span><span class="p">,</span> <span class="n">Y_donors</span><span class="o">=</span><span class="n">Y_donors_stacked</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J_dict</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="n">K_dict</span><span class="p">,</span>
-                               <span class="n">KM</span><span class="o">=</span><span class="n">KM_dict</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">M_dict</span><span class="p">,</span> <span class="n">iota</span><span class="o">=</span><span class="n">iota</span><span class="p">,</span> <span class="n">KMI</span><span class="o">=</span><span class="n">KMI</span><span class="p">,</span>
+                               <span class="n">Y_df</span><span class="o">=</span><span class="n">Y_df</span><span class="p">,</span> <span class="n">Y_donors</span><span class="o">=</span><span class="n">Y_donors_stacked</span><span class="p">,</span> <span class="n">Y_pre</span><span class="o">=</span><span class="n">Y_pre_df</span><span class="p">,</span> <span class="n">Y_post</span><span class="o">=</span><span class="n">Y_post_df</span><span class="p">,</span>
+                               <span class="n">J</span><span class="o">=</span><span class="n">J_dict</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="n">K_dict</span><span class="p">,</span> <span class="n">KM</span><span class="o">=</span><span class="n">KM_dict</span><span class="p">,</span> <span class="n">M</span><span class="o">=</span><span class="n">M_dict</span><span class="p">,</span> <span class="n">iota</span><span class="o">=</span><span class="n">iota</span><span class="p">,</span> <span class="n">KMI</span><span class="o">=</span><span class="n">KMI</span><span class="p">,</span>
                                <span class="n">cointegrated_data</span><span class="o">=</span><span class="n">cointegrated_data_dict</span><span class="p">,</span>
                                <span class="n">period_pre</span><span class="o">=</span><span class="n">period_pre_dict</span><span class="p">,</span> <span class="n">period_post</span><span class="o">=</span><span class="n">period_post_dict</span><span class="p">,</span>
                                <span class="n">T0_features</span><span class="o">=</span><span class="n">T0_features_dict</span><span class="p">,</span> <span class="n">T1_outcome</span><span class="o">=</span><span class="n">T1_dict</span><span class="p">,</span>
                                <span class="n">outcome_var</span><span class="o">=</span><span class="n">outcome_var</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
                                <span class="n">glob_cons</span><span class="o">=</span><span class="n">constant_dict</span><span class="p">,</span> <span class="n">out_in_features</span><span class="o">=</span><span class="n">out_in_features_dict</span><span class="p">,</span>
                                <span class="n">donors_dict</span><span class="o">=</span><span class="n">donors_dict</span><span class="p">,</span> <span class="n">treated_units</span><span class="o">=</span><span class="n">treated_units</span><span class="p">,</span>
-                               <span class="n">effect</span><span class="o">=</span><span class="n">effect</span><span class="p">,</span> <span class="n">units_est</span><span class="o">=</span><span class="n">units_est</span><span class="p">,</span> <span class="n">anticipation</span><span class="o">=</span><span class="n">anticipation_dict</span><span class="p">)</span></div>
+                               <span class="n">effect</span><span class="o">=</span><span class="n">effect</span><span class="p">,</span> <span class="n">units_est</span><span class="o">=</span><span class="n">units_est</span><span class="p">,</span> <span class="n">anticipation</span><span class="o">=</span><span class="n">anticipation_dict</span><span class="p">,</span>
+                               <span class="n">timeConvert</span><span class="o">=</span><span class="n">timeConvert</span><span class="p">)</span></div>
 
 
 <span class="k">class</span> <span class="nc">scdata_multi_output</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">P_diff</span><span class="p">,</span> <span class="n">Y_df</span><span class="p">,</span> <span class="n">Y_donors</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">KM</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">iota</span><span class="p">,</span> <span class="n">KMI</span><span class="p">,</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">P_diff</span><span class="p">,</span> <span class="n">Y_df</span><span class="p">,</span> <span class="n">Y_donors</span><span class="p">,</span> <span class="n">Y_pre</span><span class="p">,</span> <span class="n">Y_post</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">KM</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">iota</span><span class="p">,</span> <span class="n">KMI</span><span class="p">,</span>
                  <span class="n">cointegrated_data</span><span class="p">,</span> <span class="n">period_pre</span><span class="p">,</span> <span class="n">period_post</span><span class="p">,</span> <span class="n">T0_features</span><span class="p">,</span>
                  <span class="n">T1_outcome</span><span class="p">,</span> <span class="n">outcome_var</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">glob_cons</span><span class="p">,</span> <span class="n">out_in_features</span><span class="p">,</span>
-                 <span class="n">donors_dict</span><span class="p">,</span> <span class="n">treated_units</span><span class="p">,</span> <span class="n">effect</span><span class="p">,</span> <span class="n">units_est</span><span class="p">,</span> <span class="n">anticipation</span><span class="p">):</span>
+                 <span class="n">donors_dict</span><span class="p">,</span> <span class="n">treated_units</span><span class="p">,</span> <span class="n">effect</span><span class="p">,</span> <span class="n">units_est</span><span class="p">,</span> <span class="n">anticipation</span><span class="p">,</span> <span class="n">timeConvert</span><span class="p">):</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">A</span> <span class="o">=</span> <span class="n">A</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">B</span> <span class="o">=</span> <span class="n">B</span>
@@ -682,6 +754,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">P_diff</span> <span class="o">=</span> <span class="n">P_diff</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Y_df</span> <span class="o">=</span> <span class="n">Y_df</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">Y_donors</span> <span class="o">=</span> <span class="n">Y_donors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_pre</span> <span class="o">=</span> <span class="n">Y_pre</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y_post</span> <span class="o">=</span> <span class="n">Y_post</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">J</span> <span class="o">=</span> <span class="n">J</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">KM</span> <span class="o">=</span> <span class="n">KM</span>
@@ -702,6 +776,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">effect</span> <span class="o">=</span> <span class="n">effect</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">units_est</span> <span class="o">=</span> <span class="n">units_est</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">anticipation</span> <span class="o">=</span> <span class="n">anticipation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeConvert</span> <span class="o">=</span> <span class="n">timeConvert</span>
 </pre></div>
 
             <div class="clearer"></div>

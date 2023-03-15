@@ -537,7 +537,7 @@ def V_prep(type, B, T0_features, iota):
         V = V[:, col_trim][row_trim, :] / (iota ** 2)
 
     V = pandas.DataFrame(V, index=B.index,
-                         columns=B.index.get_level_values('treated_unit'))
+                         columns=B.index.get_level_values('ID'))
 
     return V
 
@@ -549,6 +549,7 @@ def u_des_prep(B, C, u_order, u_lags, coig_data, T0_tot, M, constant, index,
     # Construct the polynomial terms in B
     if u_order == 0:       # Simple mean
         u_des_0 = pandas.DataFrame(numpy.ones(T0_tot), index=B.index)
+        u_des_0.columns = [B.columns[0]]
 
     elif u_order > 0:  # Include covariates when predicting u_mean
 
@@ -639,7 +640,7 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
         # Construct the polynomial terms in B (e.des.0) and P (e.des.1)
         if e_order == 0:       # Simple mean
             ix = pandas.MultiIndex.from_product([[outcome_var], B.loc[(outcome_var,), :].index.tolist()])
-            ix.rename(["feature", "__time"], inplace=True)
+            ix.rename(["feature", "Time"], inplace=True)
 
             e_des_0 = pandas.DataFrame(numpy.ones(T0), index=ix)
             e_des_1 = pandas.DataFrame(numpy.ones(T1), index=P.index)
@@ -982,14 +983,14 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             e_mean = fit[:len(preds)]
             if effect == "time":
                 e_mean = pandas.DataFrame(data=e_mean, index=idx)
-                e_mean = e_mean.mean(level='__time').values[:, 0]
+                e_mean = e_mean.mean(level='Time').values[:, 0]
 
             y_fit = fit[len(preds):]
             y_var = numpy.log((y - y_fit)**2)
             var_pred = cond_pred(y=y_var, x=x, xpreds=x_more, method='lm')
             if effect == "time":
                 var_pred = pandas.DataFrame(data=var_pred[:len(preds)], index=idx)
-                var_pred = var_pred.mean(level='__time').values[:, 0]
+                var_pred = var_pred.mean(level='Time').values[:, 0]
             else:
                 var_pred = var_pred[:len(preds)]
             e_sig2 = numpy.exp(var_pred)
@@ -998,8 +999,8 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             if effect == "time":
                 q3_pred = pandas.DataFrame(data=q_pred[:len(preds), 1], index=idx)
                 q1_pred = pandas.DataFrame(data=q_pred[:len(preds), 0], index=idx)
-                q3_pred = q3_pred.mean(level='__time').values[:, 0]
-                q1_pred = q1_pred.mean(level='__time').values[:, 0]
+                q3_pred = q3_pred.mean(level='Time').values[:, 0]
+                q1_pred = q1_pred.mean(level='Time').values[:, 0]
             else:
                 q3_pred = q_pred[:len(preds), 1]
                 q1_pred = q_pred[:len(preds), 0]
@@ -1024,7 +1025,7 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             e_mean = fit[:len(preds)]
             if effect == "time":
                 e_mean = pandas.DataFrame(data=e_mean, index=idx)
-                e_mean = e_mean.mean(level='__time').values[:, 0]
+                e_mean = e_mean.mean(level='Time').values[:, 0]
 
             y_fit = fit[len(preds):]
             y_var = numpy.log((y - y_fit)**2)
@@ -1032,7 +1033,7 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             res_var = var_pred[len(preds):]
             if effect == "time":
                 var_pred = pandas.DataFrame(data=var_pred[:len(preds)], index=idx)
-                var_pred = var_pred.mean(level='__time').values[:, 0]
+                var_pred = var_pred.mean(level='Time').values[:, 0]
             else:
                 var_pred = var_pred[:len(preds)]
 
@@ -1040,8 +1041,8 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             if effect == "time":
                 q3_pred = pandas.DataFrame(data=q_pred[:len(preds), 1], index=idx)
                 q1_pred = pandas.DataFrame(data=q_pred[:len(preds), 0], index=idx)
-                q3_pred = q3_pred.mean(level='__time').values[:, 0]
-                q1_pred = q1_pred.mean(level='__time').values[:, 0]
+                q3_pred = q3_pred.mean(level='Time').values[:, 0]
+                q1_pred = q1_pred.mean(level='Time').values[:, 0]
             else:
                 q3_pred = q_pred[:len(preds), 1]
                 q1_pred = q_pred[:len(preds), 0]
@@ -1066,8 +1067,8 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             if effect == "time":
                 e_pred_lb = pandas.DataFrame(data=e_pred[:, 0], index=idx)
                 e_pred_ub = pandas.DataFrame(data=e_pred[:, 1], index=idx)
-                e_pred_lb = e_pred_lb.mean(level='__time').values[:, 0]
-                e_pred_ub = e_pred_ub.mean(level='__time').values[:, 0]
+                e_pred_lb = e_pred_lb.mean(level='Time').values[:, 0]
+                e_pred_ub = e_pred_ub.mean(level='Time').values[:, 0]
             else:
                 e_pred_lb = e_pred[:, [0]]
                 e_pred_ub = e_pred[:, [1]]
@@ -1076,7 +1077,7 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             ub = e_pred_ub
 
         if effect == "time":
-            idx = idx.unique('__time')
+            idx = idx.unique('Time')
 
         lb = pandas.DataFrame(lb, index=idx)
         ub = pandas.DataFrame(ub, index=idx)
@@ -1348,7 +1349,7 @@ def executionTime(T0, T1, J, iota, cores, sims, name):
 
 def mat2dict(mat, cols=True):
     X = deepcopy(mat)
-    tr_units = X.index.get_level_values('treated_unit').unique().tolist()
+    tr_units = X.index.get_level_values('ID').unique().tolist()
     matdict = {}
 
     if len(mat.columns) == 1:
@@ -1452,3 +1453,6 @@ def matRegularize(P, cond=None):
         Qreg = M2.transpose()
 
     return scale, Qreg
+
+def ix2rn(s):
+    return str(s).replace('(', '').replace(')', '').replace("'", '')

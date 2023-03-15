@@ -117,18 +117,18 @@ the upper bound by filling the other column with NAs.</p></li>
 <li><p><strong>w</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the weights of the donors.</p></li>
 <li><p><strong>r</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the values of the covariates used for adjustment.</p></li>
 <li><p><strong>b</strong> (<em>pandas.DataFrame</em>) – a dataframe containing w and r.</p></li>
-<li><p><strong>Y_pre_fit</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the estimated pre-treatment outcome for the SC unit.</p></li>
-<li><p><strong>Y_post_fit</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the estimated post-treatment outcome for the SC unit.</p></li>
-<li><p><strong>A_hat</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the predicted values of the features of the treated unit.</p></li>
+<li><p><strong>Y_pre_fit</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the estimated pre-treatment outcome for the SC unit(s).</p></li>
+<li><p><strong>Y_post_fit</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the estimated post-treatment outcome for the SC unit(s).</p></li>
+<li><p><strong>Y_pre</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the actual pre-treatment outcome for the treated unit(s).</p></li>
+<li><p><strong>Y_post</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the actual post-treatment outcome for the treated unit(s).</p></li>
+<li><p><strong>A_hat</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the predicted values of the features of the treated unit(s).</p></li>
 <li><p><strong>res</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the residuals A - A_hat.</p></li>
 <li><p><strong>V</strong> (<em>numpy.array</em>) – an array containing the weighting matrix used in estimation.</p></li>
 <li><p><strong>w_constr</strong> (<em>dictionary</em>) – a dictionary containing the specifics of the constraint set used on the weights.</p></li>
-<li><p><strong>A</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the treated unit.</p></li>
+<li><p><strong>A</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the treated unit(s).</p></li>
 <li><p><strong>B</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the control units.</p></li>
 <li><p><strong>C</strong> (<em>pandas.DataFrame</em>) – a dataframe containing covariates for adjustment.</p></li>
-<li><p><strong>P</strong> (<em>pandas.DataFrame</em>) – a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.</p></li>
-<li><p><strong>Y_pre</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre-treatment outcome of the treated unit.</p></li>
-<li><p><strong>Y_post</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the post-treatment outcome of the treated unit.</p></li>
+<li><p><strong>P</strong> (<em>pandas.DataFrame</em>) – a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit(s).</p></li>
 <li><p><strong>Y_donors</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre-treatment outcome of the control units.</p></li>
 <li><p><strong>J</strong> (<em>int</em>) – the number of control units</p></li>
 <li><p><strong>K</strong> (<em>array</em>) – a numeric array with the number of covariates used for adjustment for each feature</p></li>

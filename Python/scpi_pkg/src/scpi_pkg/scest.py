@@ -12,8 +12,9 @@ import pandas
 pandas.options.mode.chained_assignment = None
 import numpy
 from copy import deepcopy
-from .funs import w_constr_prep, b_est, b_est_multi, V_prep, mat2dict
+from .funs import w_constr_prep, b_est, b_est_multi, V_prep, mat2dict, ix2rn
 from .scplot import scplot
+from .scplotMulti import scplotMulti
 
 
 def scest(df, w_constr=None, V="separate", plot=False):
@@ -84,13 +85,22 @@ def scest(df, w_constr=None, V="separate", plot=False):
         a dataframe containing covariates for adjustment.
 
     P : pandas.DataFrame
-        a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.
+        a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit(s).
 
     Y_pre : pandas.DataFrame
-        a dataframe containing the pre-treatment outcome of the treated unit.
+        a dataframe containing the pre-treatment outcome of the treated unit(s). If multiple treated units are present and the desired
+        predictand involves aggregation (e.g., effect = "time" or effect = "unit) then it contains only the raw data before aggregation.
+        For the aggregated data see 'Y_actual'.
 
     Y_post : pandas.DataFrame
-        a dataframe containing the post-treatment outcome of the treated unit.
+        a dataframe containing the post-treatment outcome of the treated unit(s). If multiple treated units are present and the desired
+        predictand involves aggregation (e.g., effect = "time" or effect = "unit) then it contains only the raw data before aggregation.
+        For the aggregated data see 'Y_actual'.
+
+    Y_actual : pandas.DataFrame
+        a dataframe containing the pre- and post-treatment outcome of the treated unit(s). If the desired predictand
+        involves aggregation (e.g., effect = "time" or effect = "unit) then it contains the data after aggregation.
+        For the disaggregated data see 'Y_pre' and 'Y_post'.
 
     Y_donors : pandas.DataFrame
         a dataframe containing the pre-treatment outcome of the control units.
@@ -228,7 +238,7 @@ def scest(df, w_constr=None, V="separate", plot=False):
                             "," + str(len(B)) + ")!")
         V_type = "separate"
         V = pandas.DataFrame(V, index=B.index,
-                             columns=B.index.get_level_values('treated_unit'))
+                             columns=B.index.get_level_values('ID'))
     else:
         V = V_prep(V_type, B, T0_features, iota)
 
@@ -237,7 +247,7 @@ def scest(df, w_constr=None, V="separate", plot=False):
         w_constr = w_constr_prep(w_constr, w_names, A, Z, V, J, KM)
         result = b_est(A=A, Z=Z, J=J, KM=KM, w_constr=w_constr, V=V)
         cnms = [c.split("_", 1)[1] for c in Z.columns.tolist()]
-        idx = pandas.MultiIndex.from_product([df.treated_units, cnms], names=['treated_unit', 'donor'])
+        idx = pandas.MultiIndex.from_product([df.treated_units, cnms], names=['ID', 'donor'])
         b = pandas.DataFrame(result, index=idx)
         w_constr_dict = {df.treated_units[0]: w_constr}
 
@@ -296,7 +306,7 @@ def scest(df, w_constr=None, V="separate", plot=False):
                     k_lb = k_ub
 
         b = pandas.concat([w_store, r_store], axis=0)
-        b.index.rename(['treated_unit', 'donor'], inplace=True)
+        b.index.rename(['ID', 'donor'], inplace=True)
     w_constr = w_constr_dict
 
     ##########################
@@ -331,13 +341,138 @@ def scest(df, w_constr=None, V="separate", plot=False):
     fit_pre.columns = A.columns
     fit_post.columns = A.columns
 
+    Y_pre_fit = deepcopy(fit_pre)
+    Y_post_fit = deepcopy(fit_post)
+
+    ############################################################################
+    # Store actual values for the outcome pre and post when scdataMulti is used
+    if class_type == "scpi_data_multi":
+        Y_df = deepcopy(df.Y_df)
+        Y_df.columns = ['ID', 'Time', 'Treatment', 'Actual']
+
+        sel_units = [i in df.units_est for i in Y_df['ID']]
+        res_df = deepcopy(Y_df[sel_units])
+
+        # create hash maps if required
+        if df.timeConvert is True:
+            time_unique_ts = sorted(set(Y_df['Time'].tolist()))
+            if df.effect != "time":
+                int2ts = {i: time_unique_ts[i] for i in range(len(time_unique_ts))}
+                ts2int = {time_unique_ts[i]: i for i in range(len(time_unique_ts))}
+            else:
+                ts2int = {time_unique_ts[i]: i + 2000 for i in range(len(time_unique_ts))}
+
+            Y_df['Time'] = Y_df['Time'].map(ts2int)
+            res_df = deepcopy(Y_df[sel_units])
+
+            fit_pre.reset_index(drop=False, inplace=True)
+            fit_pre['Time'] = fit_pre['Time'].map(ts2int)
+            fit_pre.set_index(['ID', 'Time'], drop=True, inplace=True)
+
+            if df.effect != "time":
+                fit_post.reset_index(drop=False, inplace=True)
+                fit_post['Time'] = fit_post['Time'].map(ts2int)
+                fit_post.set_index(['ID', 'Time'], drop=True, inplace=True)
+
+        synth_mat = pandas.concat([fit_pre, fit_post], axis=0)
+
+        if df.effect != "time":
+            synth_mat.index = synth_mat.index.rename(['ID', 'Time'])
+            synth_mat.columns = ['Synthetic']
+
+        if df.effect == "unit":
+            Y_actual_pre = res_df[res_df['Treatment'] == 0]
+            Y_actual_post = res_df[res_df['Treatment'] == 1]
+            Y_actual_post_agg = Y_actual_post[['ID', 'Actual']].groupby(by='ID').mean()
+            Y_actual_post_agg['Treatment'] = 1
+            Y_actual_post_agg.set_index(fit_post.index, inplace=True)
+            Y_actual_pre.set_index(['ID', 'Time'], append=False, inplace=True)
+            Y_actual = pandas.concat([Y_actual_pre, Y_actual_post_agg], axis=0)
+        else:
+            Y_actual = deepcopy(res_df)
+            Y_actual.set_index(['ID', 'Time'], drop=True, inplace=True)
+
+        treated_periods = Y_actual.loc[Y_actual['Treatment'] == 1]
+        treated_periods.reset_index(drop=False, inplace=True)
+        treated_reception = treated_periods.groupby('ID').min()
+        treated_reception.columns = ["Tdate", "Treatment", "Actual"]
+        ant_df = pandas.DataFrame.from_dict(df.anticipation, orient='index')
+        ant_df.index.rename('ID', inplace=True)
+        ant_df.columns = ["anticipation"]
+        treated_reception = treated_reception.merge(ant_df, on="ID")
+        treated_reception['Tdate'] = treated_reception['Tdate'] - treated_reception['anticipation'] - 1 / 2
+
+        treated_reception.reset_index(drop=False, inplace=True)
+        sel_units = [i in df.units_est for i in treated_reception['ID']]
+        treated_reception = treated_reception[sel_units]
+
+        if df.effect != "time":
+            toplot = pandas.concat([Y_actual, synth_mat], axis=1, join='inner')
+
+        elif df.effect == "time":
+            res_df = res_df.merge(treated_reception[['ID', 'Tdate']], on="ID")
+            Y_actual_pre = res_df[res_df['Time'] < res_df['Tdate']]
+            Y_actual_post = res_df[res_df['Time'] > res_df['Tdate']]
+            Y_actual_pre['Tdate'] = Y_actual_pre['Tdate'] + 1 / 2
+            Y_actual_post['Tdate'] = Y_actual_post['Tdate'] + 1 / 2
+            Y_actual_pre['tstd'] = Y_actual_pre['Time'] - Y_actual_pre['Tdate']
+            Y_actual_post['tstd'] = Y_actual_post['Time'] - Y_actual_post['Tdate']
+
+            names = synth_mat.index.values.tolist()
+            names = [ix2rn(n).split(',') for n in names]
+            unit = []
+            unitagg = []
+            time = []
+            for n in names:
+                if len(n) == 2:
+                    unit.append(n[0])
+                    time.append(n[1])
+                else:
+                    unitagg.append(n[0])
+
+            synth_pre = pandas.DataFrame({'ID': unit,
+                                          'Time': time,
+                                          'Synthetic': synth_mat.iloc[0:len(unit), 0].values})
+            synth_pre = synth_pre.astype({'Time': Y_actual_pre['Time'].dtypes})
+            Y_pre = Y_actual_pre.merge(synth_pre, on=['ID', 'Time'], how='left')
+
+            max_pre = max(Y_actual_pre.groupby(['ID'])['tstd'].min()) + 1
+            min_post = min([v for v in df.T1_outcome.values()]) - 1
+
+            Y_pre_agg = Y_pre.groupby(['tstd'])[['Actual', 'Synthetic']].mean()
+            Y_pre_agg.reset_index(inplace=True, drop=False)
+            Y_pre_agg.columns = ['Time', 'Actual', 'Synthetic']
+            Y_pre_agg = Y_pre_agg[Y_pre_agg['Time'] >= max_pre]
+
+            Y_post_agg = Y_actual_post.groupby(['tstd'])[['Actual']].mean()
+            Y_post_agg.reset_index(inplace=True, drop=False)
+            Y_post_agg = Y_post_agg[Y_post_agg['tstd'] <= min_post]
+
+            Y_post_agg = pandas.DataFrame({'ID': unitagg,
+                                           'Actual': Y_post_agg['Actual'],
+                                           'Synthetic': synth_mat.iloc[len(unit):, 0].values,
+                                           'Time': range(0, len(unitagg))})
+
+            Y_pre_agg['Treatment'] = 0
+            Y_post_agg['Treatment'] = 1
+            Y_pre_agg['ID'] = "aggregate"
+            Y_post_agg['ID'] = "aggregate"
+
+            Y_actual = pandas.concat([Y_pre_agg, Y_post_agg], axis=0)
+            Y_actual['Tdate'] = 0
+
+        if df.effect != "time" and df.timeConvert is True:
+            Y_actual.reset_index(drop=False, inplace=True)
+            Y_actual['Time'] = Y_actual['Time'].map(int2ts)
+            Y_actual.set_index(['ID', 'Time'], drop=True, inplace=True)
+
     ##################################################
     # Plot
 
     if plot is True:
         if class_type == "scpi_data":
-            to_plot = scest_output(b=b, w=w, r=r, Y_pre_fit=fit_pre,
-                                   Y_post_fit=fit_post, A_hat=A_hat, res=res,
+            to_plot = scest_output(b=b, w=w, r=r, Y_pre_fit=Y_pre_fit,
+                                   Y_post_fit=Y_post_fit, A_hat=A_hat, res=res,
                                    V=V, w_constr=w_constr, A=A, B=B, C=C,
                                    P=P, P_diff=None, Y_pre=df.Y_pre, Y_post=df.Y_post,
                                    Y_donors=Y_donors, J=J, K=K, KM=KM,
@@ -350,29 +485,30 @@ def scest(df, w_constr=None, V="separate", plot=False):
                                    plotres=None, treated_units=df.treated_units,
                                    donors_dict={df.treated_units[0]: df.donors_units},
                                    units_est=df.units_est, anticipation=df.anticipation,
-                                   effect="unit-time")
+                                   effect="unit-time", timeConvert=df.timeConvert)
+            plotres = scplot(result=to_plot)
         else:
-            top_plot = scest_multi_output(b=b, w=w, r=r, Y_pre_fit=fit_pre, Y_post_fit=fit_post,
-                                          A_hat=A_hat, res=res, V=V, w_constr=w_constr, A=A,
-                                          B=B, C=C, P=P, P_diff=df.P_diff, Y_df=df.Y_df, Y_donors=df.Y_donors,
-                                          J=J, K=K, KM=KM, M=M, iota=df.iota, KMI=df.KMI,
-                                          cointegrated_data=df.cointegrated_data,
-                                          period_pre=df.period_pre,
-                                          period_post=df.period_post,
-                                          T0_features=df.T0_features,
-                                          T1_outcome=df.T1_outcome,
-                                          features=df.features,
-                                          outcome_var=df.outcome_var,
-                                          glob_cons=df.glob_cons,
-                                          out_in_features=df.out_in_features,
-                                          plotres=None,
-                                          donors_dict=df.donors_dict,
-                                          treated_units=df.treated_units,
-                                          effect=df.effect,
-                                          units_est=df.units_est,
-                                          anticipation=df.anticipation)
-        plotres = scplot(result=to_plot)
-
+            to_plot = scest_multi_output(b=b, w=w, r=r, Y_pre_fit=Y_pre_fit, Y_post_fit=Y_post_fit,
+                                         Y_pre=df.Y_pre, Y_post=df.Y_post, Y_actual=Y_actual,
+                                         A_hat=A_hat, res=res, V=V, w_constr=w_constr, A=A,
+                                         B=B, C=C, P=P, P_diff=df.P_diff, Y_df=df.Y_df, Y_donors=df.Y_donors,
+                                         J=J, K=K, KM=KM, M=M, iota=df.iota, KMI=df.KMI,
+                                         cointegrated_data=df.cointegrated_data,
+                                         period_pre=df.period_pre,
+                                         period_post=df.period_post,
+                                         T0_features=df.T0_features,
+                                         T1_outcome=df.T1_outcome,
+                                         features=df.features,
+                                         outcome_var=df.outcome_var,
+                                         glob_cons=df.glob_cons,
+                                         out_in_features=df.out_in_features,
+                                         plotres=None,
+                                         donors_dict=df.donors_dict,
+                                         treated_units=df.treated_units,
+                                         effect=df.effect,
+                                         units_est=df.units_est,
+                                         anticipation=df.anticipation, timeConvert=df.timeConvert)
+            plotres = scplotMulti(result=to_plot)
     else:
         plotres = None
 
@@ -380,8 +516,8 @@ def scest(df, w_constr=None, V="separate", plot=False):
         return scest_output(b=b,
                             w=w,
                             r=r,
-                            Y_pre_fit=fit_pre,
-                            Y_post_fit=fit_post,
+                            Y_pre_fit=Y_pre_fit,
+                            Y_post_fit=Y_post_fit,
                             A_hat=A_hat,
                             res=res,
                             V=V,
@@ -414,30 +550,15 @@ def scest(df, w_constr=None, V="separate", plot=False):
                             donors_dict={df.treated_units[0]: df.donors_units},
                             units_est=df.units_est,
                             anticipation=df.anticipation,
-                            effect="unit-time")
+                            effect="unit-time",
+                            timeConvert=df.timeConvert)
     else:
-        return scest_multi_output(b=b,
-                                  w=w,
-                                  r=r,
-                                  Y_pre_fit=fit_pre,
-                                  Y_post_fit=fit_post,
-                                  A_hat=A_hat,
-                                  res=res,
-                                  V=V,
-                                  w_constr=w_constr,
-                                  A=A,
-                                  B=B,
-                                  C=C,
-                                  P=P,
-                                  P_diff=df.P_diff,
-                                  Y_df=df.Y_df,
-                                  Y_donors=df.Y_donors,
-                                  J=J,
-                                  K=K,
-                                  KM=KM,
-                                  M=M,
-                                  iota=df.iota,
-                                  KMI=df.KMI,
+        return scest_multi_output(b=b, w=w, r=r, Y_pre_fit=Y_pre_fit, Y_post_fit=Y_post_fit, Y_pre=df.Y_pre,
+                                  Y_post=df.Y_post, Y_actual=Y_actual, A_hat=A_hat,
+                                  res=res, V=V, w_constr=w_constr,
+                                  A=A, B=B, C=C, P=P,
+                                  P_diff=df.P_diff, Y_df=df.Y_df, Y_donors=df.Y_donors,
+                                  J=J, K=K, KM=KM, M=M, iota=df.iota, KMI=df.KMI,
                                   cointegrated_data=df.cointegrated_data,
                                   period_pre=df.period_pre,
                                   period_post=df.period_post,
@@ -452,7 +573,7 @@ def scest(df, w_constr=None, V="separate", plot=False):
                                   treated_units=df.treated_units,
                                   effect=df.effect,
                                   units_est=df.units_est,
-                                  anticipation=df.anticipation)
+                                  anticipation=df.anticipation, timeConvert=df.timeConvert)
 
 
 class scest_output:
@@ -460,7 +581,7 @@ class scest_output:
                  A, B, C, P, P_diff, Y_pre, Y_post, Y_donors, J, K, KM, M, iota, KMI,
                  cointegrated_data, period_pre, period_post, T0_features,
                  T1_outcome, features, outcome_var, glob_cons, out_in_features,
-                 plotres, treated_units, donors_dict, units_est, anticipation, effect):
+                 plotres, treated_units, donors_dict, units_est, anticipation, effect, timeConvert):
 
         self.b = b
         self.w = w
@@ -500,6 +621,7 @@ class scest_output:
         self.units_est = units_est
         self.anticipation = anticipation
         self.effect = effect
+        self.timeConvert = timeConvert
 
     def __repr__(self):
 
@@ -585,17 +707,20 @@ class scest_output:
         return ''
 
 class scest_multi_output:
-    def __init__(self, b, w, r, Y_pre_fit, Y_post_fit, A_hat, res, V, w_constr,
+    def __init__(self, b, w, r, Y_pre_fit, Y_post_fit, Y_pre, Y_post, Y_actual, A_hat, res, V, w_constr,
                  A, B, C, P, P_diff, Y_df, Y_donors, J, K, KM, M, iota, KMI,
                  cointegrated_data, period_pre, period_post, T0_features,
                  T1_outcome, features, outcome_var, glob_cons, out_in_features, plotres,
-                 donors_dict, treated_units, effect, units_est, anticipation):
+                 donors_dict, treated_units, effect, units_est, anticipation, timeConvert):
 
         self.b = b
         self.w = w
         self.r = r
         self.Y_pre_fit = Y_pre_fit
         self.Y_post_fit = Y_post_fit
+        self.Y_pre = Y_pre
+        self.Y_post = Y_post
+        self.Y_actual = Y_actual
         self.A_hat = A_hat
         self.res = res
         self.V = V
@@ -628,6 +753,7 @@ class scest_multi_output:
         self.effect = effect
         self.units_est = units_est
         self.anticipation = anticipation
+        self.timeConvert = timeConvert
 
     def __repr__(self):
 

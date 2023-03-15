@@ -42,9 +42,9 @@ def scdataMulti(df,
         a character with the name of the variable containing units' IDs.
 
     time_var : str
-        a character with the name of the time variable. The time variable has to be numpy.int64, or one of
-        pandas.Timestamp and numpy.datetime64. Input a numeric time variable is suggested when working with
-        yearly data, whereas for all other frequencies either pandas.Timestamp or numpy.datetime64 types are preferred.
+        a character with the name of the time variable. The time variable has to be numpy.int64 or
+        numpy.datetime64. Input a numeric time variable is suggested when working with
+        yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.
 
     outcome_var : str
         a character with the name of the outcome variable. The outcome variable has to be numeric.
@@ -77,9 +77,11 @@ def scdataMulti(df,
         feature, and so on. Finally, the user can specify 'constant' and 'trend' as covariates even if they are not
         present in the loaded dataframe.
 
-    post_est : int, default None
-        an integer specifying the number of post-treatment periods for which treatment effects have to be estimated for each treated unit. If
-        effect = "unit" it indicates the number of periods over which the average post-treatment effect is computed.
+    post_est : int/str, default None
+        an integer or string specifying the number of post-treatment periods for which treatment effects have to be estimated for each
+        treated unit. It must be an integer when time_var is integer, otherwise it must be a string of the form "10 years", "2 months",
+        "1 day" and so on. Possible options are: 'year(s)', 'month(s)', 'week(s)', 'day(s), and 'hour(s)'.
+        If effect = "unit" it indicates the number of periods over which the average post-treatment effect is computed.
 
     units_est : list, default None
         a list specifying the treated units for which treatment effects have to be estimated.
@@ -133,6 +135,14 @@ def scdataMulti(df,
     Y_df : pandas.DataFrame
         a dataframe containing the outcome variable for all units.
 
+    Y_pre: pandas.DataFrame
+        a dataframe containing the actual pre-treatment outcome for the treated unit(s). Note that this is the raw data,
+        therefore if effect is specified, Y_pre will not contain the aggregated data.
+
+    Y_post: pandas.DataFrame
+        a dataframe containing the actual post-treatment outcome for the treated unit(s). Note that this is the raw data,
+        therefore if effect is specified, Y_pre will not contain the aggregated data.
+
     Y_donors : pandas.DataFrame
         a dataframe containing the pre-treatment outcome of the control units.
 
@@ -171,6 +181,9 @@ def scdataMulti(df,
         for internal use only
 
     out_in_features : bool
+        for internal use only
+
+    timeConvert : bool
         for internal use only
 
     References
@@ -246,17 +259,13 @@ def scdataMulti(df,
     if treatment_var not in var_names:
         raise Exception("Treatment variable (treatment_var) not found in the input dataframe!")
 
-    if post_est is not None:
-        if not isinstance(post_est, int):
-            raise Exception("You should specify post_est as an integer!")
-
     # Make time and id columns if these variables are indexes of the dataframe and rename variables
     if id_var in indexes:
         data['__ID'] = data.index.get_level_values(id_var)
     else:
         data.rename(columns={id_var: '__ID'}, inplace=True)
 
-    # CVXR does not like _ symbols
+    # CVXR does not like '_' symbols
     if pandas.api.types.is_string_dtype(data['__ID']) is False:  # convert to string if not string
         data['__ID'] = data['__ID'].astype(str)
     data['__ID'] = data['__ID'].str.replace('_', ' ')
@@ -269,6 +278,37 @@ def scdataMulti(df,
     data.rename(columns={treatment_var: '__Treatment'}, inplace=True)
 
     Y_df = data[['__ID', '__time', '__Treatment', outcome_var]]
+
+    # Check time_var type and eventually convert it
+    timeConvert = False
+    dd = data.iloc[0, data.columns.get_loc('__time')]
+    if not isinstance(dd, (numpy.int64, numpy.int32, numpy.int16, numpy.datetime64, pandas.Timestamp)):
+        raise Exception("The object time_var should be of type int, pandas.Timestamp, or numpy.datetime64!")
+
+    elif isinstance(dd, (numpy.datetime64, pandas.Timestamp)):
+        time_unique_ts = sorted(set(data['__time'].tolist()))
+        int2ts = {i: time_unique_ts[i] for i in range(len(time_unique_ts))}
+        ts2int = {time_unique_ts[i]: i for i in range(len(time_unique_ts))}
+        data['__time'] = data['__time'].map(ts2int)
+        timeConvert = True
+
+    if post_est is not None:
+        if not isinstance(post_est, (int, str)):
+            raise Exception("You should specify post_est as an integer or a string!")
+
+        if not isinstance(dd, (numpy.datetime64, pandas.Timestamp)):
+            if not isinstance(post_est, int):
+                raise Exception("You should specify post_est as an integer!")
+        else:
+            if not isinstance(post_est, str):
+                raise Exception("You should specify post_est as a string!")
+            aux = post_est.split(' ')
+            if len(aux) != 2:
+                raise Exception("You should specify post_est as a string of the form (e.g.) '10 years'!")
+            post_est_delta = aux[0]
+            post_est_freq = aux[1][0].upper()
+            if post_est_freq == "H":
+                post_est_freq = "h"
 
     # Identify treated units
     periods_treated = data[['__Treatment', '__ID']].groupby('__ID').sum()
@@ -448,7 +488,11 @@ def scdataMulti(df,
         donors_units = donors_count[donors_count['__Treatment'] == 0].index.values.tolist()
 
         if post_est is not None:
-            T1_last = treated_unit_T0 + post_est
+            if timeConvert is False:
+                T1_last = treated_unit_T0 + post_est
+            else:
+                T1_last = treated_unit_T0 + numpy.timedelta64(post_est_delta, post_est_freq)
+
             treated_donors = data[(data['__ID'].isin(treated_post)) &
                                   (data['__time'] < T1_last)]
             tr_donors_count = treated_donors[['__ID', '__Treatment']].groupby('__ID').sum()
@@ -476,6 +520,9 @@ def scdataMulti(df,
         if post_est is not None:
             sel_post = period_post < T1_last
             period_post = period_post[sel_post]
+
+        if timeConvert is True:  # convert back to time series format to trigger hash maps in scdata
+            df_aux['__time'] = df_aux['__time'].map(int2ts)
 
         try:
             scdata_out = scdata(df=df_aux,
@@ -508,7 +555,9 @@ def scdataMulti(df,
         P_tr = scdata_out.P
 
         if effect == "time":
-            time = P_tr.index.get_level_values('__time').tolist()
+            time = P_tr.index.get_level_values('Time').tolist()
+            if timeConvert is True:
+                time = [ts2int[t] for t in time]
             time = [t - min(time) + 1 for t in time]
             P_tr = pandas.DataFrame(P_tr.values,
                                     index=time,
@@ -535,7 +584,7 @@ def scdataMulti(df,
                     aux = numpy.array([P_diff.mean(axis=0)])
                     time = scdata_out.period_post[ceil(scdata_out.T1_outcome / 2) - 1]
                     idx = pandas.MultiIndex.from_product([[treated_unit], [time]],
-                                                         names=['treated_unit', '__time'])
+                                                         names=['ID', 'Time'])
                     P_diff = pandas.DataFrame(aux,
                                               index=idx,
                                               columns=P_diff.columns)
@@ -543,7 +592,7 @@ def scdataMulti(df,
             aux = numpy.array([P_tr.mean(axis=0)])
             time = scdata_out.period_post[ceil(scdata_out.T1_outcome / 2) - 1]
             idx = pandas.MultiIndex.from_product([[treated_unit], [time]],
-                                                 names=['treated_unit', '__time'])
+                                                 names=['ID', 'Time'])
             P_tr = pandas.DataFrame(aux,
                                     index=idx,
                                     columns=P_tr.columns)
@@ -560,6 +609,8 @@ def scdataMulti(df,
             K_dict = {treated_unit: scdata_out.K}
             KM_dict = {treated_unit: scdata_out.KM}
             M_dict = {treated_unit: scdata_out.M}
+            Y_pre_dict = {treated_unit: scdata_out.Y_pre}
+            Y_post_dict = {treated_unit: scdata_out.Y_post}
             period_pre_dict = {treated_unit: scdata_out.period_pre}
             period_post_dict = {treated_unit: scdata_out.period_post}
             T0_features_dict = {treated_unit: scdata_out.T0_features}
@@ -586,6 +637,8 @@ def scdataMulti(df,
             K_dict[treated_unit] = scdata_out.K
             KM_dict[treated_unit] = scdata_out.KM
             M_dict[treated_unit] = scdata_out.M
+            Y_pre_dict[treated_unit] = scdata_out.Y_pre
+            Y_post_dict[treated_unit] = scdata_out.Y_post
             period_pre_dict[treated_unit] = scdata_out.period_pre
             period_post_dict[treated_unit] = scdata_out.period_post
             T0_features_dict[treated_unit] = scdata_out.T0_features
@@ -620,23 +673,42 @@ def scdataMulti(df,
     iota = len(treated_units)
     KMI = len(C_stacked.columns)
 
+    # transform outcome dictionaries in dataframes
+    Y_pre_df = pandas.DataFrame(columns=['Actual'])
+    Y_post_df = pandas.DataFrame(columns=['Actual'])
+    ix_pre = []
+    ix_post = []
+    for tr in treated_units:
+        temp_df_pre = Y_pre_dict[tr]
+        temp_df_pre.rename(columns={tr: "Actual"}, inplace=True)
+        temp_df_post = Y_post_dict[tr]
+        temp_df_post.rename(columns={tr: "Actual"}, inplace=True)
+        ix_pre = temp_df_pre.index.union(ix_pre)
+        ix_post = temp_df_post.index.union(ix_post)
+        Y_pre_df = pandas.concat([Y_pre_df, temp_df_pre], axis='index')
+        Y_post_df = pandas.concat([Y_post_df, temp_df_post], axis='index')
+
+    Y_pre_df.set_index(ix_pre, inplace=True)
+    Y_post_df.set_index(ix_post, inplace=True)
+
     return scdata_multi_output(A=A_stacked, B=B_stacked, C=C_stacked, P=P_stacked, P_diff=Pd_stacked,
-                               Y_df=Y_df, Y_donors=Y_donors_stacked, J=J_dict, K=K_dict,
-                               KM=KM_dict, M=M_dict, iota=iota, KMI=KMI,
+                               Y_df=Y_df, Y_donors=Y_donors_stacked, Y_pre=Y_pre_df, Y_post=Y_post_df,
+                               J=J_dict, K=K_dict, KM=KM_dict, M=M_dict, iota=iota, KMI=KMI,
                                cointegrated_data=cointegrated_data_dict,
                                period_pre=period_pre_dict, period_post=period_post_dict,
                                T0_features=T0_features_dict, T1_outcome=T1_dict,
                                outcome_var=outcome_var, features=features,
                                glob_cons=constant_dict, out_in_features=out_in_features_dict,
                                donors_dict=donors_dict, treated_units=treated_units,
-                               effect=effect, units_est=units_est, anticipation=anticipation_dict)
+                               effect=effect, units_est=units_est, anticipation=anticipation_dict,
+                               timeConvert=timeConvert)
 
 
 class scdata_multi_output:
-    def __init__(self, A, B, C, P, P_diff, Y_df, Y_donors, J, K, KM, M, iota, KMI,
+    def __init__(self, A, B, C, P, P_diff, Y_df, Y_donors, Y_pre, Y_post, J, K, KM, M, iota, KMI,
                  cointegrated_data, period_pre, period_post, T0_features,
                  T1_outcome, outcome_var, features, glob_cons, out_in_features,
-                 donors_dict, treated_units, effect, units_est, anticipation):
+                 donors_dict, treated_units, effect, units_est, anticipation, timeConvert):
 
         self.A = A
         self.B = B
@@ -645,6 +717,8 @@ class scdata_multi_output:
         self.P_diff = P_diff
         self.Y_df = Y_df
         self.Y_donors = Y_donors
+        self.Y_pre = Y_pre
+        self.Y_post = Y_post
         self.J = J
         self.K = K
         self.KM = KM
@@ -665,3 +739,4 @@ class scdata_multi_output:
         self.effect = effect
         self.units_est = units_est
         self.anticipation = anticipation
+        self.timeConvert = timeConvert

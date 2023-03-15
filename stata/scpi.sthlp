@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 2.2.0 2023-01-23}{...}
+{* *!version 2.2.1 2023-03-14}{...}
 {viewerjumpto "Syntax" "scpi##syntax"}{...}
 {viewerjumpto "Description" "scpi##description"}{...}
 {viewerjumpto "Options" "scpi##options"}{...}
@@ -48,7 +48,7 @@
 {title:Description}
 
 {p 4 8}{cmd:scpi} implements estimation and inference procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints according to
-{browse "https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}. The command is a wrapper of the companion Python package. 
+{browse "https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}. The command is a wrapper of the companion Python package. 
 As such, the user needs to have a running version of Python with the package installed. A tutorial on how to install Python and link it to Stata
 can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
@@ -238,7 +238,7 @@ marker stored_results}{...}
 {it:Journal of Economic Literature}, 59(2), 391-425.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., and Titiunik, R. 2021. 
-{browse "https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction Intervals for Synthetic Sontrol Methods.}
+{browse "https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction Intervals for Synthetic Sontrol Methods.}
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 

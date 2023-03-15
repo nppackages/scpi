@@ -5,7 +5,7 @@ This page describes the function ``scplot`` to implement several Synthetic Contr
 The function is designed to be called after ``scest`` or ``scpi``
 which implement estimation and inference procedures for Synthetic Control methods using least squares, lasso,
 ridge, or simplex-type constraints according to
-`Cattaneo, Feng, and Titiunik (2021) <https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf>`_ 
+`Cattaneo, Feng, and Titiunik (2021) <https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf>`_ 
 and `Cattaneo, Feng, Palomba, and Titiunik (2022) <https://arxiv.org/abs/2210.05026>`_
 
 Syntax

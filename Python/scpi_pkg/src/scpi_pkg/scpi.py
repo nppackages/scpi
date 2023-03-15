@@ -172,13 +172,19 @@ def scpi(data,
         a dataframe containing w and r.
 
     Y_pre_fit : pandas.DataFrame
-        a dataframe containing the estimated pre-treatment outcome for the SC unit.
+        a dataframe containing the estimated pre-treatment outcome for the SC unit(s).
 
     Y_post_fit : pandas.DataFrame
-        a dataframe containing the estimated post-treatment outcome for the SC unit.
+        a dataframe containing the estimated post-treatment outcome for the SC unit(s).
+
+    Y_pre: pandas.DataFrame
+        a dataframe containing the actual pre-treatment outcome for the treated unit(s).
+
+    Y_post: pandas.DataFrame
+        a dataframe containing the actual post-treatment outcome for the treated unit(s).
 
     A_hat : pandas.DataFrame
-        a dataframe containing the predicted values of the features of the treated unit.
+        a dataframe containing the predicted values of the features of the treated unit(s).
 
     res : pandas.DataFrame
         a dataframe containing the residuals A - A_hat.
@@ -190,7 +196,7 @@ def scpi(data,
         a dictionary containing the specifics of the constraint set used on the weights.
 
     A : pandas.DataFrame
-        a dataframe containing pre-treatment features of the treated unit.
+        a dataframe containing pre-treatment features of the treated unit(s).
 
     B : pandas.DataFrame
         a dataframe containing pre-treatment features of the control units.
@@ -199,13 +205,7 @@ def scpi(data,
         a dataframe containing covariates for adjustment.
 
     P : pandas.DataFrame
-        a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.
-
-    Y_pre : pandas.DataFrame
-        a dataframe containing the pre-treatment outcome of the treated unit.
-
-    Y_post : pandas.DataFrame
-        a dataframe containing the post-treatment outcome of the treated unit.
+        a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic unit(s).
 
     Y_donors : pandas.DataFrame
         a dataframe containing the pre-treatment outcome of the control units.
@@ -649,26 +649,26 @@ def scpi(data,
         ud0_na, ed0_na, ed1 = createPoly(u_order, e_order, iw_dict[tr],
                                          ud0_na, ed0_na, ed1, out_feat[tr])
 
-        ud0_na.insert(0, "treated_unit", tr)
-        r_na.insert(0, "treated_unit", tr)
-        er_na.insert(0, "treated_unit", tr)
-        ed0_na.insert(0, "treated_unit", tr)
+        ud0_na.insert(0, "ID", tr)
+        r_na.insert(0, "ID", tr)
+        er_na.insert(0, "ID", tr)
+        ed0_na.insert(0, "ID", tr)
         if sc_effect == "time":
             idx = pandas.MultiIndex.from_product([[tr], ed1.index.get_level_values(0).tolist()],
-                                                 names=['treated_unit', '__time'])
+                                                 names=['ID', 'Time'])
             ed1.set_index(idx, inplace=True, append=False)
         else:
-            ed1.insert(0, "treated_unit", tr)
-            ed1.set_index('treated_unit', append=True, drop=True, inplace=True)
-            P_na.insert(0, "treated_unit", tr)
-            P_na.set_index('treated_unit', append=True, drop=True, inplace=True)
+            ed1.insert(0, "ID", tr)
+            ed1.set_index('ID', append=True, drop=True, inplace=True)
+            P_na.insert(0, "ID", tr)
+            P_na.set_index('ID', append=True, drop=True, inplace=True)
 
-        Z_na.insert(0, "treated_unit", tr)
-        ud0_na.set_index('treated_unit', append=True, drop=True, inplace=True)
-        r_na.set_index('treated_unit', append=True, drop=True, inplace=True)
-        er_na.set_index('treated_unit', append=True, drop=True, inplace=True)
-        ed0_na.set_index('treated_unit', append=True, drop=True, inplace=True)
-        Z_na.set_index('treated_unit', append=True, drop=True, inplace=True)
+        Z_na.insert(0, "ID", tr)
+        ud0_na.set_index('ID', append=True, drop=True, inplace=True)
+        r_na.set_index('ID', append=True, drop=True, inplace=True)
+        er_na.set_index('ID', append=True, drop=True, inplace=True)
+        ed0_na.set_index('ID', append=True, drop=True, inplace=True)
+        Z_na.set_index('ID', append=True, drop=True, inplace=True)
         u_des_0_na_dict[tr] = ud0_na
         res_na_dict[tr] = r_na
         e_res_na_dict[tr] = er_na
@@ -707,14 +707,14 @@ def scpi(data,
     e_des_1.fillna(0, inplace=True)
     e_res_na.fillna(0, inplace=True)
     res_na.fillna(0, inplace=True)
-    u_des_0_na = u_des_0_na.reorder_levels(['treated_unit', 'feature', '__time'])
-    e_des_0_na = e_des_0_na.reorder_levels(['treated_unit', '__time'])
-    e_des_1 = e_des_1.reorder_levels(['treated_unit', '__time'])
-    e_res_na = e_res_na.reorder_levels(['treated_unit', '__time'])
-    res_na = res_na.reorder_levels(['treated_unit', 'feature', '__time'])
-    Z_na = Z_na.reorder_levels(['treated_unit', 'feature', '__time'])
+    u_des_0_na = u_des_0_na.reorder_levels(['ID', 'feature', 'Time'])
+    e_des_0_na = e_des_0_na.reorder_levels(['ID', 'Time'])
+    e_des_1 = e_des_1.reorder_levels(['ID', 'Time'])
+    e_res_na = e_res_na.reorder_levels(['ID', 'Time'])
+    res_na = res_na.reorder_levels(['ID', 'feature', 'Time'])
+    Z_na = Z_na.reorder_levels(['ID', 'feature', 'Time'])
     if sc_effect != "time":
-        P_na = P_na.reorder_levels(['treated_unit', '__time'])
+        P_na = P_na.reorder_levels(['ID', 'Time'])
 
     Z_na = Z_na[col_order]
     P_na = P_na[col_order]
@@ -758,12 +758,12 @@ def scpi(data,
 
         for tr in tr_units:
             udict = DUflexGet(u_des_dict[tr], C_dict[tr])
-            udict.insert(0, "treated_unit", tr)
-            udict.set_index('treated_unit', append=True, drop=True, inplace=True)
+            udict.insert(0, "ID", tr)
+            udict.set_index('ID', append=True, drop=True, inplace=True)
             u_des_0_flex = pandas.concat([u_des_0_flex, udict], axis=1)
             udict = u_des_dict[tr]
-            udict.insert(0, "treated_unit", tr)
-            udict.set_index('treated_unit', append=True, drop=True, inplace=True)
+            udict.insert(0, "ID", tr)
+            udict.set_index('ID', append=True, drop=True, inplace=True)
             u_des_0_noflex = pandas.concat([u_des_0_noflex, udict], axis=1)
 
         df_U = T_u - 10
@@ -791,12 +791,12 @@ def scpi(data,
                               "feature specific model. To avoid over-fitting issues, the conditional moments of " +
                               "the pseudo-residuals are estimated with the same model across features")
             u_des_0_na = u_des_0_noflex
-            u_des_0_na = u_des_0_na.reorder_levels(['treated_unit', 'feature', '__time'])
+            u_des_0_na = u_des_0_na.reorder_levels(['ID', 'feature', 'Time'])
             u_des_0_na.fillna(0, inplace=True)
 
         elif u_flex is True:
             u_des_0_na = u_des_0_flex
-            u_des_0_na = u_des_0_na.reorder_levels(['treated_unit', 'feature', '__time'])
+            u_des_0_na = u_des_0_na.reorder_levels(['ID', 'feature', 'Time'])
             u_des_0_na.fillna(0, inplace=True)
 
         u_mean = LinearRegression().fit(u_des_0_na, res_na).predict(u_des_0_na)
@@ -936,10 +936,10 @@ def scpi(data,
         for tr in tr_units:
             edict0 = pandas.DataFrame(numpy.ones(len(ed0_dict[tr])), columns=[tr])
             edict1 = pandas.DataFrame(numpy.ones(len(ed1_dict[tr])), columns=[tr])
-            edict0.insert(0, "treated_unit", tr)
-            edict0.set_index('treated_unit', append=False, drop=True, inplace=True)
-            edict1.insert(0, "treated_unit", tr)
-            edict1.set_index('treated_unit', append=False, drop=True, inplace=True)
+            edict0.insert(0, "ID", tr)
+            edict0.set_index('ID', append=False, drop=True, inplace=True)
+            edict1.insert(0, "ID", tr)
+            edict1.set_index('ID', append=False, drop=True, inplace=True)
             e_des_0_na = pandas.concat([e_des_0_na, edict0], axis=0)
             e_des_1 = pandas.concat([e_des_1, edict1], axis=0)
 
@@ -968,18 +968,18 @@ def scpi(data,
     for tr in tr_units:
         ed0_dict[tr] = detectConstant(ed0_dict[tr], tr)
         ed1_dict[tr] = detectConstant(ed1_dict[tr], tr, scale_x)
-        ed0_dict[tr].insert(0, "treated_unit", tr)
-        ed0_dict[tr].set_index('treated_unit', append=False, drop=True, inplace=True)
-        ed1_dict[tr].insert(0, "treated_unit", tr)
-        ed1_dict[tr].set_index('treated_unit', append=False, drop=True, inplace=True)
+        ed0_dict[tr].insert(0, "ID", tr)
+        ed0_dict[tr].set_index('ID', append=False, drop=True, inplace=True)
+        ed1_dict[tr].insert(0, "ID", tr)
+        ed1_dict[tr].set_index('ID', append=False, drop=True, inplace=True)
         e_des_0_na = pandas.concat([e_des_0_na, ed0_dict[tr]], axis=0)
         e_des_1 = pandas.concat([e_des_1, ed1_dict[tr]], axis=0)
 
     e_des_0_na.set_index(e_res_na.index, append=False, inplace=True)
     if sc_effect == "time":
-        idx = pandas.MultiIndex.from_product([e_des_1.index.unique('treated_unit').tolist(),
+        idx = pandas.MultiIndex.from_product([e_des_1.index.unique('ID').tolist(),
                                              [i for i in range(1, len(P_na) + 1)]],
-                                             names=['treated_unit', '__time'])
+                                             names=['ID', 'Time'])
         e_des_1.set_index(idx, append=False, inplace=True)
     else:
         e_des_1.set_index(P_na.index, append=False, inplace=True)
@@ -994,9 +994,9 @@ def scpi(data,
 
         # Overwrite with user's input
         if e_lb_est is False:
-            e_lb = e_bounds[0]
+            e_lb_gau = e_bounds[0]
         if e_ub_est is False:
-            e_ub = e_bounds[1]
+            e_ub_gau = e_bounds[1]
 
         sc_l_1 = sc_l_0.iloc[:, 0] + e_lb_gau.iloc[:, 0] - epsk.iloc[:, 0]
         sc_r_1 = sc_r_0.iloc[:, 0] + e_ub_gau.iloc[:, 0] + epsk.iloc[:, 0]
@@ -1013,9 +1013,9 @@ def scpi(data,
 
         # Overwrite with user's input
         if e_lb_est is False:
-            e_lb = e_bounds[0]
+            e_lb_ls = e_bounds[0]
         if e_ub_est is False:
-            e_ub = e_bounds[1]
+            e_ub_ls = e_bounds[1]
 
         sc_l_2 = sc_l_0.iloc[:, 0] + e_lb_ls.iloc[:, 0] - epsk.iloc[:, 0]
         sc_r_2 = sc_r_0.iloc[:, 0] + e_ub_ls.iloc[:, 0] + epsk.iloc[:, 0]
@@ -1023,8 +1023,11 @@ def scpi(data,
 
     if e_method == 'qreg' or e_method == 'all':
         if e_order == 0:
-            e_lb = numpy.quantile(e_res_na, q=e_alpha / 2)
-            e_ub = numpy.quantile(e_res_na, q=1 - e_alpha / 2)
+            e_lb_qreg = numpy.quantile(e_res_na, q=e_alpha / 2)
+            e_lb_qreg = pandas.DataFrame([e_lb_qreg] * len(w_lb), index=w_lb.index)
+            e_ub_qreg = numpy.quantile(e_res_na, q=1 - e_alpha / 2)
+            e_ub_qreg = pandas.DataFrame([e_ub_qreg] * len(w_lb), index=w_ub.index)
+
         else:
             e_lb_qreg, e_ub_qreg, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                                       e_method="qreg", alpha=e_alpha / 2,
@@ -1032,9 +1035,9 @@ def scpi(data,
                                                       effect=sc_effect)
         # Overwrite with user's input
         if e_lb_est is False:
-            e_lb = e_bounds[0]
+            e_lb_qreg = e_bounds[0]
         if e_ub_est is False:
-            e_ub = e_bounds[1]
+            e_ub_qreg = e_bounds[1]
 
         sc_l_3 = sc_l_0.iloc[:, 0] + e_lb_qreg.iloc[:, 0] - epsk.iloc[:, 0]
         sc_r_3 = sc_r_0.iloc[:, 0] + e_ub_qreg.iloc[:, 0] + epsk.iloc[:, 0]
@@ -1229,7 +1232,8 @@ def scpi(data,
                                  plotres=None,
                                  donors_dict=sc_pred.donors_dict,
                                  treated_units=sc_pred.treated_units,
-                                 units_est=sc_pred.units_est)
+                                 units_est=sc_pred.units_est,
+                                 timeConvert=sc_pred.timeConvert)
             plotres = scplot(result=toplot)
         else:
             to_plot = scpi_multi_output(b=sc_pred.b,
@@ -1237,6 +1241,9 @@ def scpi(data,
                                         r=sc_pred.r,
                                         Y_pre_fit=sc_pred.Y_pre_fit,
                                         Y_post_fit=sc_pred.Y_post_fit,
+                                        Y_pre=sc_pred.Y_pre,
+                                        Y_post=sc_pred.Y_post,
+                                        Y_actual=sc_pred.Y_actual,
                                         A_hat=sc_pred.A_hat,
                                         res=sc_pred.res,
                                         V=sc_pred.V,
@@ -1300,7 +1307,8 @@ def scpi(data,
                                         effect=sc_pred.effect,
                                         donors_dict=sc_pred.donors_dict,
                                         treated_units=sc_pred.treated_units,
-                                        units_est=sc_pred.units_est)
+                                        units_est=sc_pred.units_est,
+                                        timeConvert=sc_pred.timeConvert)
 
             plotres = scplotMulti(result=to_plot)
     else:
@@ -1376,13 +1384,17 @@ def scpi(data,
                            plotres=plotres,
                            donors_dict=sc_pred.donors_dict,
                            treated_units=sc_pred.treated_units,
-                           units_est=sc_pred.units_est)
+                           units_est=sc_pred.units_est,
+                           timeConvert=sc_pred.timeConvert)
     else:
         return scpi_multi_output(b=sc_pred.b,
                                  w=sc_pred.w,
                                  r=sc_pred.r,
                                  Y_pre_fit=sc_pred.Y_pre_fit,
                                  Y_post_fit=sc_pred.Y_post_fit,
+                                 Y_pre=sc_pred.Y_pre,
+                                 Y_post=sc_pred.Y_post,
+                                 Y_actual=sc_pred.Y_actual,
                                  A_hat=sc_pred.A_hat,
                                  res=sc_pred.res,
                                  V=sc_pred.V,
@@ -1446,7 +1458,8 @@ def scpi(data,
                                  effect=sc_pred.effect,
                                  donors_dict=sc_pred.donors_dict,
                                  treated_units=sc_pred.treated_units,
-                                 units_est=sc_pred.units_est)
+                                 units_est=sc_pred.units_est,
+                                 timeConvert=sc_pred.timeConvert)
 
 
 # Define class
@@ -1460,7 +1473,7 @@ class scpi_output:
                  u_mean, u_var, e_mean, e_var, u_missp, u_lags, u_order,
                  u_sigma, u_user, u_T, u_params, u_D, e_method, e_lags, e_order, e_user, e_T,
                  e_params, e_D, rho, Q_star, u_alpha, e_alpha, epskappa, sims, failed_sims, plotres,
-                 donors_dict, treated_units, units_est):
+                 donors_dict, treated_units, units_est, timeConvert):
 
         self.b = b
         self.w = w
@@ -1531,6 +1544,7 @@ class scpi_output:
         self.donors_dict = donors_dict
         self.treated_units = treated_units
         self.units_est = units_est
+        self.timeConvert = timeConvert
 
     def __repr__(self):
 
@@ -1684,7 +1698,7 @@ class scpi_output:
 
 
 class scpi_multi_output:
-    def __init__(self, b, w, r, Y_pre_fit, Y_post_fit, A_hat, res, V, w_constr, w_constr_inf,
+    def __init__(self, b, w, r, Y_pre_fit, Y_post_fit, Y_pre, Y_post, Y_actual, A_hat, res, V, w_constr, w_constr_inf,
                  A, B, C, P, Y_df, Y_donors, J, K, KM, M, iota, KMI,
                  cointegrated_data, anticipation, period_pre, period_post, T0_features,
                  T1_outcome, features, outcome_var, glob_cons, out_in_features,
@@ -1692,13 +1706,16 @@ class scpi_multi_output:
                  u_mean, u_var, e_mean, e_var, u_missp, u_lags, u_order,
                  u_sigma, u_user, u_T, u_params, u_D, e_method, e_lags, e_order, e_user, e_T,
                  e_params, e_D, rho, Q_star, u_alpha, e_alpha, epskappa, sims, failed_sims, plotres,
-                 effect, donors_dict, treated_units, units_est):
+                 effect, donors_dict, treated_units, units_est, timeConvert):
 
         self.b = b
         self.w = w
         self.r = r
         self.Y_pre_fit = Y_pre_fit
         self.Y_post_fit = Y_post_fit
+        self.Y_pre = Y_pre
+        self.Y_post = Y_post
+        self.Y_actual = Y_actual
         self.A_hat = A_hat
         self.res = res
         self.V = V
@@ -1763,6 +1780,7 @@ class scpi_multi_output:
         self.donors_dict = donors_dict
         self.treated_units = treated_units
         self.units_est = units_est
+        self.timeConvert = timeConvert
 
     def __repr__(self):
 

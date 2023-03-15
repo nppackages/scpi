@@ -7,7 +7,7 @@ produces an object of class ``scdata_output`` to be passed to ``scest`` or ``scp
 The command prepares the data to be used by scest or scpi for point estimation and inference procedures using
 Synthetic Control. It allows the user to specify the outcome variable, the features of the treated unit
 to be matched, and covariate-adjustment feature by feature. The names of the output matrices
-follow the notation proposed in `Cattaneo, Feng, and Titiunik (2021) <https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf>`_.
+follow the notation proposed in `Cattaneo, Feng, and Titiunik (2021) <https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf>`_.
 
 Syntax
 ---------

@@ -42,8 +42,7 @@ time variable is preferred.}
 \item{unit.co}{a character or numeric vector that identifies the donor pool in \code{id.var}.}
 
 \item{features}{a character vector containing the name of the feature variables used for estimation.
-If features is specified, then outcome.var must be included in it. If this option is not specified the
-default is \code{features = outcome.var}.}
+If this option is not specified the default is \code{features = outcome.var}.}
 
 \item{cov.adj}{a list specifying the names of the covariates to be used for adjustment for each feature. See the \strong{Details} section for more.}
 
@@ -87,7 +86,7 @@ The command prepares the data to be used by \code{\link{scest}} or \code{\link{s
 inference procedures for Synthetic Control (SC) methods.
 It allows the user to specify the outcome variable, the features of the treated unit to be
 matched, and covariate-adjustment feature by feature. The names of the output matrices
-follow the terminology proposed in \href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
+follow the terminology proposed in \href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 
 Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in
 \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
@@ -140,7 +139,7 @@ df <- scdata(df = data, id.var = "country", time.var = "year",
 \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}.
 Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 \emph{Journal of Economic Literature}, 59(2), 391-425.}
-\item{\href{https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
+\item{\href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
