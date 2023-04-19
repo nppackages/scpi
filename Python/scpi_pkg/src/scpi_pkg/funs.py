@@ -983,14 +983,14 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             e_mean = fit[:len(preds)]
             if effect == "time":
                 e_mean = pandas.DataFrame(data=e_mean, index=idx)
-                e_mean = e_mean.mean(level='Time').values[:, 0]
+                e_mean = e_mean.groupby(level='Time').mean().values[:, 0]
 
             y_fit = fit[len(preds):]
             y_var = numpy.log((y - y_fit)**2)
             var_pred = cond_pred(y=y_var, x=x, xpreds=x_more, method='lm')
             if effect == "time":
                 var_pred = pandas.DataFrame(data=var_pred[:len(preds)], index=idx)
-                var_pred = var_pred.mean(level='Time').values[:, 0]
+                var_pred = var_pred.groupby(level='Time').mean().values[:, 0]
             else:
                 var_pred = var_pred[:len(preds)]
             e_sig2 = numpy.exp(var_pred)
@@ -999,8 +999,8 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             if effect == "time":
                 q3_pred = pandas.DataFrame(data=q_pred[:len(preds), 1], index=idx)
                 q1_pred = pandas.DataFrame(data=q_pred[:len(preds), 0], index=idx)
-                q3_pred = q3_pred.mean(level='Time').values[:, 0]
-                q1_pred = q1_pred.mean(level='Time').values[:, 0]
+                q3_pred = q3_pred.groupby(level='Time').mean().values[:, 0]
+                q1_pred = q1_pred.groupby(level='Time').mean().values[:, 0]
             else:
                 q3_pred = q_pred[:len(preds), 1]
                 q1_pred = q_pred[:len(preds), 0]
@@ -1025,7 +1025,7 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             e_mean = fit[:len(preds)]
             if effect == "time":
                 e_mean = pandas.DataFrame(data=e_mean, index=idx)
-                e_mean = e_mean.mean(level='Time').values[:, 0]
+                e_mean = e_mean.groupby(level='Time').mean().values[:, 0]
 
             y_fit = fit[len(preds):]
             y_var = numpy.log((y - y_fit)**2)
@@ -1033,7 +1033,7 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             res_var = var_pred[len(preds):]
             if effect == "time":
                 var_pred = pandas.DataFrame(data=var_pred[:len(preds)], index=idx)
-                var_pred = var_pred.mean(level='Time').values[:, 0]
+                var_pred = var_pred.groupby(level='Time').mean().values[:, 0]
             else:
                 var_pred = var_pred[:len(preds)]
 
@@ -1041,8 +1041,8 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             if effect == "time":
                 q3_pred = pandas.DataFrame(data=q_pred[:len(preds), 1], index=idx)
                 q1_pred = pandas.DataFrame(data=q_pred[:len(preds), 0], index=idx)
-                q3_pred = q3_pred.mean(level='Time').values[:, 0]
-                q1_pred = q1_pred.mean(level='Time').values[:, 0]
+                q3_pred = q3_pred.groupby(level='Time').mean().values[:, 0]
+                q1_pred = q1_pred.groupby(level='Time').mean().values[:, 0]
             else:
                 q3_pred = q_pred[:len(preds), 1]
                 q1_pred = q_pred[:len(preds), 0]
@@ -1067,8 +1067,8 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
             if effect == "time":
                 e_pred_lb = pandas.DataFrame(data=e_pred[:, 0], index=idx)
                 e_pred_ub = pandas.DataFrame(data=e_pred[:, 1], index=idx)
-                e_pred_lb = e_pred_lb.mean(level='Time').values[:, 0]
-                e_pred_ub = e_pred_ub.mean(level='Time').values[:, 0]
+                e_pred_lb = e_pred_lb.groupby(level='Time').mean().values[:, 0]
+                e_pred_ub = e_pred_ub.groupby(level='Time').mean().values[:, 0]
             else:
                 e_pred_lb = e_pred[:, [0]]
                 e_pred_ub = e_pred[:, [1]]
@@ -1360,10 +1360,15 @@ def mat2dict(mat, cols=True):
             X_r = X.loc[pandas.IndexSlice[tr, :, :]]
             csel = [c.split("_")[0] == tr for c in X_r.columns.tolist()]
             X_rc = X_r.loc[:, numpy.array(csel)]
+            # to ensure backward compatibility with Python 3.7 (IndexSlice did not remove the column automatically)
+            if 'ID' in X_rc.index.names:
+                X_rc = X_rc.reset_index(level=0, drop=True)
             matdict[tr] = X_rc
     else:
         for tr in tr_units:
             X_r = X.loc[pandas.IndexSlice[tr, :, :]]
+            if 'ID' in X_r.index.names:  # to ensure backward compatibility with Python 3.7
+                X_r = X_r.reset_index(level=0, drop=True)
             matdict[tr] = X_r
 
     return matdict

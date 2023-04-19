@@ -8,7 +8,7 @@ Welcome to scpi-pkg's documentation!
 The scpi package provides Python, R, and Stata implementations of estimation and inference procedures
 for synthetic control methods with multiple treated units and staggered adoption using least squares, 
 lasso, ridge, or simplex-type constraints. Uncertainty is quantifed using
-prediction intervals as developed in `Cattaneo, Feng, and Titiunik (2021) <https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf>`_.
+prediction intervals as developed in `Cattaneo, Feng, and Titiunik (2021) <https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf>`_.
 
 Companion `R <www.r-project.org>`_ and `Stata <https://www.python.org/>`_ packages are described in 
 `Cattaneo, Feng, Palomba, and Titiunik (2022) <https://arxiv.org/abs/2202.05984>`_.
