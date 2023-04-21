@@ -68,6 +68,9 @@ summary.scdataMulti <- function(object, ...) {
       pt.in   <- object$specs$period.pre[[tr]][1]
       pt.fi   <- object$specs$period.pre[[tr]][length(object$specs$period.pre[[tr]])]
 
+      pot.in   <- object$specs$period.post[[tr]][1]
+      pot.fi   <- object$specs$period.post[[tr]][length(object$specs$period.post[[tr]])]
+      
       cat("--------------------------------------------------------------------\n")
       cat(paste0("Synthetic Control - Setup for ", tr, " \n"))
       cat("\n")
@@ -75,8 +78,9 @@ summary.scdataMulti <- function(object, ...) {
       cat(paste("Treated Unit:                              ", tr , "\n", sep = ""))
       cat(paste("Size of the donor pool:                    ", J, "\n", sep = ""))
       cat(paste("Features:                                  ", M, "\n", sep = ""))
-      cat(paste("Pre-treatment period:                      ", pt.in, "-", pt.fi, "\n", sep = ""))
-
+      cat(paste("Pre-treatment period:                      ", pt.in, " || ", pt.fi, "\n", sep = ""))
+      cat(paste("Post-treatment period:                     ", pot.in, " || ", pot.fi, "\n", sep = ""))
+      
       if (M == 1) {
         cat(paste("Pre-treatment periods used in estimation:  ", T0, "\n", sep = ""))
         cat(paste("Covariates used for adjustment:            ", KM, "\n", sep = ""))

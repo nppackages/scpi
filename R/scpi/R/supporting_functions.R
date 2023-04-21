@@ -387,7 +387,7 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
 
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method
-b.est <- function(A, Z, J, KM, w.constr, V) {
+b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver="ECOS") {
 
   dire <- w.constr[["dir"]]
   lb   <- w.constr[["lb"]]
@@ -427,16 +427,20 @@ b.est <- function(A, Z, J, KM, w.constr, V) {
   }
 
   prob        <- CVXR::Problem(objective, constraints)
-  sol         <- CVXR::solve(prob)
+  sol         <- CVXR::solve(prob, solver=CVXR.solver)
 
   b <- sol$getValue(x)
-  alert <- sol$status != "optimal"
+  alert <- !(sol$status %in% c("optimal", "optimal_inaccurate"))
 
   if (alert == TRUE) {
     stop(paste0("Estimation algorithm not converged! The algorithm returned the value:",
                 sol$status, ". To check to what errors it corresponds go to 
                'https://cvxr.rbind.io/cvxr_examples/cvxr_gentle-intro/'. Typically, this occurs
-               because the problem is badly-scaled. If so, scaling the data fixes the issue."))
+                because the problem is badly-scaled. If so, scaling the data fixes the issue. Another
+                fix could be changing the algorithm via the option 'solver'. Check your available options
+                using CVXR::installed_solvers() and consult 
+                'https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/'"),
+         call. = FALSE)
   }
 
   b <- b[, 1, drop = TRUE]
@@ -447,7 +451,7 @@ b.est <- function(A, Z, J, KM, w.constr, V) {
 
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method - Multiple treated units case
-b.est.multi <- function(A, Z, J, KMI, I, w.constr, V) {
+b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver="ECOS") {
 
   # The constraint is symmetric in the shape across treated units (J, KM, Q might change)
   dire  <- w.constr[[1]]$dir
@@ -494,15 +498,20 @@ b.est.multi <- function(A, Z, J, KMI, I, w.constr, V) {
   }
 
   prob        <- CVXR::Problem(objective, constraints)
-  sol         <- CVXR::solve(prob)
+  sol         <- CVXR::solve(prob, solver=CVXR.solver)
 
   b <- sol$getValue(x)
-  alert <- sol$status != "optimal"
-
+  alert <- !(sol$status %in% c("optimal", "optimal_inaccurate"))
+  
   if (alert == TRUE) {
     stop(paste0("Estimation algorithm not converged! The algorithm returned the value:",
                 sol$status, ". To check to what errors it corresponds go to 
-                'https://cvxr.rbind.io/cvxr_examples/cvxr_gentle-intro/'."))
+               'https://cvxr.rbind.io/cvxr_examples/cvxr_gentle-intro/'. Typically, this occurs
+                because the problem is badly-scaled. If so, scaling the data fixes the issue. Another
+                fix could be changing the algorithm via the option 'solver'. Check your available options
+                using CVXR::installed_solvers() and consult 
+                'https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/'"),
+         call. = FALSE)
   }
 
   rownames(b)  <- colnames(Z)

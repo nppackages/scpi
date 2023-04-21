@@ -65,7 +65,9 @@ summary.scdata <- function(object, ...) {
     tr.unit <- colnames(object$A)
     pt.in   <- strsplit(rownames(object$Y.pre)[1], "\\.")[[1]][2]
     pt.fi   <- strsplit(rownames(object$Y.pre)[length(object$Y.pre)], "\\.")[[1]][2]
-
+    pot.in  <- strsplit(rownames(object$Y.post)[1], "\\.")[[1]][2]
+    pot.fi  <- strsplit(rownames(object$Y.post)[length(object$Y.post)], "\\.")[[1]][2]
+    
     cat("\n")
     cat(paste0("Synthetic Control - Setup\n"))
     cat("\n")
@@ -73,8 +75,9 @@ summary.scdata <- function(object, ...) {
     cat(paste("Treated Unit:                              ", tr.unit, "\n", sep = ""))
     cat(paste("Size of the donor pool:                    ", J, "\n", sep = ""))
     cat(paste("Features:                                  ", M, "\n", sep = ""))
-    cat(paste("Pre-treatment period:                      ", pt.in, "-", pt.fi, "\n", sep = ""))
-
+    cat(paste("Pre-treatment period:                      ", pt.in, " || ", pt.fi, "\n", sep = ""))
+    cat(paste("Post-treatment period:                     ", pot.in, " || ", pot.fi, "\n", sep = ""))
+    
     if (M == 1) {
       cat(paste("Pre-treatment periods used in estimation:  ", T0, "\n", sep = ""))
       cat(paste("Covariates used for adjustment:            ", KM, "\n", sep = ""))

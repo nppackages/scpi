@@ -6,7 +6,7 @@
 #' the data in the particular case of a single treated unit.
 #'
 #' The names of the output matrices follow the terminology proposed in
-#' \href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, Palomba and Titiunik (2022)}  (UPDATE LINK).
+#' \href{https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, Palomba and Titiunik (2022)}  (UPDATE LINK).
 #'
 #' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are
 #' described in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
@@ -115,7 +115,7 @@
 #'\itemize{
 #' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
-#' \item{\href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
+#' \item{\href{https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
@@ -399,9 +399,8 @@ scdataMulti <- function(df,
 
     df.aux <- subset(data, ID %in% c(donors.units, treated.unit)) # subset dataset
     time.vec <- unique(data["Time"])
-
-    period.pre <- time.vec[time.vec < treated.unit.T0]
-    period.post <- time.vec[time.vec >= treated.unit.T0]
+    period.pre <- time.vec[time.vec$Time < treated.unit.T0, 1]
+    period.post <- time.vec[time.vec$Time >= treated.unit.T0, 1]
 
     if (is.null(post.est) == FALSE) {
       if (is.list(post.est)) {
@@ -546,6 +545,7 @@ scdataMulti <- function(df,
         P.stacked <- Matrix::bdiag(P.stacked, P.tr)
       }
       if (is.null(Pd.stacked) == FALSE) Pd.stacked <- Matrix::bdiag(Pd.stacked, P.diff)
+
       Y.donors.stacked <- Matrix::bdiag(Y.donors.stacked, Y.donors.tr)
     }
 
@@ -616,7 +616,6 @@ scdataMulti <- function(df,
 
   if (sparse.matrices == FALSE) {
     if (is.null(Pd.stacked == FALSE)) Pd.stacked <- as.matrix(Pd.stacked)
-
     df.sc <-     list(A = A.stacked,
                       B = as.matrix(B.stacked),
                       C = as.matrix(C.stacked),

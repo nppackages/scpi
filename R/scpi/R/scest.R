@@ -4,7 +4,7 @@
 #'
 #' @description The command implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso,
 #' ridge, or simplex-type constraints. For more information see
-#' \href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
+#' \href{https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, Feng, and Titiunik (2021)}.
 #'
 #' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described
 #' in \href{https://arxiv.org/abs/2202.05984}{Cattaneo, Feng, Palomba, and Titiunik (2022)}.
@@ -32,7 +32,9 @@
 #' The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
 #' (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
 #' See the \strong{Details} section for more.
-#'
+#' @param solver a string containing the name of the solver used by \code{CVXR}. You can check which solvers are available
+#' on your machine by running \code{CVXR::installed_solvers()}. More information on what different solvers do can be found
+#' at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/.
 #' @param plot a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working
 #' directory. For more options see \code{\link{scplot}}.
 #' @param plot.name a string containing the name of the plot (the format is by default .png). For more options see \code{\link{scplot}}.
@@ -149,7 +151,7 @@
 #' \itemize{
 #' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
-#' \item{\href{https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
+#' \item{\href{https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
 #' \item{\href{https://arxiv.org/abs/2202.05984}{Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. (2022).}
 #' scpi: Uncertainty Quantification for Synthetic Control Methods, \emph{arXiv}:2202.05984.}
@@ -177,6 +179,7 @@
 scest <- function(data,
                   w.constr  = NULL,
                   V         = "separate",
+                  solver    = "ECOS",
                   plot      = FALSE,
                   plot.name = NULL,
                   plot.path = NULL,
@@ -201,6 +204,11 @@ scest <- function(data,
              'simplex', 'lasso', 'ridge', 'ols', 'L1-L2'.")
       }
     }
+  }
+
+  if (!(solver %in% CVXR::installed_solvers())) {
+    stop(paste0("The specified solver - ", solver," - is not available on your machine! Run
+                CVXR::installed_solvers() to see the list of available options on your machine."))
   }
 
   # Data matrices
@@ -266,7 +274,7 @@ scest <- function(data,
   # Estimate SC
   if (class.type == 'scpi_data') { # single treated unit
     w.constr <- w.constr.OBJ(w.constr, A, Z, V, J, KM, M)
-    b <- b.est(A = A, Z = Z, J = J, KM = KM, w.constr = w.constr, V = V)
+    b <- b.est(A = A, Z = Z, J = J, KM = KM, w.constr = w.constr, V = V, CVXR.solver = solver)
 
   } else if (class.type == 'scpi_data_multi') { # multiple treated units
     
@@ -295,7 +303,7 @@ scest <- function(data,
       w.constr.list[[data$specs$treated.units[i]]] <- w.constr.OBJ(w.constr, A.i, Z.i, V.i, J[[i]], KM[[i]], M[[i]])
 
       if (V.type == "separate") {
-        res <- b.est(A = A.i, Z = Z.i, J = J[[i]], KM = KM[[i]], w.constr = w.constr.list[[i]], V = V.i)
+        res <- b.est(A = A.i, Z = Z.i, J = J[[i]], KM = KM[[i]], w.constr = w.constr.list[[i]], V = V.i, CVXR.solver = solver)
         w.store <- c(w.store, res[1:J[[i]]])
         if (KM[[i]] > 0) r.store <- c(r.store, res[(J[[i]]+1):length(res)])
       }
@@ -303,7 +311,7 @@ scest <- function(data,
 
     if (V.type != "separate") {
       b <- b.est.multi(A = A, Z = Z, J = J, KMI = KMI, I = I, 
-                       w.constr = w.constr.list, V = V)
+                       w.constr = w.constr.list, V = V, CVXR.solver = solver)
       b <- b[,1,drop=TRUE]
       
     } else if (V.type == "separate") {
