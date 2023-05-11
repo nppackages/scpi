@@ -346,7 +346,7 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
             in case you don't want to specify a constraint on the norm of the weights.")
     }
 
-    if (!(w.constr[["lb"]] == 0 | w.constr[["lb"]] == -Inf)) {
+    if (!(w.constr[["lb"]] == 0 || w.constr[["lb"]] == -Inf)) {
       stop("Specify either lb = 0 or lb = -Inf.")
     }
 
@@ -365,20 +365,20 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
 
     wls     <- lm(A ~ Z - 1, weights = diag(V))
     sig.wls <- sigma(wls)
-    lambd   <- sig.wls^2*(J + KM) / sum(wls$coef^2, na.rm = TRUE)           # rule of thumb for lambda (Hoerl et al, 1975)
-    Q       <- sqrt(sum(wls$coef^2, na.rm = TRUE)) / (1 + lambd)            # convert lambda into Q
+    lambd   <- sig.wls^2 * (J + KM) / sum(wls$coef^2, na.rm = TRUE)           # rule of thumb for lambda (Hoerl et al, 1975)
+    Q       <- sqrt(sum(wls$coef^2, na.rm = TRUE)) / (1 + lambd)              # convert lambda into Q
 
-    if (is.nan(Q) | (nrow(Z) <= ncol(Z) + 10)) { # reduce dimensionality of the problem if more params than obs
+    if (is.nan(Q) || (nrow(Z) <= ncol(Z) + 10)) { # reduce dimensionality of the problem if more params than obs
       lasso.cols <- b.est(A, Z, J, KM, list(dir = "<=", lb = -Inf, p = "L1", Q = 1), V)
       active.cols <- abs(lasso.cols) > 1e-8
       if (sum(active.cols) >= (max(nrow(A) - 10, 2)) ) {
         active.cols <-  rank(-abs(lasso.cols)) <= max(nrow(A) - 10, 2)
       }
-      Z.sel <- Z[,active.cols,drop=FALSE]
+      Z.sel <- Z[, active.cols, drop = FALSE]
       wls     <- lm(A ~ Z.sel - 1, weights = diag(V))
       sig.wls <- sigma(wls)
-      lambd   <- sig.wls^2*(ncol(Z.sel)+KM)/sum(wls$coef^2, na.rm = TRUE)     # rule of thumb for lambda (Hoerl et al, 1975)
-      Q       <- sqrt(sum(wls$coef^2, na.rm = TRUE)) / (1 + lambd)            # convert lambda into Q
+      lambd   <- sig.wls^2 * (ncol(Z.sel) + KM) / sum(wls$coef^2, na.rm = TRUE)     # rule of thumb for lambda (Hoerl et al, 1975)
+      Q       <- sqrt(sum(wls$coef^2, na.rm = TRUE)) / (1 + lambd)                  # convert lambda into Q
     }
   }
 
@@ -387,7 +387,7 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
 
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method
-b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver="ECOS") {
+b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "ECOS") {
 
   dire <- w.constr[["dir"]]
   lb   <- w.constr[["lb"]]
@@ -652,11 +652,9 @@ u.des.prep <- function(B, C, u.order, u.lags, coig.data, T0.tot, constant,
 
 
 e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.feat, features,
-                       J, index, index.w, coig.data, T0, T1, constant, e.design, P.diff.pre, effect, I) {
+                       J, index, index.w, coig.data, T0, T1, constant, e.design, P.diff.pre,
+                       effect, I, class.type) {
 
-  # If the outcome variable is not among the features we need to create the
-  # proper vector of residuals. Further, we force the predictors to be
-  # the outcome variable of the donors
   aux <- trendRemove(P)
   C <- trendRemove(C)$mat
   index <- index[aux$sel]
@@ -665,10 +663,19 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
   if (!is.null(P.diff.pre)) P.diff.pre <- trendRemove(as.matrix(P.diff.pre))$mat
 
   if (out.feat == FALSE) {
-    e.res    <- sc.pred$data$Y.pre - sc.pred$est.results$Y.pre.fit
+    # If the outcome variable is not among the features we need to create a
+    # proper vector of residuals. Further, we force the predictors to be
+    # the outcome variable of the donors
+    if (class.type == "scpi_data") { # just one treated unit
+      e.res <- sc.pred$data$Y.pre - sc.pred$est.results$Y.pre.fit
+    } else { # need to extract data from the specific treated unit
+      tr.unit <- stringr::str_split(rownames(res[1,,drop=FALSE]), "\\.")[[1]][[1]]
+      sel <- sapply(stringr::str_split(rownames(sc.pred$data$Y.pre), "\\."), "[[", 1) == tr.unit
+      e.res <- sc.pred$data$Y.pre[sel, 1, drop=FALSE] - sc.pred$est.results$Y.pre.fit[sel, 1, drop=FALSE]
+    }
 
     if (coig.data == TRUE) {
-      e.des.0 <- apply(Y.donors, 2, function(x) x - dplyr::lag(x))[, index.w]
+      e.des.0 <- apply(Y.donors, 2, function(x) x - dplyr::lag(x))[, index.w, drop=FALSE]
 
       if (effect == "time") {
         P.first <- (P[1, ]*I - Y.donors[T0[1], ])/I
@@ -679,10 +686,10 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
       e.des.1 <- P.diff
 
     } else {
-      e.des.0  <- Y.donors[, index.w]
+      e.des.0  <- Y.donors[, index.w, drop=FALSE]
       e.des.1  <- P[, index, drop = FALSE]
     }
-
+    
   } else if (out.feat == TRUE) {    # outcome variable is among features
     e.res <- res[1:T0[1], , drop = FALSE]
 
@@ -878,9 +885,10 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
 
       zeta    <- rnorm(length(beta))
       G <- Sigma.root %*% zeta
-      a <- -2 * G - 2 * c(t(beta) %*% Q)
+      a <- -2 * G - 2 * Q %*% beta
       d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-
+      if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
+ 
       data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
       data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
 
@@ -949,7 +957,7 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
     doSNOW::registerDoSNOW(cl)
 
     vsig <- foreach::foreach(i = 1 : sims,
-                             .packages = c('ECOSolveR', 'Matrix'),
+                             .packages = c('ECOSolveR', 'Matrix', 'methods'),
                              .export   = c('ECOS_get_G', 'ECOS_get_h', 'ECOS_get_h', 'ECOS_get_c',
                                            'blockdiag', 'blockdiagRidge', 'sqrtm'),
                              .combine  = rbind,
@@ -959,9 +967,10 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
 
                                zeta    <- rnorm(length(beta))
                                G       <- Sigma.root %*% zeta
-                               a <- -2 * G - 2 * c(t(beta) %*% Q)
+                               a <- -2 * G - 2 * Q %*% beta
                                d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-
+                               if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
+                               
                                data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
                                data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
 
@@ -1025,22 +1034,21 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
 }
 
 # Prediction interval, for e
-scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose, effect) {
+scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose, effect, out.feat) {
 
   neval <- nrow(eval)
   e.1 <- e.2 <- lb <- ub <- NA
 
-  if (e.lb.est == TRUE | e.ub.est == TRUE) {
+  if (e.lb.est == TRUE || e.ub.est == TRUE) {
     if (e.method == "gaussian") {
       x.more   <- rbind(eval, x)
-      fit      <- predict(y=res, x=x, eval=x.more, type="lm")
-
+      fit      <- predict(y = res, x = x, eval = x.more, type = "lm")
       e.mean   <- fit[1:neval]
       res.fit  <- fit[-(1:neval)]
 
       if (effect == "time") {
         labels <- unlist(purrr::map(stringr::str_split(rownames(fit)[1:neval], "\\."), 2))
-        e.mean <- aggregateUnits(xx=e.mean, labels=labels)
+        e.mean <- aggregateUnits(xx = e.mean, labels = labels)
       }
 
       var.pred <- predict(y = log((res - res.fit)^2), x = x, eval = x.more, type = "lm")
@@ -1129,18 +1137,25 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose,
     }
   }
   
+  # if model is heavily misspecified just give up on out-of-sample uncertainty
+  if (out.feat[[1]] == FALSE) { 
+    if (any(lb > 0)) lb <- rep(min(lb), length(lb))
+    if (any(ub < 0)) ub <- rep(max(ub), length(ub))
+  }
+  
   return(list(lb = lb, ub = ub, e.1 = e.1, e.2 = e.2))
 }
 
 
 simultaneousPredGet <- function(vsig, T1, T1.tot, I, u.alpha, e.alpha, e.res.na, e.des.0.na, e.des.1,
-                                w.lb.est, w.ub.est, w.bounds, w.name, effect) {
+                                w.lb.est, w.ub.est, w.bounds, w.name, effect, out.feat) {
 
   vsigUB <- vsig[, (T1.tot + 1):(2 * T1.tot), drop = FALSE]
   vsigLB <- vsig[, 1:T1.tot, drop = FALSE]
-
+  
   pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1, 
-                     e.method = "gaussian", alpha = e.alpha/2, e.lb.est = TRUE, e.ub.est =  TRUE, effect = effect)
+                     e.method = "gaussian", alpha = e.alpha/2, e.lb.est = TRUE,
+                     e.ub.est =  TRUE, effect = effect, out.feat = out.feat)
 
   w.lb.joint <- w.ub.joint <- c()
   
@@ -1165,7 +1180,7 @@ simultaneousPredGet <- function(vsig, T1, T1.tot, I, u.alpha, e.alpha, e.res.na,
       eps <- c(eps, rep(sqrt(log(T1[[i]] + 1)), T1[[i]]))
     }
   }
-  
+
   e.lb.joint <- pi.e$lb * eps
   e.ub.joint <- pi.e$ub * eps
   
@@ -1268,7 +1283,7 @@ df.EST <- function(w.constr, w, B, J, KM){
 
 u.sigma.est <- function(u.mean, u.sigma, res, Z, V, index, TT, df) {
   
-  if      (u.sigma == "HC0") { # White (1980)
+  if (u.sigma == "HC0") { # White (1980)
     vc <- 1
   }
   
@@ -1277,17 +1292,17 @@ u.sigma.est <- function(u.mean, u.sigma, res, Z, V, index, TT, df) {
   }
   
   else if (u.sigma == "HC2") { # MacKinnon and White (1985)
-    PP <- Z %*% base::solve(t(Z)%*% V %*% Z) %*% t(Z) %*% V
+    PP <- Z %*% Matrix::solve(t(Z)%*% V %*% Z) %*% t(Z) %*% V
     vc <- 1/(1-diag(PP))
   }
   
   else if (u.sigma == "HC3") { # Davidson and MacKinnon (1993)
-    PP <- Z %*% base::solve(t(Z)%*% V %*% Z) %*% t(Z) %*% V
+    PP <- Z %*% Matrix::solve(t(Z)%*% V %*% Z) %*% t(Z) %*% V
     vc <- 1/(1-diag(PP))^2
   }
   
   else if (u.sigma == "HC4") { # Cribari-Neto (2004)
-    PP <- Z %*% base::solve(t(Z)%*% V %*% Z) %*% t(Z) %*% V
+    PP <- Z %*% Matrix::solve(t(Z)%*% V %*% Z) %*% t(Z) %*% V
     CN <- as.matrix((TT)*diag(PP)/df)
     dd <- apply(CN, 1, function(x) min(4,x))
     vc <- as.matrix(NA, length(res), 1)
@@ -1295,7 +1310,7 @@ u.sigma.est <- function(u.mean, u.sigma, res, Z, V, index, TT, df) {
       vc[ii] <- 1/(1 - diag(PP)[ii])^dd[ii]
     }
   }
-  
+
   Omega  <- diag(c((res-u.mean)^2)*vc)
   Sigma  <- t(Z) %*% V %*% Omega %*% V %*% Z / (TT^2)
   
@@ -1371,6 +1386,7 @@ local.geom <- function(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, 
 
 
 regularize.w <- function(rho, rho.max, res, B, C, coig.data, T0.tot) {
+
   if (rho == "type-1") {
     sigma.u  <- sqrt(mean((res-mean(res))^2))
     sigma.bj <- min(apply(B, 2, sd))

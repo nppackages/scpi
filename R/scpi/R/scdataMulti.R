@@ -80,6 +80,7 @@
 #' \item{\code{effect}, for internal use only}
 #' \item{\code{anticipation}, number of periods of potential anticipation effects}
 #' \item{\code{out.in.features}, for internal use only}
+#' \item{\code{sparse.matrices}, for internal use only}
 #' \item{\code{treated.units}, list containing the IDs of all treated units}
 #' \item{\code{donors.list}, list containing the IDs of the donors of each treated unit}}}
 #'
@@ -321,6 +322,11 @@ scdataMulti <- function(df,
       if (!all(names(post.est) %in% treated.units)) {
         stop("The elements of post.est must be named with the identifier of the treated units in id.var!")
       }
+    } else if (is.numeric(post.est) == TRUE) {
+      if (length(post.est) > 1) {
+        stop(paste0("When post.est is not a list it should be a single scalar indicating the number of post-treatment ", 
+                    "for which treatment effects have to be computed for each treated unit!"))
+      }
     }
   }
 
@@ -367,6 +373,7 @@ scdataMulti <- function(df,
   colnames.C <- c()
   rownames.P <- c()
   colnames.P <- c()
+  rownames.Y.pre <- c()
   rownames.Y.donors <- c()
   colnames.Y.donors <- c()
 
@@ -389,7 +396,7 @@ scdataMulti <- function(df,
       } else {
         T1.last <- treated.unit.T0 + post.est
       }
-
+      
       treated.donors <- subset(data, ID %in% treated.post & Time < T1.last, select = c(ID, Treatment))   # get all other units before treatment of treated unit
       tr.donors.count <- aggregate(treated.donors[,"Treatment"], by=list(unit=treated.donors$ID), FUN=sum) # number of periods units have been treated before treatment of treated unit
       tr.donors.units <- tr.donors.count$unit[tr.donors.count$x == 0] # donors are those unit that have never been treated before treatment of treated unit
@@ -460,7 +467,8 @@ scdataMulti <- function(df,
     A.tr <- scdata.out$A
     B.tr <- scdata.out$B
     C.tr <- scdata.out$C
-
+    Y.pre.tr <- scdata.out$Y.pre
+  
     if (is.null(C.tr)) { # to avoid bdiag to crash when C is null
       C.tr <- as.matrix(data.frame()[1:nrow(B.tr), ])
     }
@@ -509,7 +517,8 @@ scdataMulti <- function(df,
     rownames.A <- c(rownames.A, rownames(A.tr))
     rownames.P <- c(rownames.P, rownames(P.tr))
     colnames.B <- c(colnames.B, colnames(B.tr))
-
+    rownames.Y.pre <- c(rownames.Y.pre, rownames(Y.pre.tr))
+    
     if (!is.null(cov.adj.list[[treated.unit]]) || constant.list[[treated.unit]]) {
       colnames.C <- c(colnames.C, colnames(C.tr))
     }
@@ -534,6 +543,7 @@ scdataMulti <- function(df,
 
       Pd.stacked <- P.diff
       Y.donors.stacked <- Y.donors.tr
+      Y.pre.stacked <- Y.pre.tr
 
     } else {
       A.stacked <- rbind(A.stacked, A.tr)
@@ -547,6 +557,7 @@ scdataMulti <- function(df,
       if (is.null(Pd.stacked) == FALSE) Pd.stacked <- Matrix::bdiag(Pd.stacked, P.diff)
 
       Y.donors.stacked <- Matrix::bdiag(Y.donors.stacked, Y.donors.tr)
+      Y.pre.stacked <- rbind(Y.pre.stacked, Y.pre.tr)
     }
 
     J.list[[treated.unit]] <- scdata.out$specs$J
@@ -567,6 +578,8 @@ scdataMulti <- function(df,
   rownames(B.stacked) <- rownames.A
   rownames(C.stacked) <- rownames.A
   rownames(Y.donors.stacked) <- rownames.Y.donors
+  rownames(Y.pre.stacked) <- rownames.Y.pre
+  
   if (effect == "time") {
     P.stacked$aux_id <- NULL
   } else {
@@ -612,6 +625,7 @@ scdataMulti <- function(df,
                 donors.list = donors.list,
                 effect = effect,
                 anticipation = anticipation,
+                sparse.matrices = sparse.matrices,
                 units.est = units.est)
 
   if (sparse.matrices == FALSE) {
@@ -622,6 +636,7 @@ scdataMulti <- function(df,
                       P = as.matrix(P.stacked),
                       P.diff = Pd.stacked,
                       Y.df = Y.df,
+                      Y.pre = Y.pre.stacked,
                       Y.donors = as.matrix(Y.donors.stacked),
                       specs = specs)
 
@@ -632,7 +647,8 @@ scdataMulti <- function(df,
                       P = P.stacked,
                       P.diff = Pd.stacked,
                       Y.df = Y.df,
-                      Y.donors = Y.donors.stacked,
+                      Y.pre = Y.pre.stacked,
+                      Y.donors = as.matrix(Y.donors.stacked),
                       specs = specs)
   }
 

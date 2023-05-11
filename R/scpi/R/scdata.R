@@ -63,6 +63,7 @@
 #' \item{\code{constant}, for internal use only}
 #' \item{\code{out.in.features}, for internal use only}
 #' \item{\code{effect}, for internal use only}
+#' \item{\code{sparse.matrices}, for internal use only}
 #' \item{\code{treated.units}, list containing the IDs of all treated units}}}
 #'
 #' @details
@@ -717,6 +718,7 @@ scdata <- function(df,
                 treated.units = unit.tr,
                 donors.units = unit.co.eff,
                 effect = "unit-time",
+                sparse.matrices = FALSE,
                 units.est = unit.tr)
 
 

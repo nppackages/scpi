@@ -30,8 +30,8 @@
 #' @param V specifies the weighting matrix to be used when minimizing the sum of squared residuals
 #' \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
 #' The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
-#' (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
-#' See the \strong{Details} section for more.
+#' (you used \code{\link{scdataMulti}} to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
+#' In both cases, the user can provide a conformable matrix as input. See the \strong{Details} section for more.
 #' @param solver a string containing the name of the solver used by \code{CVXR}. You can check which solvers are available
 #' on your machine by running \code{CVXR::installed_solvers()}. More information on what different solvers do can be found
 #' at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/.
@@ -126,7 +126,7 @@
 #' where \eqn{Q} is a tuning parameter computed as in the "ridge" case.}
 #' }}
 #'
-#' \item{\strong{Weighting Matrix with Multiple Treated Units.}
+#' \item{\strong{Weighting Matrix.}
 #' \itemize{
 #' \item{if \code{V <- "separate"}, then \eqn{\mathbf{V} = \mathbf{I}} and the minimized objective function is
 #' \deqn{\sum_{i=1}^{N_1} \sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{{i \prime }} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{{i \prime}} \mathbf{r}_{l}^{i}\right)^{2},}
@@ -134,10 +134,12 @@
 #' \item{if \code{V <- "pooled"}, then \eqn{\mathbf{V} = \frac{1}{I}\mathbf{1}\mathbf{1}'\otimes \mathbf{I}} and the minimized objective function is
 #' \deqn{\sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(\frac{1}{N_1^2} \sum_{i=1}^{N_1}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{i \prime} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{i\prime} \mathbf{r}_{l}^{i}\right)\right)^{2},}
 #' which optimizes the pooled fit for the average of the treated units.}
+#' \item{if \code{V} is a user-provided matrix, then in must be a \eqn{v\times v} positive-definite matrix where \eqn{v} is the 
+#' number of rows of \eqn{\mathbf{B}} (or \eqn{\mathbf{C}}) after missing values have been taken into account. In case the user
+#' wants to provide their own \code{V}, we suggest to check the appropriate dimension \eqn{v} by inspecting the output
+#' of either \code{scdata} or \code{scdataMulti}.}
 #' }}
-#'
 #' }
-#'
 #' @author
 #' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
 #'
@@ -397,6 +399,7 @@ scest <- function(data,
                  P = data$P,
                  P.diff = data$P.diff,
                  Y.df = data$Y.df,
+                 Y.pre = data$Y.pre,
                  Z = Z,
                  specs  = data$specs)
   }
@@ -406,9 +409,9 @@ scest <- function(data,
   to.return <- list(data = df, est.results = est.results)
   class(to.return) <- 'scest'
   if (class.type == 'scpi_data') {
-    to.return$data$specs$class.type <- 'scpi_scest'    
+    to.return$data$specs$class.type <- 'scpi_scest'
   } else if (class.type == 'scpi_data_multi') {
-    to.return$data$specs$class.type <- 'scpi_scest_multi'    
+    to.return$data$specs$class.type <- 'scpi_scest_multi'
   }
 
   ##################################################

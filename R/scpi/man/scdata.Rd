@@ -79,6 +79,7 @@ The command returns an object of class 'scdata' containing the following
 \item{\code{constant}, for internal use only}
 \item{\code{out.in.features}, for internal use only}
 \item{\code{effect}, for internal use only}
+\item{\code{sparse.matrices}, for internal use only}
 \item{\code{treated.units}, list containing the IDs of all treated units}}}
 }
 \description{

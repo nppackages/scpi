@@ -33,8 +33,8 @@
 #' @param V specifies the weighting matrix to be used when minimizing the sum of squared residuals
 #' \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
 #' The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
-#' (you used scdataMulti to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
-#' See the \strong{Details} section for more.
+#' (you used \code{\link{scdataMulti}} to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
+#' In both cases, the user can provide a conformable matrix as input. See the \strong{Details} section for more.
 #' @param rho a string specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
 #' \code{rho = 'type-1'} (the default), then the tuning parameter is computed based on optimization inequalities. Users can provide a scalar 
 #' with their own value for \code{rho}. Other options are described in the \strong{Details} section.
@@ -201,7 +201,7 @@
 #' where \eqn{Q} is a tuning parameter computed as in the "ridge" case.}
 #' }}
 #'
-#' \item{\strong{Weighting Matrix with Multiple Treated Units.}
+#' \item{\strong{Weighting Matrix.}
 #' \itemize{
 #' \item{if \code{V <- "separate"}, then \eqn{\mathbf{V} = \mathbf{I}} and the minimized objective function is
 #' \deqn{\sum_{i=1}^{N_1} \sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{{i \prime }} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{{i \prime}} \mathbf{r}_{l}^{i}\right)^{2},}
@@ -209,6 +209,10 @@
 #' \item{if \code{V <- "pooled"}, then \eqn{\mathbf{V} = \mathbf{1}\mathbf{1}'\otimes \mathbf{I}} and the minimized objective function is
 #' \deqn{\sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(\frac{1}{N_1^2} \sum_{i=1}^{N_1}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{i \prime} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{i\prime} \mathbf{r}_{l}^{i}\right)\right)^{2},}
 #' which optimizes the pooled fit for the average of the treated units.}
+#' \item{if \code{V} is a user-provided matrix, then in must be a \eqn{v\times v} positive-definite matrix where \eqn{v} is the 
+#' number of rows of \eqn{\mathbf{B}} (or \eqn{\mathbf{C}}) after missing values have been taken into account. In case the user
+#' wants to provide their own \code{V}, we suggest to check the appropriate dimension \eqn{v} by inspecting the output
+#' of either \code{scdata} or \code{scdataMulti}.}
 #' }}
 #'
 #'
@@ -367,7 +371,8 @@ scpi  <- function(data,
   res         <- sc.pred$est.results$res                  # Residuals from estimation
   outcome.var <- sc.pred$data$specs$outcome.var           # name of outcome variable
   sc.effect   <- sc.pred$data$specs$effect                # Causal quantity of interest
-
+  sparse.mat  <- sc.pred$data$specs$sparse.matrices       # Whether sparse matrices are involved or not
+  
   if (class.type == 'scpi_data') {
     Jtot            <- J
     KMI             <- KM
@@ -412,16 +417,16 @@ scpi  <- function(data,
     }
 
     if (nrow(P) != Prows) {
-      stop(paste("The matrix P currently has",nrow(P),"rows when instead",Prows,"were expected
+      stop(paste("The matrix P currently has", nrow(P), "rows when instead", Prows, "were expected
                  (i.e. the number of post-intervention periods)!"))
     }
     if (ncol(P) != Pcols) {
-      stop(paste("The matrix P currently has",ncol(P),"columns when instead",Pcols,"were expected
+      stop(paste("The matrix P currently has", ncol(P), "columns when instead", Pcols, "were expected
                  (i.e. the size of the donor pool plus the number of covariates used in adjustment in the outcome equation)!"))
     }
   }
 
-  if (!(e.method %in% c("gaussian","ls","qreg","all"))) {
+  if (!(e.method %in% c("gaussian", "ls", "qreg", "all"))) {
     stop("The object e.method should be one of 'gaussian', 'ls', 'qreg', or 'all'.")
   }
 
@@ -547,6 +552,13 @@ scpi  <- function(data,
   res.list <- mat2list(res)
   Y.d.list <- mat2list(Y.donors)
 
+  if (sparse.mat == TRUE) {
+    res.list <- lapply(res.list, as.matrix)
+    B.list <- lapply(B.list, as.matrix)
+    if (is.null(C) == FALSE) C.list <- lapply(C.list, as.matrix)
+    P.list <- lapply(P.list, as.matrix)
+  }
+  
   #############################################################################
   #############################################################################
   ### Estimate In-Sample Uncertainty
@@ -567,7 +579,8 @@ scpi  <- function(data,
   for (i in seq_len(I)) {
     ## Regularize W and local geometry (treated unit by treated unit)
     loc.geom <- local.geom(w.constr.list[[i]], rho, rho.max, res.list[[i]], B.list[[i]], 
-                           C.list[[i]], coig.data[[i]], T0.M[[i]], J[[i]], w.list[[i]], verbose)
+                           C.list[[i]], coig.data[[i]], T0.M[[i]], J[[i]], w.list[[i]],
+                           verbose)
     
     w.star       <- c(w.star, loc.geom$w.star)
     index.w      <- c(index.w, loc.geom$index.w)
@@ -598,13 +611,14 @@ scpi  <- function(data,
     
     u.des.0 <- Matrix::bdiag(u.des.0, obj$u.des.0)
     f.id <- c(f.id, as.factor(feature.id))
-
+    
     ## Prepare design matrices for out-of-sample uncertainty
     e.des <- e.des.prep(B.list[[i]], C.list[[i]], P.list[[i]], e.order, e.lags,
                         res.list[[i]], sc.pred, Y.d.list[[i]], out.feat[[i]],
                         features[[i]], J[[i]], index.i, loc.geom$index.w,
                         coig.data[[i]], T0[[i]][outcome.var], T1[[i]], constant[[i]], 
-                        e.design, Pd.list[[i]], sc.pred$data$specs$effect, I)
+                        e.design, Pd.list[[i]], sc.pred$data$specs$effect, I, class.type)
+ 
     e.res   <- c(e.res, e.des$e.res)
     e.rownames <- c(e.rownames, rownames(e.des$e.res))
     cnames <- rep(paste0(names(w.constr.list)[[i]], "."), ncol(e.des$e.des.0))
@@ -664,7 +678,9 @@ scpi  <- function(data,
   ###########################################################################
   # Remove NA - In Sample Uncertainty
   X  <- cbind(A, res, u.des.0, Z, f.id)
-  XX <- na.omit(X)
+  # na.omit does not work with sparse matrices, so have to do it manually
+  rowKeep <- Matrix::rowSums(is.na(X)) == 0
+  XX <- X[rowKeep, ]
   j1 <- 1
   j2 <- 2
   j3 <- j2 + 1
@@ -678,7 +694,7 @@ scpi  <- function(data,
   Z.na       <- XX[, j5:j6, drop = FALSE]
   f.id.na    <- XX[, ncol(XX), drop = FALSE]
 
-  active.features <- rowSums(is.na(X)) == 0
+  active.features <- Matrix::rowSums(is.na(X)) == 0
   V.na <- V[active.features, active.features]
 
   # Effective number of observation used for inference (not yet adjusted for df used)
@@ -686,27 +702,30 @@ scpi  <- function(data,
 
   # Remove NA - Out of Sample Uncertainty
   X  <- cbind(e.res, e.des.0)
-  XX <- na.omit(X)
+  rowKeep <- Matrix::rowSums(is.na(X)) == 0
+  XX <- X[rowKeep, ]
   e.res.na   <- XX[, 1, drop = FALSE]
   e.des.0.na <- XX[, -1, drop = FALSE]
 
   # Proceed cleaning missing data in the post-treatment period
-  P.na <- na.omit(P)
+  rowKeep <- Matrix::rowSums(is.na(P)) == 0
+  P.na <- P[rowKeep, ]
 
   #############################################################################
   ########################################################################
   ## Estimate E[u|H], V[u|H], and Sigma
   # If the model is thought to be misspecified then E[u|H] is estimated
+  
   if (u.missp == TRUE) {
     T.u <- nrow(u.des.0.na)
-    u.des.list <- mat2list(u.des.0.na)
-    f.id.list <- mat2list(f.id.na)
+    u.des.list <- mat2list(as.matrix(u.des.0.na)) # as.matrix takes care of the sparse case
+    f.id.list <- mat2list(as.matrix(f.id.na))
     u.des.0.flex <- matrix(NA, 0, 0)
     u.des.0.noflex <- matrix(NA, 0, 0)
     for (i in seq_len(I)) {
-      u.des.0.flex <- Matrix::bdiag(u.des.0.flex, DUflexGet(u.des.list[[i]], C.list[[i]],
-                                                          f.id.list[[i]], M[[i]]))
-      u.des.0.noflex <- Matrix::bdiag(u.des.0.noflex, u.des.list[[i]])
+      u.des.0.flex <- Matrix::bdiag(u.des.0.flex, 
+                                    DUflexGet(as.matrix(u.des.list[[i]]), C.list[[i]], f.id.list[[i]], M[[i]]))
+      u.des.0.noflex <- Matrix::bdiag(u.des.0.noflex, as.matrix(u.des.list[[i]]))
     }
 
     df.U <- T.u - 10
@@ -739,7 +758,8 @@ scpi  <- function(data,
 
     }
 
-    u.mean <- lm(res.na ~ u.des.0.na - 1)$fitted.values
+    y <- res.na[, 1] # takes care of the sparse matrices
+    u.mean <- lm(y ~ u.des.0.na - 1)$fitted.values
     params.u <- ncol(u.des.0.na)
 
   } else if (u.missp == FALSE) {
@@ -757,8 +777,9 @@ scpi  <- function(data,
   }
 
   # Use HC inference to estimate V[u|H]
-  result <- u.sigma.est(u.mean = u.mean, u.sigma = u.sigma, res = res.na,
+  result <- u.sigma.est(u.mean = u.mean, u.sigma = u.sigma, res = as.matrix(res.na),
                         Z = Z.na, V = V.na, index = index, TT = TT, df = df)
+
   Sigma <- result$Sigma
   Omega <- result$Omega
   Sigma.root <- sqrtm(Sigma)
@@ -773,7 +794,6 @@ scpi  <- function(data,
 
   ## Define constrained problem to be simulated
   if (w.lb.est == TRUE || w.ub.est == TRUE) {
-
     vsigg <- insampleUncertaintyGet(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I,
                                     w.constr.inf[[1]], Q.star, Q2.star, lb, TT, sims, cores, verbose, 
                                     w.lb.est, w.ub.est)
@@ -817,7 +837,7 @@ scpi  <- function(data,
   }
 
   ## Adjust for missing values
-  P.nomiss <- rowSums(is.na(P)) == 0   # rows of P with no missing values
+  P.nomiss <- Matrix::rowSums(is.na(P)) == 0   # rows of P with no missing values
 
   Wlb <- matrix(NA, nrow = nrow(P), ncol = 1)
   Wub <- matrix(NA, nrow = nrow(P), ncol = 1)
@@ -860,6 +880,12 @@ scpi  <- function(data,
     if (all(is.na(e.bounds[, 2]) == FALSE)) e.ub.est <- FALSE
   }
 
+  if (sc.pred$data$specs$effect == "time") {
+    scale.x <- sc.pred$data$specs$I
+  } else {
+    scale.x <- 1
+  }
+
   T.e <- nrow(e.des.0.na)
   params.e <- ncol(e.des.0.na)
   if ((T.e - 10) <= params.e) {
@@ -870,8 +896,14 @@ scpi  <- function(data,
     e.des.1.list <- mat2list(e.des.1)
 
     for (i in seq_len(I)) {
-      aux <- matrix(1, nrow = nrow(e.des.0.na.list[[i]]), 1)
-      auxx <- matrix(1, nrow = nrow(e.des.1.list[[i]]), 1)
+      if (sc.effect == "time") {
+        aux <- matrix(1/scale.x, nrow = nrow(e.des.0.na.list[[i]]), 1)
+        auxx <- matrix(1/scale.x, nrow = nrow(e.des.1.list[[i]]), 1)
+      } else {
+        aux <- matrix(1, nrow = nrow(e.des.0.na.list[[i]]), 1)
+        auxx <- matrix(1, nrow = nrow(e.des.1.list[[i]]), 1)
+      }
+
       if (i == 1) {
         e.des.0.na <- aux
         e.des.1 <- auxx
@@ -895,7 +927,7 @@ scpi  <- function(data,
     e.order <- 0
     e.lags <- 0
   }
-
+  
   params.e <- ncol(e.des.0.na)
 
   e.lb.gau <- e.ub.gau <- e.lb.ls <- e.ub.ls <- e.lb.qreg <- e.ub.qreg <- e.mean <- e.var <- c()
@@ -904,13 +936,7 @@ scpi  <- function(data,
   e.des.1.list <- mat2list(e.des.1)
   e1.rnames <- rownames(e.des.1)
   e0.rnames <- rownames(e.des.0.na)
-
-  if (sc.pred$data$specs$effect == "time") {
-    scale.x <- sc.pred$data$specs$I
-  } else {
-    scale.x <- 1
-  }
-
+  
   for (i in seq_len(I)) {
     e.des.0.na.list[[i]] <- detectConstant(e.des.0.na.list[[i]])
     e.des.1.list[[i]] <- detectConstant(e.des.1.list[[i]], scale.x)
@@ -934,7 +960,7 @@ scpi  <- function(data,
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1,
                        e.method = "gaussian", alpha = e.alpha / 2,
                        e.lb.est = e.lb.est, e.ub.est =  e.lb.est,
-                       effect = sc.pred$data$specs$effect)
+                       effect = sc.pred$data$specs$effect, out.feat = out.feat)
 
     e.lb.gau <- pi.e$lb
     e.ub.gau <- pi.e$ub
@@ -955,7 +981,7 @@ scpi  <- function(data,
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1,
                        e.method = "ls", alpha = e.alpha / 2,
                        e.lb.est = e.lb.est, e.ub.est =  e.lb.est,
-                       effect = sc.pred$data$specs$effect)
+                       effect = sc.pred$data$specs$effect, out.feat = out.feat)
 
     e.lb.ls <- pi.e$lb
     e.ub.ls <- pi.e$ub
@@ -980,7 +1006,7 @@ scpi  <- function(data,
       pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1,
                          e.method = "qreg", alpha = e.alpha / 2,
                          e.lb.est = e.lb.est, e.ub.est =  e.ub.est, verbose = verbose,
-                         effect = sc.pred$data$specs$effect)
+                         effect = sc.pred$data$specs$effect, out.feat = out.feat)
 
       lb <- pi.e$lb
       ub <- pi.e$ub
@@ -1007,18 +1033,18 @@ scpi  <- function(data,
     joint.bounds <- simultaneousPredGet(vsig, T1, nrow(P.na), I, u.alpha, e.alpha,
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est,
                                         w.bounds, w.constr.inf[[1]]["name"],
-                                        sc.pred$data$specs$effect)
+                                        sc.pred$data$specs$effect, out.feat)
 
   } else if (sc.effect == "unit") { # joint across units
     joint.bounds <- simultaneousPredGet(vsig, nrow(P.na), nrow(P.na), I = 1, u.alpha, e.alpha,
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est, w.bounds,
-                                        w.constr.inf[[1]]["name"], sc.pred$data$specs$effect)
+                                        w.constr.inf[[1]]["name"], sc.pred$data$specs$effect, out.feat)
 
   } else if (sc.effect == "time") { # joint within aggregate unit
     joint.bounds <- simultaneousPredGet(vsig, min(unlist(T1)), nrow(P.na), 1, u.alpha, e.alpha,
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est,
                                         w.bounds, w.constr.inf[[1]]["name"],
-                                        sc.pred$data$specs$effect)
+                                        sc.pred$data$specs$effect, out.feat)
   }
 
   ML <- joint.bounds$ML

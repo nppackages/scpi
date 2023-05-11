@@ -98,6 +98,7 @@ The command returns an object of class 'scdataMulti' containing the following
 \item{\code{effect}, for internal use only}
 \item{\code{anticipation}, number of periods of potential anticipation effects}
 \item{\code{out.in.features}, for internal use only}
+\item{\code{sparse.matrices}, for internal use only}
 \item{\code{treated.units}, list containing the IDs of all treated units}
 \item{\code{donors.list}, list containing the IDs of the donors of each treated unit}}}
 }
