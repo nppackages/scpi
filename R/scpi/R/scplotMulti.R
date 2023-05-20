@@ -83,6 +83,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
                         col.treated = "black", col.synth = "mediumblue", scales = "fixed",
                         point.size = 1.5, ncols = 3, save.data = NULL, verbose = TRUE) {
 
+  # shortcut to avoid "no visible binding for global variable 'X' when checking the package
   Treatment <- ID <- Time <- Tdate <- Type <- tstd <- NULL
 
   if (!(result$data$specs$class.type %in% c("scpi_scest_multi", "scpi_scpi_multi"))) {

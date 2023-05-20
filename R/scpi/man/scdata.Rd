@@ -44,7 +44,8 @@ time variable is preferred.}
 \item{features}{a character vector containing the name of the feature variables used for estimation.
 If this option is not specified the default is \code{features = outcome.var}.}
 
-\item{cov.adj}{a list specifying the names of the covariates to be used for adjustment for each feature. See the \strong{Details} section for more.}
+\item{cov.adj}{a list specifying the names of the covariates to be used for adjustment for each feature. If \code{outcome.var} is
+not in the variables specified in \code{features}, we force \code{cov.adj<-NULL}. See the \strong{Details} section for more.}
 
 \item{cointegrated.data}{a logical that indicates if there is a belief that the data is cointegrated or not.
 The default value is \code{FALSE}.  See the \strong{Details} section for more.}
@@ -114,9 +115,18 @@ adjustment for each feature. For example, if there are two features specified an
 \item{provide a list with as many elements as the number of features specified, then
 feature-specific covariate adjustment is implemented. For example,
 \code{cov.adj = list('f1' = c("constant","trend"), 'f2' = c("trend"))}. In this case the name of each element
-of the list should be one (and only one) of the features specified.}}
+of the list should be one (and only one) of the features specified. Note that if two (or more) features are
+specified and covariates adjustment has to be specified just for one of them, the user must still provide a list
+of the same length of the number of features, e.g., \code{cov.adj = list('f1' = c("constant","trend"), 'f2' = NULL}.}
+}
 
 This option allows the user to include feature-specific constant terms
+or time trends by simply including "constant" or "trend" in the corresponding
+element of the list.
+
+When \code{outcome.var} is not included in \code{features}, we automatically set \eqn{\mathcal{R}=\emptyset}, that is
+we do not perform covariate adjustment. This is because, in this setting it is natural to create the out-of-sample
+prediction matrix \eqn{\mathbf{P}} using the post-treatment outcomes of the donor units only.
 }
 
 \item{\code{cointegrated.data} allows the user to model the belief that \eqn{\mathbf{A}} and \eqn{\mathbf{B}} form a

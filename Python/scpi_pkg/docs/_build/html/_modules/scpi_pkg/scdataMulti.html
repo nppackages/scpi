@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>scpi_pkg.scdataMulti &#8212; scpi-pkg 2.0.0 documentation</title>
+    <title>scpi_pkg.scdataMulti &#8212; scpi-pkg 2.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
@@ -23,7 +23,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scdataMulti</a></li> 
       </ul>
@@ -36,11 +36,7 @@
             
   <h1>Source code for scpi_pkg.scdataMulti</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Created on Mon Mar  7 15:47:09 2022</span>
 
-<span class="sd">@author: ux310uq-gl443t</span>
-<span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># Temporary code to suppress pandas FutureWarning</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
@@ -155,7 +151,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    The function returns an object of class `scdata_output&#39; containing the following objects</span>
+<span class="sd">    The function returns an object of class &#39;scdata_output&#39; containing the following objects</span>
 
 <span class="sd">    A : pandas.DataFrame</span>
 <span class="sd">        a dataframe containing pre-treatment features of the treated units.</span>
@@ -174,11 +170,11 @@
 
 <span class="sd">    Y_pre: pandas.DataFrame</span>
 <span class="sd">        a dataframe containing the actual pre-treatment outcome for the treated unit(s). Note that this is the raw data,</span>
-<span class="sd">        therefore if effect is specified, Y_pre will not contain the aggregated data.</span>
+<span class="sd">        therefore if effect is specified, it will not contain the aggregated data.</span>
 
 <span class="sd">    Y_post: pandas.DataFrame</span>
 <span class="sd">        a dataframe containing the actual post-treatment outcome for the treated unit(s). Note that this is the raw data,</span>
-<span class="sd">        therefore if effect is specified, Y_pre will not contain the aggregated data.</span>
+<span class="sd">        therefore if effect is specified, it will not contain the aggregated data.</span>
 
 <span class="sd">    Y_donors : pandas.DataFrame</span>
 <span class="sd">        a dataframe containing the pre-treatment outcome of the control units.</span>
@@ -237,9 +233,9 @@
 <span class="sd">    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic</span>
 <span class="sd">    Controls with Staggered Treatment Adoption”.</span>
 
-<span class="sd">   See Also</span>
+<span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    scdata, scest, scpi, scplot</span>
+<span class="sd">    scdata, scest, scpi, scplot, scplotMulti</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -805,7 +801,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scdataMulti</a></li> 
       </ul>

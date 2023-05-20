@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 16 11:08:57 2021
 
-@author: Filippo Palomba
-"""
 # Temporary code to suppress pandas FutureWarning
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -17,9 +13,9 @@ from .scplot import scplot
 from .scplotMulti import scplotMulti
 
 
-def scest(df, w_constr=None, V="separate", plot=False):
+def scest(df, w_constr=None, V="separate", Vmat=None, plot=False):
 
-    '''
+    """
 
     Parameters
     ----------
@@ -35,10 +31,14 @@ def scest(df, w_constr=None, V="separate", plot=False):
         - lb, a scalar defining the lower bound on the weights. It can be either 0 or -numpy.inf.
         - name, a character selecting one of the default proposals.
 
-    V : str/numpy.array, default "separate"
+    V : str, default "separate"
         a weighting matrix to be used when minimizing the sum of squared residuals.
         The default is the identity matrix ("separate"), so equal weight is given to all observations.
         The other possibility is to specify V = "pooled" for the pooled fit.
+
+    Vmat : numpy.array, defaul None
+        a conformable weighting matrix to be used in the minimization of the sum of squared residuals. To check the proper
+        dimensions, we suggest to check the output of scdata or scdataMulti and inspect the dimensions of B and C.
 
     plot : bool, default False
         a logical specifying whether scplot should be called and a plot saved in the current working directory. For more
@@ -46,7 +46,7 @@ def scest(df, w_constr=None, V="separate", plot=False):
 
     Returns
     -------
-    The function returns an object of class `scest_output' containing the following objects
+    The function returns an object of class 'scest_output' containing the following objects
 
     w : pandas.DataFrame
         a dataframe containing the weights of the donors.
@@ -168,7 +168,7 @@ def scest(df, w_constr=None, V="separate", plot=False):
     --------
     scdata, scdataMulti, scpi, scplot, scplotMulti
 
-    '''
+    """
 
     if df.__class__.__name__ not in ['scdata_output', 'scdata_multi_output']:
         raise Exception("df should be the object returned by running scdata or scdataMulti!")
@@ -228,19 +228,26 @@ def scest(df, w_constr=None, V="separate", plot=False):
     # Set up the estimation problem
 
     # Create weighting matrix
-    if not isinstance(V, (pandas.DataFrame, numpy.ndarray, str)):
-        raise Exception("The object V should be a string, a dataframe or a matrix!")
+    if not isinstance(V, str):
+        raise Exception("The object V should be a string! If you want to manually specify the weighting matrix " +
+                        "consider using the option 'Vmat'!")
 
-    if isinstance(V, (pandas.DataFrame, numpy.ndarray)):
-        V_shape = numpy.shape(V)
-        if V_shape[0] != len(B) or V_shape[1] != len(B):
-            raise Exception("The object V should be of shape (" + str(len(B)) +
-                            "," + str(len(B)) + ")!")
-        V_type = "separate"
-        V = pandas.DataFrame(V, index=B.index,
-                             columns=B.index.get_level_values('ID'))
+    if Vmat is not None:
+        if not isinstance(Vmat, (pandas.DataFrame, numpy.ndarray, str)):
+            raise Exception("The object Vmat should a pandas.dataframe or a numpy.array!")
+
+        else:
+            V_shape = numpy.shape(Vmat)
+            if V_shape[0] != len(B) or V_shape[1] != len(B):
+                raise Exception("The object Vmat should be of shape (" + str(len(B)) +
+                                "," + str(len(B)) + ")!")
+
+            Vmat = pandas.DataFrame(Vmat, index=B.index,
+                                    columns=B.index.get_level_values('ID'))
     else:
-        V = V_prep(V_type, B, T0_features, iota)
+        Vmat = V_prep(V_type, B, T0_features, iota)
+
+    V = Vmat
 
     # Estimate SC
     if class_type == "scpi_data":

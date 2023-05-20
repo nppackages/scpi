@@ -435,8 +435,11 @@ def b_est(A, Z, J, KM, w_constr, V):
                        cvxpy.sum_squares(x[0:J]) <= cvxpy.power(w_constr['Q2'], 2)]
 
     prob = cvxpy.Problem(objective, constraints)
-    prob.solve()
 
+    if w_constr['name'] == 'lasso' or (p == "L1" and dire == "<="):
+        prob.solve(solver=cvxpy.OSQP)
+    else:
+        prob.solve(solver=cvxpy.ECOS)
     b = x.value
     alert = prob.status != 'optimal'
 
@@ -444,7 +447,7 @@ def b_est(A, Z, J, KM, w_constr, V):
         raise Exception("Estimation algorithm not converged! The algorithm returned the value: " +
                         str(prob.status) + ". To check to what errors it corresponds" +
                         "go to 'https://www.cvxpy.org/tutorial/intro/index.html'. " +
-                        " Typically, this occurs because the problem is badly-scaled." +
+                        "Typically, this occurs because the problem is badly-scaled." +
                         "If so, scaling the data fixes the issue.")
 
     return b
@@ -500,7 +503,10 @@ def b_est_multi(A, Z, J, KM, iota, w_constr, V):
         j_lb = j_ub
 
     prob = cvxpy.Problem(objective, constraints)
-    prob.solve()
+    if w_constr[0]['name'] == 'lasso' or (p == "L1" and dire == "<="):
+        prob.solve(solver=cvxpy.OSQP)
+    else:
+        prob.solve(solver=cvxpy.ECOS)
 
     b = x.value
     alert = prob.status != 'optimal'
@@ -643,7 +649,10 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
             ix.rename(["feature", "Time"], inplace=True)
 
             e_des_0 = pandas.DataFrame(numpy.ones(T0), index=ix)
-            e_des_1 = pandas.DataFrame(numpy.ones(T1), index=P.index)
+            if effect == "time":
+                e_des_1 = pandas.DataFrame(numpy.ones(T1) / iota, index=P.index)
+            else:
+                e_des_1 = pandas.DataFrame(numpy.ones(T1), index=P.index)
 
         elif e_order > 0:  # Include covariates when predicting u_mean
             # Create first differences feature-by-feature of the matrix B (not of C!!)
@@ -668,8 +677,12 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
             if constant is False:
                 e_des_0.insert(loc=len(e_des_0.columns), column='0_constant',
                                value=numpy.ones(len(e_des_0)))
-                e_des_1.insert(loc=len(e_des_1.columns), column='0_constant',
-                               value=numpy.ones(len(e_des_1)))
+                if effect == "time":
+                    e_des_1.insert(loc=len(e_des_1.columns), column='0_constant',
+                                   value=numpy.ones(len(e_des_1)) / iota)
+                else:
+                    e_des_1.insert(loc=len(e_des_1.columns), column='0_constant',
+                                   value=numpy.ones(len(e_des_1)))
 
         nolag = False
 
@@ -968,7 +981,7 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
 
     return vsig
 
-def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
+def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect, out_feat):
     e_1 = e_2 = None
     idx = preds.index
     y = deepcopy(numpy.array(y))[:, 0]
@@ -1082,6 +1095,13 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
         lb = pandas.DataFrame(lb, index=idx)
         ub = pandas.DataFrame(ub, index=idx)
 
+        # if model is heavily misspecified just give up on out-of-sample uncertainty
+        if out_feat is False:
+            if any(lb[0] > 0):
+                lb = pandas.DataFrame([lb.min()] * len(lb), index=idx)
+            if any(ub[0] < 0):
+                ub = pandas.DataFrame([ub.max()] * len(ub), index=idx)
+
     else:
         lb = None
         ub = None
@@ -1090,14 +1110,14 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect):
 
 
 def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_des_0_na,
-                        e_des_1, w_lb_est, w_ub_est, w_bounds, w_name, effect):
+                        e_des_1, w_lb_est, w_ub_est, w_bounds, w_name, effect, out_feat):
 
     vsigLB = vsig[:, :T1_tot]
     vsigUB = vsig[:, T1_tot:]
 
     e_lb, e_ub, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                     e_method="gaussian", alpha=e_alpha / 2,
-                                    e_lb_est=True, e_ub_est=True, effect=effect)
+                                    e_lb_est=True, e_ub_est=True, effect=effect, out_feat=out_feat)
 
     jmin = 0
     w_lb_joint = []

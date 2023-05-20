@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 25 07:55:26 2021
 
-@author: Filippo Palomba
-"""
 # Temporary code to suppress pandas FutureWarning
 
 import warnings
@@ -28,12 +24,12 @@ def scplot(result,
            e_method=None,
            save_data=None):
 
-    '''
+    """
     Parameters
     ----------
     result : scest_output/scpi_output
-        a class `scest_output' object, obtained by calling scest, or a class
-        `scpi_output' object, obtained by calling scpi
+        a class 'scest_output' object, obtained by calling scest, or a class
+        'scpi_output' object, obtained by calling scpi
 
     col_dots_t : str, default "black"
         string indicating the color of the time series marker for treated unit
@@ -90,7 +86,8 @@ def scplot(result,
     --------
     scdata, scdataMulti, scest, scpi, scplotMulti
 
-    '''
+    """
+
     class_input = result.__class__.__name__
 
     if class_input not in ['scest_output', 'scpi_output']:

@@ -32,7 +32,8 @@
 #' @param unit.co a character or numeric vector that identifies the donor pool in \code{id.var}.
 #' @param features a character vector containing the name of the feature variables used for estimation.
 #' If this option is not specified the default is \code{features = outcome.var}.
-#' @param cov.adj a list specifying the names of the covariates to be used for adjustment for each feature. See the \strong{Details} section for more.
+#' @param cov.adj a list specifying the names of the covariates to be used for adjustment for each feature. If \code{outcome.var} is
+#' not in the variables specified in \code{features}, we force \code{cov.adj<-NULL}. See the \strong{Details} section for more.
 #' @param constant a logical which controls the inclusion of a constant term across features. The default value is \code{FALSE}.
 #' @param cointegrated.data a logical that indicates if there is a belief that the data is cointegrated or not.
 #' The default value is \code{FALSE}.  See the \strong{Details} section for more.
@@ -79,11 +80,18 @@
 #' \item{provide a list with as many elements as the number of features specified, then
 #' feature-specific covariate adjustment is implemented. For example,
 #' \code{cov.adj = list('f1' = c("constant","trend"), 'f2' = c("trend"))}. In this case the name of each element
-#' of the list should be one (and only one) of the features specified.}}
+#' of the list should be one (and only one) of the features specified. Note that if two (or more) features are 
+#' specified and covariates adjustment has to be specified just for one of them, the user must still provide a list 
+#' of the same length of the number of features, e.g., \code{cov.adj = list('f1' = c("constant","trend"), 'f2' = NULL}.}
+#' }
 #'
 #' This option allows the user to include feature-specific constant terms
-#  or time trends by simply including "constant" or "trend" in the corresponding
-#  element of the list.
+#' or time trends by simply including "constant" or "trend" in the corresponding
+#' element of the list.
+#'  
+#' When \code{outcome.var} is not included in \code{features}, we automatically set \eqn{\mathcal{R}=\emptyset}, that is
+#' we do not perform covariate adjustment. This is because, in this setting it is natural to create the out-of-sample
+#' prediction matrix \eqn{\mathbf{P}} using the post-treatment outcomes of the donor units only.
 #' }
 #'
 #' \item{\code{cointegrated.data} allows the user to model the belief that \eqn{\mathbf{A}} and \eqn{\mathbf{B}} form a
@@ -416,7 +424,6 @@ scdata <- function(df,
   # this is why we do everything in one step
   Y.donors <- as.matrix(aux[, colnames(aux) != "Time", drop=FALSE])
 
-
   Y.names     <- stringr::str_remove(colnames(Y.donors), outcome.var)
   Y.names     <- stringr::str_remove(Y.names,".")
 
@@ -511,7 +518,7 @@ scdata <- function(df,
       if (is.null(cc) == TRUE) {
         colnames.C[[j]] <- NULL
       } else {
-        colnames.C[[j]] <- paste(unit.tr, j, cc, sep = ".")
+        colnames.C[[j]] <- paste(unit.tr, features[j], cc, sep = ".")
       }
     }
 
@@ -545,9 +552,9 @@ scdata <- function(df,
   P.names     <- stringr::str_remove(P.names,".")
   colnames(P) <- paste(unit.tr, P.names, sep = ".")
   P           <- P[,B.names, drop = F]  # Re-order as the matrix B
-  
+
   # If the outcome variable is within the specified features then we need to
-  # augment P with the corresponding (eventual) covariates used for adjustment,
+  # augment P with the corresponding (eventual) covariates used for adjustment.
   # If instead the outcome variable is not within the specified features
   # P is composed by the outcome variable of the donors only
   
@@ -588,7 +595,7 @@ scdata <- function(df,
   
   T1 <- length(period.post)
 
-  
+
   ############################################################################
   ############################################################################
   # Proceed cleaning missing data in the pre-treatment period
@@ -613,7 +620,7 @@ scdata <- function(df,
   }
   
   X <- cbind(A, B, C)
-  
+
   rownames(X) <- paste(unit.tr, feature.vec, as.character(time.vec), sep = ".")
   select      <- rowSums(is.na(X)) == 0
   X.na        <- X[select, , drop = FALSE]
@@ -681,7 +688,7 @@ scdata <- function(df,
   names(K) <- features
 
   # Augment P with zeros for other equations' cov adj
-  if (sum(K[-1]) > 0) {
+  if (sum(K[-1]) > 0 & out.in.features == TRUE) {
     zeros        <- matrix(0, nrow = nrow(P), ncol = sum(K[-1]))
     P            <- cbind(P, zeros)
   }
@@ -700,7 +707,7 @@ scdata <- function(df,
   } else {
     colnames(P) <- c(colnames(B.na), colnames(C.na))
   }
-  
+
   specs <- list(J = J,
                 K = K,
                 KM = KM,
@@ -720,7 +727,6 @@ scdata <- function(df,
                 effect = "unit-time",
                 sparse.matrices = FALSE,
                 units.est = unit.tr)
-
 
   df.sc <-     list(A = A.na,
                     B = B.na,

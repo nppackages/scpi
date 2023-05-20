@@ -428,7 +428,7 @@ b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "ECOS") {
 
   prob        <- CVXR::Problem(objective, constraints)
   sol         <- CVXR::solve(prob, solver=CVXR.solver)
-
+  
   b <- sol$getValue(x)
   alert <- !(sol$status %in% c("optimal", "optimal_inaccurate"))
 
@@ -500,7 +500,6 @@ b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver="ECOS") {
   prob        <- CVXR::Problem(objective, constraints)
   sol         <- CVXR::solve(prob, solver=CVXR.solver)
 
-  b <- sol$getValue(x)
   alert <- !(sol$status %in% c("optimal", "optimal_inaccurate"))
   
   if (alert == TRUE) {
@@ -530,7 +529,7 @@ V.prep <- function(type, B, T0.features, I) {
     max.dim <- max(dim.V)
     ones <- matrix(1, nrow = I, ncol = 1)
     eye <- diag(1, nrow = max.dim, ncol = max.dim)
-    V <- kronecker(ones %*% t(ones), eye) # structure if T0*M was balanced across treated unit
+    VV <- kronecker(ones %*% t(ones), eye) # structure if T0*M was balanced across treated unit
 
     sel <- matrix(TRUE, nrow = nrow(V), ncol = ncol(V))
     for (i in seq_len(I)) { # trim V according to length of pre-treatment period
@@ -697,7 +696,11 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
     if (e.order == 0) {
 
       e.des.0 <- as.matrix(rep(1, T0[1]))
-      e.des.1 <- as.matrix(rep(1, T1))
+      if (effect == "time") {
+        e.des.1 <- as.matrix(rep(1/I, T1))
+      } else {
+        e.des.1 <- as.matrix(rep(1, T1))
+      }
 
     } else if (e.order > 0) {
       feature.id <- unlist(purrr::map(stringr::str_split(rownames(B), "\\."), 2))
@@ -756,7 +759,11 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
       # the collinear covariates!!
       if (constant == FALSE) {
         e.des.0 <- cbind(e.des.0, rep(1, nrow(e.des.0)))
-        e.des.1 <- cbind(e.des.1, rep(1, nrow(e.des.1)))
+        if (effect == "time") {
+          e.des.1 <- cbind(e.des.1, rep(1/I, nrow(e.des.1)))
+        } else {
+          e.des.1 <- cbind(e.des.1, rep(1, nrow(e.des.1)))
+        }
       }
     }
 
@@ -885,6 +892,7 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
 
       zeta    <- rnorm(length(beta))
       G <- Sigma.root %*% zeta
+
       a <- -2 * G - 2 * Q %*% beta
       d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
       if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
@@ -1130,15 +1138,15 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose,
         e.pred.lb <- e.pred[,1]
         e.pred.ub <- e.pred[,2]
       }
-      
+
       lb <- e.pred.lb
       ub <- e.pred.ub
-      
+
     }
   }
-  
+
   # if model is heavily misspecified just give up on out-of-sample uncertainty
-  if (out.feat[[1]] == FALSE) { 
+  if (out.feat[[1]] == FALSE) {
     if (any(lb > 0)) lb <- rep(min(lb), length(lb))
     if (any(ub < 0)) ub <- rep(max(ub), length(ub))
   }
@@ -1233,7 +1241,7 @@ predict <- function(y, x, eval, type="lm", tau=NULL, verbose = FALSE) {
     pred <- eval %*% betahat
     
   } else if (type == "qreg") {
-    
+
     tryCatch(
       {
         betahat <- Qtools::rrq(y~x-1, tau=tau)$coefficients
@@ -1639,3 +1647,101 @@ matRegularize <- function(P, cond = NA) {
   }    
   return(list(scale = scale, Qreg = Qreg))
 }
+
+
+outcomeGet <- function(Y.pre.fit, Y.post.fit, Y.df, units.est, treated.units,
+                       plot.type, anticipation, period.post) {
+
+  # shortcut to avoid "no visible binding for global variable 'X' when checking the package
+  Treatment <- ID <- Time <- Tdate <- Type <- tstd <- NULL
+      
+  synth.mat <- rbind(Y.pre.fit, Y.post.fit)
+  names(Y.df) <- c(names(Y.df)[1:3], "Actual")
+  res.df <- subset(Y.df, ID %in% units.est)
+  
+  if (plot.type == "unit") {
+    Y.actual.pre <- subset(res.df, Treatment == 0)
+    Y.actual.post <- subset(res.df, Treatment == 1)
+    Y.actual.post.agg <- aggregate(Actual ~ ID, data = Y.actual.post, mean)
+    Y.actual.post.agg$Treatment <- 1
+    names <- strsplit(rownames(Y.post.fit), "\\.")
+    Y.actual.post.agg$Time <- as.numeric(unlist(lapply(names, "[[", 2)))
+    Y.actual <- rbind(Y.actual.pre, Y.actual.post.agg)
+    
+  } else {
+    Y.actual <- res.df # dataframe
+  }
+  
+  treated.periods <- subset(Y.actual, Treatment == 1, select = c(Time, ID)) # post treatment period for each treated unit
+  treated.reception <- aggregate(Time ~ ID, data = treated.periods, min)
+  names(treated.reception) <- c("ID", "Tdate")
+  treated.reception$Tdate <- as.numeric(treated.reception$Tdate) - anticipation - 1 / 2
+  treated.reception <- subset(treated.reception, ID %in% units.est)
+  
+  if (plot.type == "time") {
+    res.df <- merge(res.df, treated.reception, by = "ID")
+    Y.actual.pre <- subset(res.df, Time < Tdate)
+    Y.actual.post <- subset(res.df, Time > Tdate)
+    Y.actual.pre$Tdate <- Y.actual.pre$Tdate + 1/2
+    Y.actual.post$Tdate <- Y.actual.post$Tdate + 1/2
+    Y.actual.pre$tstd <- Y.actual.pre$Time - Y.actual.pre$Tdate
+    Y.actual.post$tstd <- Y.actual.post$Time - Y.actual.post$Tdate
+    
+    names <- strsplit(rownames(synth.mat), "\\.")
+    unit <- unlist(lapply(names, "[[", 1))
+    no.agg <- unit %in% treated.units
+    time <- unlist(lapply(names[1:sum(no.agg)], "[[", 2))
+    synth.pre <- data.frame(ID = unit[no.agg == TRUE],
+                            Synthetic = synth.mat[no.agg == TRUE, 1],
+                            Time = time)
+    
+    Y.pre <- merge(Y.actual.pre, synth.pre, by=c("ID", "Time"))
+    max.pre <- max(aggregate(tstd ~ ID, data = Y.pre, min)$tstd)
+    min.post <- min(unlist(lapply(period.post, length))) - 1
+    
+    Y.pre.agg <- aggregate(x = Y.pre[c("Actual", "Synthetic")],
+                           by = Y.pre[c("tstd")],
+                           FUN = mean, na.rm = TRUE)
+    names(Y.pre.agg) <- c("Time", "Actual", "Synthetic")
+    Y.pre.agg <- subset(Y.pre.agg, Time >= max.pre)
+    
+    Y.post.agg <- aggregate(x = Y.actual.post[c("Actual")],
+                            by = Y.actual.post[c("tstd")],
+                            FUN = mean, na.rm = TRUE)
+    
+    Y.post.agg <- subset(Y.post.agg, tstd <= min.post)
+    
+    Y.post.agg <- data.frame(ID = unit[no.agg == FALSE],
+                             Actual = Y.post.agg$Actual,
+                             Synthetic = synth.mat[no.agg == FALSE, 1],
+                             Time = c(0:(sum(no.agg==FALSE)-1))) 
+    
+    Y.pre.agg$Treatment <- 0
+    Y.post.agg$Treatment <- 1
+    
+    Y.pre.agg$ID <- "aggregate"
+    Y.post.agg$ID <- "aggregate"
+    
+    Y.actual <- rbind(Y.pre.agg, Y.post.agg)
+    Y.actual$Tdate <- 0
+    
+    plot.type <- "unit-time"
+    I <- 1
+    treated.reception <- data.frame(ID="aggregate", Tdate = 1/2)
+    toplot <- Y.actual
+    toplot$Time <- toplot$Time + 1
+    
+  } else {
+    # Merge synthetic
+    names <- strsplit(rownames(synth.mat), "\\.")
+    unit <- unlist(lapply(names, "[[", 1))
+    period <- unlist(lapply(names, "[[", 2))
+    
+    synth <- data.frame(ID = unit, Time = period, Synthetic = synth.mat)
+    toplot <- merge(Y.actual, synth, by = c("ID", "Time"), all = FALSE) # keep only treated units
+  }
+ 
+  return(list(toplot=toplot, treated.reception=treated.reception, plot.type=plot.type)) 
+}
+
+

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Data Preparation for Synthetic Control (scdata.scdata) &#8212; scpi-pkg 2.0.0 documentation</title>
+    <title>Data Preparation for Synthetic Control (scdata.scdata) &#8212; scpi-pkg 2.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to scpi-pkg’s documentation!"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Data Preparation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdata.scdata</span></code>)</a></li> 
       </ul>
     </div>  
@@ -59,7 +59,7 @@ follow the notation proposed in <a class="reference external" href="https://nppa
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – a dataframe object containing the data to be processed</p></li>
-<li><p><strong>id_var</strong> (<em>str</em>) – a character with the name of the variable containing units’ IDs</p></li>
+<li><p><strong>id_var</strong> (<em>str</em>) – a character with the name of the variable containing units IDs</p></li>
 <li><p><strong>time_var</strong> (<em>str</em>) – a character with the name of the time variable. The time variable has to be numpy.int64 or
 numpy.datetime64. Input a numeric time variable is suggested when working with
 yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.</p></li>
@@ -68,19 +68,15 @@ yearly data, whereas for all other frequencies numpy.datetime64 type is preferre
 <li><p><strong>period_post</strong> (<em>array</em>) – a numeric vector that identifies the post-treatment period in time_var.</p></li>
 <li><p><strong>unit_tr</strong> (<em>int</em>) – a scalar that identifies the treated unit in id_var.</p></li>
 <li><p><strong>unit_co</strong> (<em>array</em>) – a numeric vector that identifies the donor pool in id_var.</p></li>
-<li><p><strong>features</strong> (<em>list</em><em>, </em><em>default None</em>) – <dl class="simple">
-<dt>a character list containing the name of the feature variables used for estimation.</dt><dd><p>If this option is not specified the default is features = outcome_var.</p>
-</dd>
-<dt>cov_adj<span class="classifier">list, default None</span></dt><dd><p>a list specifying the names of the covariates to be used for adjustment for each feature. If the user wants
+<li><p><strong>features</strong> (<em>list</em><em>, </em><em>default None</em>) – a character list containing the name of the feature variables used for estimation.
+If this option is not specified the default is features = outcome_var.</p></li>
+<li><p><strong>cov_adj</strong> (<em>list</em><em>, </em><em>default None</em>) – a list specifying the names of the covariates to be used for adjustment for each feature. If the user wants
 to specify the same set of covariates for all features, a single list should be provided. If instead a
 different set of covariates per feature has to be specified, then a list of lists should be provided. Note that
 in this latter case the number of sub-lists must be equal to the number of features. Moreover, the order of the
 sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates for the first
 feature, and so on. Finally, the user can specify ‘constant’ and ‘trend’ as covariates even if they are not
-present in the loaded dataframe.</p>
-</dd>
-</dl>
-</p></li>
+present in the loaded dataframe.</p></li>
 <li><p><strong>constant</strong> (<em>bool</em><em>, </em><em>default False</em>) – a logical which controls the inclusion of a constant term across features. The default value is False.</p></li>
 <li><p><strong>cointegrated_data</strong> (<em>bool</em><em>, </em><em>default False</em>) – a logical that indicates if there is a belief that the data is cointegrated or not. The default value is False.
 See the Details section for more.</p></li>
@@ -91,7 +87,7 @@ See the Details section for more.</p></li>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p>The function returns an object of class <a href="#id1"><span class="problematic" id="id2">`</span></a>scdata_output’ containing the following objects</p></li>
+<li><p><em>The function returns an object of class ‘scdata_output’ containing the following objects</em></p></li>
 <li><p><strong>A</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the treated unit.</p></li>
 <li><p><strong>B</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the control units.</p></li>
 <li><p><strong>C</strong> (<em>pandas.DataFrame</em>) – a dataframe containing covariates for adjustment.</p></li>
@@ -246,7 +242,7 @@ Controls with Staggered Treatment Adoption”.</p>
         <li class="right" >
           <a href="index.html" title="Welcome to scpi-pkg’s documentation!"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Data Preparation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdata.scdata</span></code>)</a></li> 
       </ul>
     </div>

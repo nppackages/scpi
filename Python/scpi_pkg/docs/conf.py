@@ -12,12 +12,14 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath(r'D:\Dropbox (Personal)\Research\Cattaneo\packages\python\scpi_pkg\src\scpi_pkg'))
+sys.path.insert(0, os.path.abspath('/Users/fpalomba/Dropbox (Princeton)/projects/scpi/packages/python/scpi_pkg/src/scpi_pkg'))
 
 from scpi_pkg.scdata import scdata
+from scpi_pkg.scdataMulti import scdataMulti
 from scpi_pkg.scest import scest
 from scpi_pkg.scpi import scpi
 from scpi_pkg.scplot import scplot
+from scpi_pkg.scplotMulti import scplotMulti
 
 # -- Project information -----------------------------------------------------
 
@@ -26,7 +28,7 @@ copyright = '2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiuni
 author = 'Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik'
 
 # The full version, including alpha/beta/rc tags
-release = '2.0.0'
+release = '2.2.2'
 
 
 # -- General configuration ---------------------------------------------------

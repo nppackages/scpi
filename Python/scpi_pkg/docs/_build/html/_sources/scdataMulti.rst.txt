@@ -24,7 +24,7 @@ Dependencies
 
             `dask <https://docs.dask.org/en/stable/>`_, 
 
-            `nlopt <https://nlopt.readthedocs.io/en/latest/>`_,
+            `ecos <https://pypi.org/project/ecos//>`_,
 
             `numpy <https://numpy.org/>`_, 
 
@@ -38,7 +38,7 @@ Dependencies
 
             `statsmodels <https://www.statsmodels.org/stable/index.html>`_
 
-**scpi_pkg**: none
+**scpi_pkg**: scdata
 
 Usage
 -----

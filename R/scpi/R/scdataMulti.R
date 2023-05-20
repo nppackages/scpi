@@ -34,7 +34,8 @@
 #' the command would not work as expected!
 #' @param features a list containing the names of the feature variables used for estimation.
 #' If this option is not specified the default is \code{features = outcome.var}.
-#' @param cov.adj a list specifying the names of the covariates to be used for adjustment for each feature.
+#' @param cov.adj a list specifying the names of the covariates to be used for adjustment for each feature. If \code{outcome.var} is
+#' not in the variables specified in \code{features}, we force \code{cov.adj<-NULL}. See the \strong{Details} section for more.
 #' @param post.est a scalar specifying the number of post-treatment periods or a list specifying the periods
 #' for which treatment effects have to be computed for each treated unit.
 #' @param units.est a list specifying the treated units for which treatment effects have to be computed.
@@ -61,6 +62,8 @@
 #' \item{P}{a matrix whose rows are the vectors used to predict the out-of-sample series for the synthetic units.}
 #' \item{P.diff}{for internal use only.}
 #' \item{Y.df}{a dataframe containing the outcome variable for all units.}
+#' \item{Y.pre}{a matrix containing the pre-treatment outcome of the treated units.}
+#' \item{Y.post}{a matrix containing the post-treatment outcome of the treated units.}
 #' \item{Y.donors}{a matrix containing the pre-treatment outcome of the control units.}
 #' \item{specs}{a list containing some specifics of the data:
 #' \itemize{
@@ -210,8 +213,10 @@ scdataMulti <- function(df,
     if (is.list(features) == FALSE) {
       stop("The argument features should be a list!")
     }
-    if (!all(names(features) %in% units.est)) {
-      stop("The object features should be a list whose elements have the same name of the selected treated units!")
+    if (length(features) > 1) {
+      if (!all(names(features) %in% units.est)) {
+        stop("The object features should be a list whose elements have the same name of the selected treated units!")
+      }
     }
   } else {
     features <- outcome.var
@@ -374,6 +379,7 @@ scdataMulti <- function(df,
   rownames.P <- c()
   colnames.P <- c()
   rownames.Y.pre <- c()
+  rownames.Y.post <- c()
   rownames.Y.donors <- c()
   colnames.Y.donors <- c()
 
@@ -468,7 +474,8 @@ scdataMulti <- function(df,
     B.tr <- scdata.out$B
     C.tr <- scdata.out$C
     Y.pre.tr <- scdata.out$Y.pre
-  
+    Y.post.tr <- scdata.out$Y.post
+    
     if (is.null(C.tr)) { # to avoid bdiag to crash when C is null
       C.tr <- as.matrix(data.frame()[1:nrow(B.tr), ])
     }
@@ -518,11 +525,16 @@ scdataMulti <- function(df,
     rownames.P <- c(rownames.P, rownames(P.tr))
     colnames.B <- c(colnames.B, colnames(B.tr))
     rownames.Y.pre <- c(rownames.Y.pre, rownames(Y.pre.tr))
+    rownames.Y.post <- c(rownames.Y.post, rownames(Y.post.tr))
     
     if (!is.null(cov.adj.list[[treated.unit]]) || constant.list[[treated.unit]]) {
       colnames.C <- c(colnames.C, colnames(C.tr))
     }
-    colnames.P <- c(colnames.P, c(colnames(B.tr), colnames(C.tr)))
+    if (scdata.out$specs$out.in.features == TRUE) {
+      colnames.P <- c(colnames.P, c(colnames(B.tr), colnames(C.tr)))
+    } else {
+      colnames.P <- c(colnames.P, colnames(B.tr))
+    }
     colnames.Y.donors <- c(colnames.Y.donors, colnames(Y.donors.tr))
     rownames.Y.donors <- c(rownames.Y.donors, rownames(Y.donors.tr))
 
@@ -544,7 +556,8 @@ scdataMulti <- function(df,
       Pd.stacked <- P.diff
       Y.donors.stacked <- Y.donors.tr
       Y.pre.stacked <- Y.pre.tr
-
+      Y.post.stacked <- Y.post.tr
+      
     } else {
       A.stacked <- rbind(A.stacked, A.tr)
       B.stacked <- Matrix::bdiag(B.stacked, B.tr)
@@ -558,6 +571,7 @@ scdataMulti <- function(df,
 
       Y.donors.stacked <- Matrix::bdiag(Y.donors.stacked, Y.donors.tr)
       Y.pre.stacked <- rbind(Y.pre.stacked, Y.pre.tr)
+      Y.post.stacked <- rbind(Y.post.stacked, Y.post.tr)
     }
 
     J.list[[treated.unit]] <- scdata.out$specs$J
@@ -579,6 +593,7 @@ scdataMulti <- function(df,
   rownames(C.stacked) <- rownames.A
   rownames(Y.donors.stacked) <- rownames.Y.donors
   rownames(Y.pre.stacked) <- rownames.Y.pre
+  rownames(Y.post.stacked) <- rownames.Y.post
   
   if (effect == "time") {
     P.stacked$aux_id <- NULL
@@ -592,13 +607,20 @@ scdataMulti <- function(df,
   colnames(P.stacked) <- colnames.P
   colnames(Y.donors.stacked) <- colnames.Y.donors
 
-  
   # Rearrange P so that order of columns coincides with (B,C)
-  P.stacked <- P.stacked[, c(colnames.B, colnames.C), drop = FALSE]
+  if (out.in.features.list[[1]] == TRUE) {
+    P.stacked <- P.stacked[, c(colnames.B, colnames.C), drop = FALSE]
+  } else {
+    P.stacked <- P.stacked[, colnames.B, drop = FALSE]
+  }
   if (is.null(Pd.stacked) == FALSE) {
     colnames(Pd.stacked) <- colnames.P
     rownames(Pd.stacked) <- rownames.P
-    Pd.stacked <- Pd.stacked[, c(colnames.B, colnames.C), drop = FALSE]
+    if (out.in.features.list[[1]] == TRUE) {
+      Pd.stacked <- Pd.stacked[, c(colnames.B, colnames.C), drop = FALSE]
+    } else {
+      Pd.stacked <- Pd.stacked[, colnames.B, drop = FALSE]
+    }
   }
   
   if (effect == "time") {
@@ -637,6 +659,7 @@ scdataMulti <- function(df,
                       P.diff = Pd.stacked,
                       Y.df = Y.df,
                       Y.pre = Y.pre.stacked,
+                      Y.post = Y.post.stacked,
                       Y.donors = as.matrix(Y.donors.stacked),
                       specs = specs)
 
@@ -648,6 +671,7 @@ scdataMulti <- function(df,
                       P.diff = Pd.stacked,
                       Y.df = Y.df,
                       Y.pre = Y.pre.stacked,
+                      Y.post = Y.post.stacked,
                       Y.donors = as.matrix(Y.donors.stacked),
                       specs = specs)
   }

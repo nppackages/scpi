@@ -30,11 +30,19 @@
 #' @param P a \eqn{I\cdot T_1\times I\cdot (J+KM)} matrix containing the design matrix to be used to obtain the predicted.
 #' post-intervention outcome of the synthetic control unit. \eqn{T_1} is the number of post-treatment periods,
 #' \eqn{J} is the size of the donor pool, and \eqn{K_1} is the number of covariates used for adjustment in the outcome equation.
-#' @param V specifies the weighting matrix to be used when minimizing the sum of squared residuals
+#' @param V specifies the type of weighting matrix to be used when minimizing the sum of squared residuals
 #' \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
 #' The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
 #' (you used \code{\link{scdataMulti}} to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
-#' In both cases, the user can provide a conformable matrix as input. See the \strong{Details} section for more.
+#' If \code{scdata()} was used to prepare the data, \code{V} is automatically set to "separate" as the two options are 
+#' equivalent. See the \strong{Details} section for more.
+#' @param V.mat A conformable weighting matrix \eqn{\mathbf{V}} to be used in the minimization of the sum of squared residuals
+#' \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r}).}
+#' See the \strong{Details} section for more information on how to prepare this matrix.
+#' @param solver a string containing the name of the solver used by \code{CVXR} when computing the weights. You can check which solvers are available
+#' on your machine by running \code{CVXR::installed_solvers()}. More information on what different solvers do can be found
+#' at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/. "OSQP" is the default solver when 'lasso'
+#' is the constraint type, whilst "ECOS" is the default in all other cases.
 #' @param rho a string specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
 #' \code{rho = 'type-1'} (the default), then the tuning parameter is computed based on optimization inequalities. Users can provide a scalar 
 #' with their own value for \code{rho}. Other options are described in the \strong{Details} section.
@@ -86,12 +94,16 @@
 #' @return
 #' The function returns an object of class 'scpi' containing three lists. The first list is labeled 'data' and contains used
 #' data as returned by \code{\link{scdata}} and some other values.
-#' \item{A}{a matrix containing pre-treatment features of the treated unit.}
+#' \item{A}{a matrix containing pre-treatment features of the treated unit(s).}
 #' \item{B}{a matrix containing pre-treatment features of the control units.}
 #' \item{C}{a matrix containing covariates for adjustment.}
-#' \item{P}{a matrix whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.}
-#' \item{Y.pre}{a matrix containing the pre-treatment outcome of the treated unit.}
-#' \item{Y.post}{a matrix containing the post-treatment outcome of the treated unit.}
+#' \item{P}{a matrix whose rows are the vectors used to predict the out-of-sample series for the synthetic unit(s).}
+#' \item{Y.pre}{a matrix containing the pre-treatment outcome of the treated unit(s).}
+#' \item{Y.post}{a matrix containing the post-treatment outcome of the treated unit(s).}
+#' \item{Y.pre.agg}{a matrix containing the aggregate pre-treatment outcome of the treated unit(s). This differs from 
+#' Y.pre only in the case 'effect' in \code{scdataMulti()} is set to either 'unit' or 'time'.}
+#' \item{Y.post.agg}{a matrix containing the aggregate post-treatment outcome of the treated unit(s). This differs from 
+#' Y.post only in the case 'effect' in \code{scdataMulti()} is set to either 'unit' or 'time'.}
 #' \item{Y.donors}{a matrix containing the pre-treatment outcome of the control units.}
 #' \item{specs}{a list containing some specifics of the data:
 #' \itemize{
@@ -100,7 +112,7 @@
 #' \item{\code{M}, number of features}
 #' \item{\code{KM}, the total number of covariates used for adjustment}
 #' \item{\code{KMI}, the total number of covariates used for adjustment}
-#' \item{\code{I}, number of treated units}
+#' \item{\code{I}, number of treated unit(s)}
 #' \item{\code{period.pre}, a numeric vector with the pre-treatment period}
 #' \item{\code{period.post}, a numeric vector with the post-treatment period}
 #' \item{\code{T0.features}, a numeric vector with the number of periods used in estimation for each feature}
@@ -116,9 +128,9 @@
 #' \item{w}{a matrix containing the estimated weights of the donors.}
 #' \item{r}{a matrix containing the values of the covariates used for adjustment.}
 #' \item{b}{a matrix containing \eqn{\mathbf{w}} and \eqn{\mathbf{r}}.}
-#' \item{Y.pre.fit}{a matrix containing the estimated pre-treatment outcome of the SC unit.}
-#' \item{Y.post.fit}{a matrix containing the estimated post-treatment outcome of the SC unit.}
-#' \item{A.hat}{a matrix containing the predicted values of the features of the treated unit.}
+#' \item{Y.pre.fit}{a matrix containing the estimated pre-treatment outcome of the SC unit(s).}
+#' \item{Y.post.fit}{a matrix containing the estimated post-treatment outcome of the SC unit(s).}
+#' \item{A.hat}{a matrix containing the predicted values of the features of the treated unit(s).}
 #' \item{res}{a matrix containing the residuals \eqn{\mathbf{A}-\widehat{\mathbf{A}}}.}
 #' \item{V}{a matrix containing the weighting matrix used in estimation.}
 #' \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
@@ -209,10 +221,12 @@
 #' \item{if \code{V <- "pooled"}, then \eqn{\mathbf{V} = \mathbf{1}\mathbf{1}'\otimes \mathbf{I}} and the minimized objective function is
 #' \deqn{\sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(\frac{1}{N_1^2} \sum_{i=1}^{N_1}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{i \prime} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{i\prime} \mathbf{r}_{l}^{i}\right)\right)^{2},}
 #' which optimizes the pooled fit for the average of the treated units.}
-#' \item{if \code{V} is a user-provided matrix, then in must be a \eqn{v\times v} positive-definite matrix where \eqn{v} is the 
-#' number of rows of \eqn{\mathbf{B}} (or \eqn{\mathbf{C}}) after missing values have been taken into account. In case the user
+#' \item{if the user wants to provide their own weighting matrix, then it must use the option \code{V.mat} to input a \eqn{v\times v} positive-definite matrix, where \eqn{v} is the 
+#' number of rows of \eqn{\mathbf{B}} (or \eqn{\mathbf{C}}) after potential missing values have been removed. In case the user
 #' wants to provide their own \code{V}, we suggest to check the appropriate dimension \eqn{v} by inspecting the output
-#' of either \code{scdata} or \code{scdataMulti}.}
+#' of either \code{scdata} or \code{scdataMulti} and check the dimensions of \eqn{\mathbf{B}} (and \eqn{\mathbf{C}}). Note that 
+#' the weighting matrix could cause problems to the optimizer if not properly scaled. For example, if \eqn{\mathbf{V}} is diagonal
+#' we suggest to divide each of its entries by \eqn{\|\mathrm{diag}(\mathbf{V})\|_1}.}
 #' }}
 #'
 #'
@@ -296,6 +310,8 @@
 scpi  <- function(data,
                   w.constr     = NULL,
                   V            = "separate",
+                  V.mat        = NULL,
+                  solver       = "ECOS",
                   P            = NULL,
                   u.missp      = TRUE,
                   u.sigma      = "HC1",
@@ -331,8 +347,6 @@ scpi  <- function(data,
     class.type <- 'scpi_data_multi'
   }
 
-  V.type <- V
-
   #############################################################################
   #############################################################################
   ## Estimation of synthetic weights
@@ -340,7 +354,7 @@ scpi  <- function(data,
     cat("---------------------------------------------------------------\n")
     cat("Estimating Weights...\n")
   }
-  sc.pred <- scest(data = data, w.constr = w.constr, V = V)
+  sc.pred <- scest(data = data, w.constr = w.constr, V = V, V.mat = V.mat, solver = solver)
 
 
   #############################################################################
@@ -607,6 +621,7 @@ scpi  <- function(data,
     obj <- u.des.prep(B.list[[i]], C.list[[i]], u.order, u.lags, coig.data[[i]],
                       T0.M[i], constant[[i]], index.i, loc.geom$index.w,
                       features[[i]], feature.id, u.design, res.list[[i]])
+
     u.names <- c(u.names, colnames(obj$u.des.0))
     
     u.des.0 <- Matrix::bdiag(u.des.0, obj$u.des.0)
@@ -794,6 +809,7 @@ scpi  <- function(data,
 
   ## Define constrained problem to be simulated
   if (w.lb.est == TRUE || w.ub.est == TRUE) {
+    
     vsigg <- insampleUncertaintyGet(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I,
                                     w.constr.inf[[1]], Q.star, Q2.star, lb, TT, sims, cores, verbose, 
                                     w.lb.est, w.ub.est)
@@ -896,6 +912,7 @@ scpi  <- function(data,
     e.des.1.list <- mat2list(e.des.1)
 
     for (i in seq_len(I)) {
+
       if (sc.effect == "time") {
         aux <- matrix(1/scale.x, nrow = nrow(e.des.0.na.list[[i]]), 1)
         auxx <- matrix(1/scale.x, nrow = nrow(e.des.1.list[[i]]), 1)

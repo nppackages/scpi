@@ -34,6 +34,7 @@ df <- scdataMulti(data, id.var = "country", outcome.var = "gdp",
                   cointegrated.data = TRUE, features = list(c("gdp", "trade")),
                   cov.adj = list(c("constant", "trend")))
 
+
 res <- scest(df, w.constr = list("name" = "simplex"))
 scplotMulti(res)
 

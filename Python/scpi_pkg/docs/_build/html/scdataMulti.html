@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti) &#8212; scpi-pkg 2.0.0 documentation</title>
+    <title>Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti) &#8212; scpi-pkg 2.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -32,7 +32,7 @@
         <li class="right" >
           <a href="scdata.html" title="Data Preparation for Synthetic Control (scdata.scdata)"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a></li> 
       </ul>
     </div>  
@@ -56,29 +56,24 @@ follow the notation proposed in <a class="reference external" href="https://arxi
 <dl class="py function">
 <dt class="sig sig-object py" id="scpi_pkg.scdataMulti.scdataMulti">
 <span class="sig-prename descclassname"><span class="pre">scpi_pkg.scdataMulti.</span></span><span class="sig-name descname"><span class="pre">scdataMulti</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treatment_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_adj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cointegrated_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_est</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units_est</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">donors_est</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anticipation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">effect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'unit-time'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scpi_pkg/scdataMulti.html#scdataMulti"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scpi_pkg.scdataMulti.scdataMulti" title="Permalink to this definition">¶</a></dt>
-<dd><blockquote>
-<div><dl>
-<dt>df<span class="classifier">pandas.DataFrame</span></dt><dd><p>a dataframe object containing the data to be processed.</p>
-</dd>
-<dt>id_var<span class="classifier">str</span></dt><dd><p>a character with the name of the variable containing units’ IDs.</p>
-</dd>
-<dt>time_var<span class="classifier">str</span></dt><dd><p>a character with the name of the time variable. The time variable has to be numpy.int64 or
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – a dataframe object containing the data to be processed.</p></li>
+<li><p><strong>id_var</strong> (<em>str</em>) – a character with the name of the variable containing units’ IDs.</p></li>
+<li><p><strong>time_var</strong> (<em>str</em>) – a character with the name of the time variable. The time variable has to be numpy.int64 or
 numpy.datetime64. Input a numeric time variable is suggested when working with
-yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.</p>
-</dd>
-<dt>outcome_var<span class="classifier">str</span></dt><dd><p>a character with the name of the outcome variable. The outcome variable has to be numeric.</p>
-</dd>
-<dt>treatment_var<span class="classifier">str</span></dt><dd><p>a character with the name of the treatment variable. The treatment variable has to be 1 only in periods
-where a unit is treated.</p>
-</dd>
-<dt>features<span class="classifier">dict, default None</span></dt><dd><p>a dictionary whose elements are lists containing the name of the feature variables used for estimation.
+yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.</p></li>
+<li><p><strong>outcome_var</strong> (<em>str</em>) – a character with the name of the outcome variable. The outcome variable has to be numeric.</p></li>
+<li><p><strong>treatment_var</strong> (<em>str</em>) – a character with the name of the treatment variable. The treatment variable has to be 1 only in periods
+where a unit is treated.</p></li>
+<li><p><strong>features</strong> (<em>dict</em><em>, </em><em>default None</em>) – a dictionary whose elements are lists containing the name of the feature variables used for estimation.
 If a dictionary with a single key
 is provided as input, then the same features are used for all treated units. Alternatively, if the user wants to
 specify different features for different treated units, the dictionary must contain as many keys as the number
 of treated units in the data. Each key must correspond to the identifier (id_var) of one treated unit.
-If this option is not specified the default is features = outcome_var.</p>
-</dd>
-<dt>cov_adj<span class="classifier">dict, default None</span></dt><dd><p>a dictionary whose elements are lists containing the name of the covariates used for adjustment.
+If this option is not specified the default is features = outcome_var.</p></li>
+<li><p><strong>cov_adj</strong> (<em>dict</em><em>, </em><em>default None</em>) – <p>a dictionary whose elements are lists containing the name of the covariates used for adjustment.
 If a dictionary with a single key
 is provided as input, then the same covariates are used for adjustment for all treated units.
 Alternatively, if the user wants to specify different covariates for different treated units,
@@ -91,88 +86,66 @@ in this latter case the number of sub-lists must be equal to the number of featu
 sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates for the first
 feature, and so on. Finally, the user can specify ‘constant’ and ‘trend’ as covariates even if they are not
 present in the loaded dataframe.</p>
-</dd>
-<dt>post_est<span class="classifier">int/str, default None</span></dt><dd><p>an integer or string specifying the number of post-treatment periods for which treatment effects have to be estimated for each
+</p></li>
+<li><p><strong>post_est</strong> (<em>int/str</em><em>, </em><em>default None</em>) – an integer or string specifying the number of post-treatment periods for which treatment effects have to be estimated for each
 treated unit. It must be an integer when time_var is integer, otherwise it must be a string of the form “10 years”, “2 months”,
 “1 day” and so on. Possible options are: ‘year(s)’, ‘month(s)’, ‘week(s)’, ‘day(s), and ‘hour(s)’.
-If effect = “unit” it indicates the number of periods over which the average post-treatment effect is computed.</p>
-</dd>
-<dt>units_est<span class="classifier">list, default None</span></dt><dd><p>a list specifying the treated units for which treatment effects have to be estimated.</p>
-</dd>
-<dt>donors_est<span class="classifier">dict, default None</span></dt><dd><p>a dictionary specifying the donors units to be used. If the dictionary has length 1, then all treated units share the same
+If effect = “unit” it indicates the number of periods over which the average post-treatment effect is computed.</p></li>
+<li><p><strong>units_est</strong> (<em>list</em><em>, </em><em>default None</em>) – a list specifying the treated units for which treatment effects have to be estimated.</p></li>
+<li><p><strong>donors_est</strong> (<em>dict</em><em>, </em><em>default None</em>) – a dictionary specifying the donors units to be used. If the dictionary has length 1, then all treated units share the same
 potential donors. Otherwise, if the user requires different donor pools for different treated units, the dictionary must
 be of the same length of the number of treated units and each element has to be named with one treated unit’s name as
-specified in id_var.</p>
-</dd>
-<dt>constant<span class="classifier">bool/dict, default False</span></dt><dd><p>a logical which controls the inclusion of a constant term across features. If the user wants to specify this
+specified in id_var.</p></li>
+<li><p><strong>constant</strong> (<em>bool/dict</em><em>, </em><em>default False</em>) – a logical which controls the inclusion of a constant term across features. If the user wants to specify this
 option indipendently for each treated unit, a dictionary must be provided instead of a boolean value.
 Specifically, the dictionary must contain as many keys as the number of treated units in the data.
-Each key must correspond to the identifier (id_var) of one treated unit.</p>
-</dd>
-<dt>cointegrated_data<span class="classifier">bool/dict, default False</span></dt><dd><p>a logical that indicates if there is a belief that the data is cointegrated or not. If the user wants to specify
+Each key must correspond to the identifier (id_var) of one treated unit.</p></li>
+<li><p><strong>cointegrated_data</strong> (<em>bool/dict</em><em>, </em><em>default False</em>) – a logical that indicates if there is a belief that the data is cointegrated or not. If the user wants to specify
 this option indipendently for each treated unit, a dictionary must be provided instead of a boolean value.
 Specifically, the dictionary must contain as many keys as the number of treated units in the data.
-Each key must correspond to the identifier (id_var) of one treated unit.</p>
-</dd>
-<dt>effect<span class="classifier">str, default “unit-time”</span></dt><dd><p>a string indicating the type of treatment effect to be estimated. Options are: ‘unit-time’, which estimates
+Each key must correspond to the identifier (id_var) of one treated unit.</p></li>
+<li><p><strong>effect</strong> (<em>str</em><em>, </em><em>default &quot;unit-time&quot;</em>) – a string indicating the type of treatment effect to be estimated. Options are: ‘unit-time’, which estimates
 treatment effects for each treated unit- post treatment period combination; ‘unit’, which estimates the
 treatment effect for each unit by averaging post-treatment features over time; ‘time’, which estimates the
-average treatment effect on the treated at various horizons.</p>
-</dd>
-<dt>anticipation<span class="classifier">int/dict, default 0</span></dt><dd><p>a scalar that indicates the number of periods of potential anticipation effects. If the user wants to specify
+average treatment effect on the treated at various horizons.</p></li>
+<li><p><strong>anticipation</strong> (<em>int/dict</em><em>, </em><em>default 0</em>) – a scalar that indicates the number of periods of potential anticipation effects. If the user wants to specify
 this option indipendently for each treated unit, a dictionary must be provided instead of an integer value.
 Specifically, the dictionary must contain as many keys as the number of treated units in the data.
-Each key must correspond to the identifier (id_var) of one treated unit.</p>
+Each key must correspond to the identifier (id_var) of one treated unit.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>The function returns an object of class ‘scdata_output’ containing the following objects</em></p></li>
+<li><p><strong>A</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the treated units.</p></li>
+<li><p><strong>B</strong> (<em>pandas.DataFrame</em>) – a dataframe containing pre-treatment features of the control units.</p></li>
+<li><p><strong>C</strong> (<em>pandas.DataFrame</em>) – a dataframe containing covariates for adjustment.</p></li>
+<li><p><strong>P</strong> (<em>pandas.DataFrame</em>) – a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic units.</p></li>
+<li><p><strong>Y_df</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the outcome variable for all units.</p></li>
+<li><p><strong>Y_pre</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the actual pre-treatment outcome for the treated unit(s). Note that this is the raw data,
+therefore if effect is specified, it will not contain the aggregated data.</p></li>
+<li><p><strong>Y_post</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the actual post-treatment outcome for the treated unit(s). Note that this is the raw data,
+therefore if effect is specified, it will not contain the aggregated data.</p></li>
+<li><p><strong>Y_donors</strong> (<em>pandas.DataFrame</em>) – a dataframe containing the pre-treatment outcome of the control units.</p></li>
+<li><p><strong>J</strong> (<em>dict</em>) – a dictionary containing the number of donors for each treated unit</p></li>
+<li><p><strong>K</strong> (<em>dict</em>) – a dictionary containing the number of covariates used for adjustment for each feature for each treated unit</p></li>
+<li><p><strong>KM</strong> (<em>dict</em>) – a dictionary containing the total number of covariates used for adjustment for each treated unit</p></li>
+<li><p><strong>M</strong> (<em>dict</em>) – a dictionary containing number of features used for each treated unit</p></li>
+<li><p><strong>iota</strong> (<em>int</em>) – number of treated units</p></li>
+<li><p><strong>KMI</strong> (<em>int</em>) – overall number of covariates used for adjustment</p></li>
+<li><p><strong>period_pre</strong> (<em>dict</em>) – a dictionary containing a numeric vector with the pre-treatment period for each treated unit</p></li>
+<li><p><strong>period_post</strong> (<em>dict</em>) – a dictionary containing a numeric vector with the post-treatment period for each treated unit</p></li>
+<li><p><strong>T0_features</strong> (<em>dict</em>) – a dictionary containing a numeric vector with the number of periods used in estimation for each feature for each
+treated unit</p></li>
+<li><p><strong>T1_outcome</strong> (<em>dict</em>) – a dictionary containing the number of post-treatment periods for each treated unit</p></li>
+<li><p><strong>glob_cons</strong> (<em>bool</em>) – for internal use only</p></li>
+<li><p><strong>out_in_features</strong> (<em>bool</em>) – for internal use only</p></li>
+<li><p><strong>timeConvert</strong> (<em>bool</em>) – for internal use only</p></li>
+</ul>
+</p>
 </dd>
 </dl>
-<p>The function returns an object of class <a href="#id1"><span class="problematic" id="id2">`</span></a>scdata_output’ containing the following objects</p>
-<dl class="simple">
-<dt>A<span class="classifier">pandas.DataFrame</span></dt><dd><p>a dataframe containing pre-treatment features of the treated units.</p>
-</dd>
-<dt>B<span class="classifier">pandas.DataFrame</span></dt><dd><p>a dataframe containing pre-treatment features of the control units.</p>
-</dd>
-<dt>C<span class="classifier">pandas.DataFrame</span></dt><dd><p>a dataframe containing covariates for adjustment.</p>
-</dd>
-<dt>P<span class="classifier">pandas.DataFrame</span></dt><dd><p>a dataframe whose rows are the vectors used to predict the out-of-sample series for the synthetic units.</p>
-</dd>
-<dt>Y_df<span class="classifier">pandas.DataFrame</span></dt><dd><p>a dataframe containing the outcome variable for all units.</p>
-</dd>
-<dt>Y_pre: pandas.DataFrame</dt><dd><p>a dataframe containing the actual pre-treatment outcome for the treated unit(s). Note that this is the raw data,
-therefore if effect is specified, Y_pre will not contain the aggregated data.</p>
-</dd>
-<dt>Y_post: pandas.DataFrame</dt><dd><p>a dataframe containing the actual post-treatment outcome for the treated unit(s). Note that this is the raw data,
-therefore if effect is specified, Y_pre will not contain the aggregated data.</p>
-</dd>
-<dt>Y_donors<span class="classifier">pandas.DataFrame</span></dt><dd><p>a dataframe containing the pre-treatment outcome of the control units.</p>
-</dd>
-<dt>J<span class="classifier">dict</span></dt><dd><p>a dictionary containing the number of donors for each treated unit</p>
-</dd>
-<dt>K<span class="classifier">dict</span></dt><dd><p>a dictionary containing the number of covariates used for adjustment for each feature for each treated unit</p>
-</dd>
-<dt>KM<span class="classifier">dict</span></dt><dd><p>a dictionary containing the total number of covariates used for adjustment for each treated unit</p>
-</dd>
-<dt>M<span class="classifier">dict</span></dt><dd><p>a dictionary containing number of features used for each treated unit</p>
-</dd>
-<dt>iota<span class="classifier">int</span></dt><dd><p>number of treated units</p>
-</dd>
-<dt>KMI<span class="classifier">int</span></dt><dd><p>overall number of covariates used for adjustment</p>
-</dd>
-<dt>period_pre<span class="classifier">dict</span></dt><dd><p>a dictionary containing a numeric vector with the pre-treatment period for each treated unit</p>
-</dd>
-<dt>period_post<span class="classifier">dict</span></dt><dd><p>a dictionary containing a numeric vector with the post-treatment period for each treated unit</p>
-</dd>
-<dt>T0_features<span class="classifier">dict</span></dt><dd><p>a dictionary containing a numeric vector with the number of periods used in estimation for each feature for each
-treated unit</p>
-</dd>
-<dt>T1_outcome<span class="classifier">dict</span></dt><dd><p>a dictionary containing the number of post-treatment periods for each treated unit</p>
-</dd>
-<dt>glob_cons<span class="classifier">bool</span></dt><dd><p>for internal use only</p>
-</dd>
-<dt>out_in_features<span class="classifier">bool</span></dt><dd><p>for internal use only</p>
-</dd>
-<dt>timeConvert<span class="classifier">bool</span></dt><dd><p>for internal use only</p>
-</dd>
-</dl>
+<p class="rubric">References</p>
 <p>Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
 Aspects,” Journal of Economic Literature, 59, 391-425.</p>
 <p>Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control
@@ -181,11 +154,10 @@ Methods,” Journal of the American Statistical Association, 116, 1865-1880.</p>
 Synthetic Control Estimators”.</p>
 <p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
 Controls with Staggered Treatment Adoption”.</p>
-</div></blockquote>
-<dl class="simple">
-<dt>See Also</dt><dd><p>scdata, scest, scpi, scplot</p>
-</dd>
-</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">scdata</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scest</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scpi</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplot</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">scplotMulti</span></code></p>
+</div>
 </dd></dl>
 
 </section>
@@ -194,7 +166,7 @@ Controls with Staggered Treatment Adoption”.</p>
 <p><strong>Python</strong>: <a class="reference external" href="https://www.cvxpy.org/">cvxpy</a>,</p>
 <blockquote>
 <div><p><a class="reference external" href="https://docs.dask.org/en/stable/">dask</a>,</p>
-<p><a class="reference external" href="https://nlopt.readthedocs.io/en/latest/">nlopt</a>,</p>
+<p><a class="reference external" href="https://pypi.org/project/ecos//">ecos</a>,</p>
 <p><a class="reference external" href="https://numpy.org/">numpy</a>,</p>
 <p><a class="reference external" href="https://pandas.pydata.org/">pandas</a>,</p>
 <p><a class="reference external" href="https://plotnine.readthedocs.io/en/stable/">plotnine</a>,</p>
@@ -202,7 +174,7 @@ Controls with Staggered Treatment Adoption”.</p>
 <p><a class="reference external" href="https://scipy.org/">scipy</a>,</p>
 <p><a class="reference external" href="https://www.statsmodels.org/stable/index.html">statsmodels</a></p>
 </div></blockquote>
-<p><strong>scpi_pkg</strong>: none</p>
+<p><strong>scpi_pkg</strong>: scdata</p>
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
@@ -330,7 +302,7 @@ Controls with Staggered Treatment Adoption”.</p>
         <li class="right" >
           <a href="scdata.html" title="Data Preparation for Synthetic Control (scdata.scdata)"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a></li> 
       </ul>
     </div>

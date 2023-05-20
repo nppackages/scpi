@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Mar  7 15:47:09 2022
 
-@author: ux310uq-gl443t
-"""
 # Temporary code to suppress pandas FutureWarning
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -118,7 +114,7 @@ def scdataMulti(df,
 
     Returns
     -------
-    The function returns an object of class `scdata_output' containing the following objects
+    The function returns an object of class 'scdata_output' containing the following objects
 
     A : pandas.DataFrame
         a dataframe containing pre-treatment features of the treated units.
@@ -137,11 +133,11 @@ def scdataMulti(df,
 
     Y_pre: pandas.DataFrame
         a dataframe containing the actual pre-treatment outcome for the treated unit(s). Note that this is the raw data,
-        therefore if effect is specified, Y_pre will not contain the aggregated data.
+        therefore if effect is specified, it will not contain the aggregated data.
 
     Y_post: pandas.DataFrame
         a dataframe containing the actual post-treatment outcome for the treated unit(s). Note that this is the raw data,
-        therefore if effect is specified, Y_pre will not contain the aggregated data.
+        therefore if effect is specified, it will not contain the aggregated data.
 
     Y_donors : pandas.DataFrame
         a dataframe containing the pre-treatment outcome of the control units.
@@ -200,9 +196,9 @@ def scdataMulti(df,
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
     Controls with Staggered Treatment Adoption”.
 
-   See Also
+    See Also
     --------
-    scdata, scest, scpi, scplot
+    scdata, scest, scpi, scplot, scplotMulti
 
     """
 

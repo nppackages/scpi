@@ -16,6 +16,7 @@ from scpi_pkg.scplotMulti import scplotMulti
 
 ########################################
 # Load database
+os.chdir("/Users/fpalomba/Dropbox (Princeton)/projects/scpi/packages/python/")
 data = pandas.read_csv("scpi_germany.csv")
 
 filterwarnings("ignore")

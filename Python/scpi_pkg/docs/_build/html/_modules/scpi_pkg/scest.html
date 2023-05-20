@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>scpi_pkg.scest &#8212; scpi-pkg 2.0.0 documentation</title>
+    <title>scpi_pkg.scest &#8212; scpi-pkg 2.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
@@ -23,7 +23,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scest</a></li> 
       </ul>
@@ -36,11 +36,7 @@
             
   <h1>Source code for scpi_pkg.scest</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Created on Mon Aug 16 11:08:57 2021</span>
 
-<span class="sd">@author: Filippo Palomba</span>
-<span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># Temporary code to suppress pandas FutureWarning</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
@@ -54,9 +50,9 @@
 <span class="kn">from</span> <span class="nn">.scplotMulti</span> <span class="kn">import</span> <span class="n">scplotMulti</span>
 
 
-<div class="viewcode-block" id="scest"><a class="viewcode-back" href="../../scest.html#scpi_pkg.scest.scest">[docs]</a><span class="k">def</span> <span class="nf">scest</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="s2">&quot;separate&quot;</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="scest"><a class="viewcode-back" href="../../scest.html#scpi_pkg.scest.scest">[docs]</a><span class="k">def</span> <span class="nf">scest</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">w_constr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">V</span><span class="o">=</span><span class="s2">&quot;separate&quot;</span><span class="p">,</span> <span class="n">Vmat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
-    <span class="sd">&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -72,10 +68,14 @@
 <span class="sd">        - lb, a scalar defining the lower bound on the weights. It can be either 0 or -numpy.inf.</span>
 <span class="sd">        - name, a character selecting one of the default proposals.</span>
 
-<span class="sd">    V : str/numpy.array, default &quot;separate&quot;</span>
+<span class="sd">    V : str, default &quot;separate&quot;</span>
 <span class="sd">        a weighting matrix to be used when minimizing the sum of squared residuals.</span>
 <span class="sd">        The default is the identity matrix (&quot;separate&quot;), so equal weight is given to all observations.</span>
 <span class="sd">        The other possibility is to specify V = &quot;pooled&quot; for the pooled fit.</span>
+
+<span class="sd">    Vmat : numpy.array, defaul None</span>
+<span class="sd">        a conformable weighting matrix to be used in the minimization of the sum of squared residuals. To check the proper</span>
+<span class="sd">        dimensions, we suggest to check the output of scdata or scdataMulti and inspect the dimensions of B and C.</span>
 
 <span class="sd">    plot : bool, default False</span>
 <span class="sd">        a logical specifying whether scplot should be called and a plot saved in the current working directory. For more</span>
@@ -83,7 +83,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    The function returns an object of class `scest_output&#39; containing the following objects</span>
+<span class="sd">    The function returns an object of class &#39;scest_output&#39; containing the following objects</span>
 
 <span class="sd">    w : pandas.DataFrame</span>
 <span class="sd">        a dataframe containing the weights of the donors.</span>
@@ -205,7 +205,7 @@
 <span class="sd">    --------</span>
 <span class="sd">    scdata, scdataMulti, scpi, scplot, scplotMulti</span>
 
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;scdata_output&#39;</span><span class="p">,</span> <span class="s1">&#39;scdata_multi_output&#39;</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;df should be the object returned by running scdata or scdataMulti!&quot;</span><span class="p">)</span>
@@ -265,19 +265,26 @@
     <span class="c1"># Set up the estimation problem</span>
 
     <span class="c1"># Create weighting matrix</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="p">(</span><span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object V should be a string, a dataframe or a matrix!&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object V should be a string! If you want to manually specify the weighting matrix &quot;</span> <span class="o">+</span>
+                        <span class="s2">&quot;consider using the option &#39;Vmat&#39;!&quot;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="p">(</span><span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
-        <span class="n">V_shape</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">V</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">V_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="ow">or</span> <span class="n">V_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object V should be of shape (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">))</span> <span class="o">+</span>
-                            <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;)!&quot;</span><span class="p">)</span>
-        <span class="n">V_type</span> <span class="o">=</span> <span class="s2">&quot;separate&quot;</span>
-        <span class="n">V</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
-                             <span class="n">columns</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s1">&#39;ID&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">Vmat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">Vmat</span><span class="p">,</span> <span class="p">(</span><span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object Vmat should a pandas.dataframe or a numpy.array!&quot;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">V_shape</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">Vmat</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">V_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="ow">or</span> <span class="n">V_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The object Vmat should be of shape (&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">))</span> <span class="o">+</span>
+                                <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;)!&quot;</span><span class="p">)</span>
+
+            <span class="n">Vmat</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">Vmat</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                                    <span class="n">columns</span><span class="o">=</span><span class="n">B</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s1">&#39;ID&#39;</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">V</span> <span class="o">=</span> <span class="n">V_prep</span><span class="p">(</span><span class="n">V_type</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">T0_features</span><span class="p">,</span> <span class="n">iota</span><span class="p">)</span>
+        <span class="n">Vmat</span> <span class="o">=</span> <span class="n">V_prep</span><span class="p">(</span><span class="n">V_type</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">T0_features</span><span class="p">,</span> <span class="n">iota</span><span class="p">)</span>
+
+    <span class="n">V</span> <span class="o">=</span> <span class="n">Vmat</span>
 
     <span class="c1"># Estimate SC</span>
     <span class="k">if</span> <span class="n">class_type</span> <span class="o">==</span> <span class="s2">&quot;scpi_data&quot;</span><span class="p">:</span>
@@ -823,7 +830,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scest</a></li> 
       </ul>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>scpi_pkg.scplotMulti &#8212; scpi-pkg 2.0.0 documentation</title>
+    <title>scpi_pkg.scplotMulti &#8212; scpi-pkg 2.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
@@ -23,7 +23,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scplotMulti</a></li> 
       </ul>
@@ -36,11 +36,6 @@
             
   <h1>Source code for scpi_pkg.scplotMulti</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Created on Mon Jul 25 16:59:19 2022</span>
-
-<span class="sd">@author: Filippo Palomba</span>
-<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
@@ -71,12 +66,13 @@
                 <span class="n">save_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 
-    <span class="sd">&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    result : scest_output/scpi_output</span>
-<span class="sd">        a class `scest_multi_output&#39; object, obtained by calling scest, or a class</span>
-<span class="sd">        `scpi_multi_output&#39; object, obtained by calling scpi. The data object given as input to</span>
+<span class="sd">        a class &#39;scest_multi_output&#39; object, obtained by calling scest, or a class</span>
+<span class="sd">        &#39;scpi_multi_output&#39; object, obtained by calling scpi. The data object given as input to</span>
 <span class="sd">        this command has to be processed with scdataMulti.</span>
 
 <span class="sd">    ptype : str, default &quot;series&quot;</span>
@@ -156,7 +152,7 @@
 <span class="sd">    --------</span>
 <span class="sd">    scdata, scdataMulti, scest, scpi, scplot</span>
 
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">class_input</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
 
@@ -676,7 +672,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scplotMulti</a></li> 
       </ul>

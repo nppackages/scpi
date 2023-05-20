@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>scpi_pkg.scdata &#8212; scpi-pkg 2.0.0 documentation</title>
+    <title>scpi_pkg.scdata &#8212; scpi-pkg 2.2.2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
@@ -23,7 +23,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scdata</a></li> 
       </ul>
@@ -36,11 +36,7 @@
             
   <h1>Source code for scpi_pkg.scdata</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Created on Mon Aug 16 09:59:24 2021</span>
 
-<span class="sd">@author: Filippo Palomba</span>
-<span class="sd">&quot;&quot;&quot;</span>
 <span class="c1"># Temporary code to suppress pandas FutureWarning</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
@@ -78,7 +74,7 @@
 <span class="sd">        a dataframe object containing the data to be processed</span>
 
 <span class="sd">    id_var : str</span>
-<span class="sd">        a character with the name of the variable containing units&#39; IDs</span>
+<span class="sd">        a character with the name of the variable containing units IDs</span>
 
 <span class="sd">    time_var : str</span>
 <span class="sd">        a character with the name of the time variable. The time variable has to be numpy.int64 or</span>
@@ -92,19 +88,19 @@
 <span class="sd">        a numeric vector that identifies the pre-treatment period in time_var.</span>
 
 <span class="sd">    period_post : array</span>
-<span class="sd">         a numeric vector that identifies the post-treatment period in time_var.</span>
+<span class="sd">        a numeric vector that identifies the post-treatment period in time_var.</span>
 
 <span class="sd">    unit_tr : int</span>
-<span class="sd">         a scalar that identifies the treated unit in id_var.</span>
+<span class="sd">        a scalar that identifies the treated unit in id_var.</span>
 
 <span class="sd">    unit_co : array</span>
 <span class="sd">         a numeric vector that identifies the donor pool in id_var.</span>
 
 <span class="sd">    features : list, default None</span>
-<span class="sd">         a character list containing the name of the feature variables used for estimation.</span>
+<span class="sd">        a character list containing the name of the feature variables used for estimation.</span>
 <span class="sd">        If this option is not specified the default is features = outcome_var.</span>
 
-<span class="sd">     cov_adj : list, default None</span>
+<span class="sd">    cov_adj : list, default None</span>
 <span class="sd">        a list specifying the names of the covariates to be used for adjustment for each feature. If the user wants</span>
 <span class="sd">        to specify the same set of covariates for all features, a single list should be provided. If instead a</span>
 <span class="sd">        different set of covariates per feature has to be specified, then a list of lists should be provided. Note that</span>
@@ -131,7 +127,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    The function returns an object of class `scdata_output&#39; containing the following objects</span>
+<span class="sd">    The function returns an object of class &#39;scdata_output&#39; containing the following objects</span>
 
 <span class="sd">    A : pandas.DataFrame</span>
 <span class="sd">        a dataframe containing pre-treatment features of the treated unit.</span>
@@ -215,6 +211,7 @@
 <span class="sd">    scdataMulti, scest, scpi, scplot, scplotMulti</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="c1"># Check main input is a dataframe</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Data input should be a dataframe object!&#39;</span><span class="p">)</span>
@@ -865,7 +862,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">scpi_pkg.scdata</a></li> 
       </ul>

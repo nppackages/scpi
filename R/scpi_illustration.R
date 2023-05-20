@@ -65,7 +65,8 @@ scplot(result = est.si, fig.path = ".",
 ### SC - point estimation with lasso
 est.lasso <- scest(data = df, w.constr = list(name="lasso"))
 summary(est.lasso)
-est.lasso2 <- scest(data = df, w.constr = list(p = "L1", dir = "<=", Q = 1, lb = -Inf))
+est.lasso2 <- scest(data = df, w.constr = list(p = "L1", dir = "<=", Q = 1, lb = -Inf),
+                    solver="OSQP")
 summary(est.lasso2)
 
 
@@ -192,11 +193,18 @@ df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = o
                 unit.tr = unit.tr, unit.co = unit.co, cov.adj = cov.adj, features = c("gdp", "trade"),
                 constant = constant, cointegrated.data = cointegrated.data)
 
-## multiple features and featuer-specific covariate adjustment
+## multiple features and feature-specific covariate adjustment
 df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
                 period.pre = period.pre, period.post = period.post,
                 unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "trade"), 
                 cov.adj = list('gdp' = c("constant","trend"), 'trade' = c("constant")),
+                constant = constant, cointegrated.data = cointegrated.data)
+
+## multiple features and feature-specific covariate adjustment (just for one of the two features)
+df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
+                period.pre = period.pre, period.post = period.post,
+                unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "trade"), 
+                cov.adj = list('gdp' = c("constant","trend"), 'trade' = c()),
                 constant = constant, cointegrated.data = cointegrated.data)
 
 

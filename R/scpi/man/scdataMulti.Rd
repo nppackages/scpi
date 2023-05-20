@@ -43,7 +43,8 @@ the command would not work as expected!}
 \item{features}{a list containing the names of the feature variables used for estimation.
 If this option is not specified the default is \code{features = outcome.var}.}
 
-\item{cov.adj}{a list specifying the names of the covariates to be used for adjustment for each feature.}
+\item{cov.adj}{a list specifying the names of the covariates to be used for adjustment for each feature. If \code{outcome.var} is
+not in the variables specified in \code{features}, we force \code{cov.adj<-NULL}. See the \strong{Details} section for more.}
 
 \item{cointegrated.data}{a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}.}
 
@@ -79,6 +80,8 @@ The command returns an object of class 'scdataMulti' containing the following
 \item{P}{a matrix whose rows are the vectors used to predict the out-of-sample series for the synthetic units.}
 \item{P.diff}{for internal use only.}
 \item{Y.df}{a dataframe containing the outcome variable for all units.}
+\item{Y.pre}{a matrix containing the pre-treatment outcome of the treated units.}
+\item{Y.post}{a matrix containing the post-treatment outcome of the treated units.}
 \item{Y.donors}{a matrix containing the pre-treatment outcome of the control units.}
 \item{specs}{a list containing some specifics of the data:
 \itemize{

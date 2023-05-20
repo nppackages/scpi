@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Aug 17 14:46:14 2021
 
-@author: Filippo Palomba
-"""
 # Temporary code to suppress pandas FutureWarning
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -29,6 +25,7 @@ from scipy.linalg import sqrtm
 def scpi(data,
          w_constr=None,
          V="separate",
+         Vmat=None,
          P=None,
          u_missp=True,
          u_sigma="HC1",
@@ -52,7 +49,7 @@ def scpi(data,
          verbose=True,
          pass_stata=False):
 
-    '''
+    """
     Parameters
     ----------
     data : scdata_output
@@ -67,9 +64,14 @@ def scpi(data,
         4. lb, a scalar defining the lower bound on the weights. It can be either 0 or -numpy.inf.
         5. name, a character selecting one of the default proposals.
 
-    V : numpy.array, default numpy.identity
-        an array specifying the weighting matrix to be used when minimizing the sum of squared residuals.
-        The default is the identity matrix, so equal weight is given to all observations.
+    V : str, default "separate"
+        a weighting matrix to be used when minimizing the sum of squared residuals.
+        The default is the identity matrix ("separate"), so equal weight is given to all observations.
+        The other possibility is to specify V = "pooled" for the pooled fit.
+
+    Vmat : numpy.array, defaul None
+        a conformable weighting matrix to be used in the minimization of the sum of squared residuals. To check the proper
+        dimensions, we suggest to check the output of scdata or scdataMulti and inspect the dimensions of B and C.
 
     P : numpy.array, default None
         a T_1 x (J+K_1) array containing the design matrix to be used to obtain the predicted.
@@ -160,7 +162,7 @@ def scpi(data,
 
     Returns
     -------
-    The function returns an object of class `scpi_output' containing the following objects
+    The function returns an object of class 'scpi_output' containing the following objects
 
     w : pandas.DataFrame
         a dataframe containing the weights of the donors.
@@ -363,7 +365,7 @@ def scpi(data,
     --------
     scdata, scdataMulti, scest, splot, scplotMulti
 
-    '''
+    """
 
     if data.__class__.__name__ not in ['scdata_output', 'scdata_multi_output']:
         raise Exception("data should be the object returned by running scdata or scdataMulti!")
@@ -378,7 +380,7 @@ def scpi(data,
     if pass_stata is False and verbose:
         print("-----------------------------------------------")
         print("Estimating Weights...")
-    sc_pred = scest(df=data, w_constr=w_constr, V=V)
+    sc_pred = scest(df=data, w_constr=w_constr, V=V, Vmat=Vmat)
 
     ######################################
     # Retrieve processed data from scest
@@ -990,7 +992,7 @@ def scpi(data,
         e_lb_gau, e_ub_gau, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                                 e_method="gaussian", alpha=e_alpha / 2,
                                                 e_lb_est=e_lb_est, e_ub_est=e_ub_est,
-                                                effect=sc_effect)
+                                                effect=sc_effect, out_feat=out_feat[tr])
 
         # Overwrite with user's input
         if e_lb_est is False:
@@ -1009,7 +1011,7 @@ def scpi(data,
         e_lb_ls, e_ub_ls, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                               e_method="ls", alpha=e_alpha / 2,
                                               e_lb_est=e_lb_est, e_ub_est=e_ub_est,
-                                              effect=sc_effect)
+                                              effect=sc_effect, out_feat=out_feat[tr])
 
         # Overwrite with user's input
         if e_lb_est is False:
@@ -1032,7 +1034,7 @@ def scpi(data,
             e_lb_qreg, e_ub_qreg, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                                       e_method="qreg", alpha=e_alpha / 2,
                                                       e_lb_est=e_lb_est, e_ub_est=e_ub_est,
-                                                      effect=sc_effect)
+                                                      effect=sc_effect, out_feat=out_feat[tr])
         # Overwrite with user's input
         if e_lb_est is False:
             e_lb_qreg = e_bounds[0]
@@ -1051,19 +1053,19 @@ def scpi(data,
         ML, MU = simultaneousPredGet(vsig, T1val, len(P_na), iota, u_alpha,
                                      e_alpha, e_res_na, e_des_0_na, e_des_1,
                                      w_lb_est, w_ub_est, w_bounds,
-                                     w_constr_aux[tr_units[0]]['name'], sc_effect)
+                                     w_constr_aux[tr_units[0]]['name'], sc_effect, out_feat)
 
     elif sc_effect == "unit":  # joint across units
         ML, MU = simultaneousPredGet(vsig, [len(P_na)], len(P_na), 1, u_alpha,
                                      e_alpha, e_res_na, e_des_0_na, e_des_1,
                                      w_lb_est, w_ub_est, w_bounds,
-                                     w_constr_aux[tr_units[0]]['name'], sc_effect)
+                                     w_constr_aux[tr_units[0]]['name'], sc_effect, out_feat)
 
     elif sc_effect == "time":  # joint within aggregate unit
         ML, MU = simultaneousPredGet(vsig, [len(P_na)], len(P_na), 1, u_alpha,
                                      e_alpha, e_res_na, e_des_0_na, e_des_1,
                                      w_lb_est, w_ub_est, w_bounds,
-                                     w_constr_aux[tr_units[0]]['name'], sc_effect)
+                                     w_constr_aux[tr_units[0]]['name'], sc_effect, out_feat)
 
     ML.set_index(P_na.index, inplace=True, append=False)
     MU.set_index(P_na.index, inplace=True, append=False)

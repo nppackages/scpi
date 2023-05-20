@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Jul 25 16:59:19 2022
-
-@author: Filippo Palomba
-"""
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -34,12 +29,13 @@ def scplotMulti(result,
                 save_data=None,
                 verbose=True):
 
-    '''
+    """
+
     Parameters
     ----------
     result : scest_output/scpi_output
-        a class `scest_multi_output' object, obtained by calling scest, or a class
-        `scpi_multi_output' object, obtained by calling scpi. The data object given as input to
+        a class 'scest_multi_output' object, obtained by calling scest, or a class
+        'scpi_multi_output' object, obtained by calling scpi. The data object given as input to
         this command has to be processed with scdataMulti.
 
     ptype : str, default "series"
@@ -119,7 +115,7 @@ def scplotMulti(result,
     --------
     scdata, scdataMulti, scest, scpi, scplot
 
-    '''
+    """
 
     class_input = result.__class__.__name__
 

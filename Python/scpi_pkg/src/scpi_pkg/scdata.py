@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 16 09:59:24 2021
 
-@author: Filippo Palomba
-"""
 # Temporary code to suppress pandas FutureWarning
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -41,7 +37,7 @@ def scdata(df,
         a dataframe object containing the data to be processed
 
     id_var : str
-        a character with the name of the variable containing units' IDs
+        a character with the name of the variable containing units IDs
 
     time_var : str
         a character with the name of the time variable. The time variable has to be numpy.int64 or
@@ -55,19 +51,19 @@ def scdata(df,
         a numeric vector that identifies the pre-treatment period in time_var.
 
     period_post : array
-         a numeric vector that identifies the post-treatment period in time_var.
+        a numeric vector that identifies the post-treatment period in time_var.
 
     unit_tr : int
-         a scalar that identifies the treated unit in id_var.
+        a scalar that identifies the treated unit in id_var.
 
     unit_co : array
          a numeric vector that identifies the donor pool in id_var.
 
     features : list, default None
-         a character list containing the name of the feature variables used for estimation.
+        a character list containing the name of the feature variables used for estimation.
         If this option is not specified the default is features = outcome_var.
 
-     cov_adj : list, default None
+    cov_adj : list, default None
         a list specifying the names of the covariates to be used for adjustment for each feature. If the user wants
         to specify the same set of covariates for all features, a single list should be provided. If instead a
         different set of covariates per feature has to be specified, then a list of lists should be provided. Note that
@@ -94,7 +90,7 @@ def scdata(df,
 
     Returns
     -------
-    The function returns an object of class `scdata_output' containing the following objects
+    The function returns an object of class 'scdata_output' containing the following objects
 
     A : pandas.DataFrame
         a dataframe containing pre-treatment features of the treated unit.
@@ -178,6 +174,7 @@ def scdata(df,
     scdataMulti, scest, scpi, scplot, scplotMulti
 
     """
+
     # Check main input is a dataframe
     if not isinstance(df, pandas.DataFrame):
         raise Exception('Data input should be a dataframe object!')

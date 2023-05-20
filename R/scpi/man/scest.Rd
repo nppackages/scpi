@@ -8,6 +8,7 @@ scest(
   data,
   w.constr = NULL,
   V = "separate",
+  V.mat = NULL,
   solver = "ECOS",
   plot = FALSE,
   plot.name = NULL,
@@ -29,15 +30,21 @@ scest(
 See the \strong{Details} section for more.
 }}
 
-\item{V}{specifies the weighting matrix to be used when minimizing the sum of squared residuals
+\item{V}{specifies the type of weighting matrix to be used when minimizing the sum of squared residuals
 \deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})}
 The default is the identity matrix, so equal weight is given to all observations. In the case of multiple treated observations
 (you used \code{\link{scdataMulti}} to prepare the data), the user can specify \code{V} as a string equal to either "separate" or "pooled".
-In both cases, the user can provide a conformable matrix as input. See the \strong{Details} section for more.}
+If \code{scdata()} was used to prepare the data, \code{V} is automatically set to "separate" as the two options are
+equivalent. See the \strong{Details} section for more.}
 
-\item{solver}{a string containing the name of the solver used by \code{CVXR}. You can check which solvers are available
+\item{V.mat}{A conformable weighting matrix \eqn{\mathbf{V}} to be used in the minimization of the sum of squared residuals
+\deqn{(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r})'\mathbf{V}(\mathbf{A}-\mathbf{B}\mathbf{w}-\mathbf{C}\mathbf{r}).}
+See the \strong{Details} section for more information on how to prepare this matrix.}
+
+\item{solver}{a string containing the name of the solver used by \code{CVXR} when computing the weights. You can check which solvers are available
 on your machine by running \code{CVXR::installed_solvers()}. More information on what different solvers do can be found
-at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/.}
+at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/. "OSQP" is the default solver when 'lasso'
+is the constraint type, whilst "ECOS" is the default in all other cases.}
 
 \item{plot}{a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working
 directory. For more options see \code{\link{scplot}}.}
@@ -51,13 +58,17 @@ directory. For more options see \code{\link{scplot}}.}
 \value{
 The function returns an object of class 'scest' containing two lists. The first list is labeled 'data' and
 contains used data as returned by \code{\link{scdata}} and some other values.
-\item{A}{a matrix containing pre-treatment features of the treated unit.}
+\item{A}{a matrix containing pre-treatment features of the treated unit(s).}
 \item{B}{a matrix containing pre-treatment features of the control units.}
 \item{C}{a matrix containing covariates for adjustment.}
-\item{P}{a matrix whose rows are the vectors used to predict the out-of-sample series for the synthetic unit.}
+\item{P}{a matrix whose rows are the vectors used to predict the out-of-sample series for the synthetic unit(s).}
 \item{P.diff}{for internal use only.}
-\item{Y.pre}{a matrix containing the pre-treatment outcome of the treated unit.}
-\item{Y.post}{a matrix containing the post-treatment outcome of the treated unit.}
+\item{Y.pre}{a matrix containing the (raw) pre-treatment outcome of the treated unit(s).}
+\item{Y.post}{a matrix containing the (raw) post-treatment outcome of the treated unit(s).}
+\item{Y.pre.agg}{a matrix containing the aggregate pre-treatment outcome of the treated unit(s). This differs from
+Y.pre only in the case 'effect' in \code{scdataMulti()} is set to either 'unit' or 'time'.}
+\item{Y.post.agg}{a matrix containing the aggregate post-treatment outcome of the treated unit(s). This differs from
+Y.post only in the case 'effect' in \code{scdataMulti()} is set to either 'unit' or 'time'.}
 \item{Y.donors}{a matrix containing the pre-treatment outcome of the control units.}
 \item{specs}{a list containing some specifics of the data:
 \itemize{
@@ -83,9 +94,9 @@ The second list is labeled 'est.results' and contains estimation results.
 \item{w}{a matrix containing the estimated weights of the donors.}
 \item{r}{a matrix containing the values of the covariates used for adjustment.}
 \item{b}{a matrix containing \eqn{\mathbf{w}} and \eqn{\mathbf{r}}.}
-\item{Y.pre.fit}{a matrix containing the estimated pre-treatment outcome of the SC unit.}
-\item{Y.post.fit}{a matrix containing the estimated post-treatment outcome of the SC unit.}
-\item{A.hat}{a matrix containing the predicted values of the features of the treated unit.}
+\item{Y.pre.fit}{a matrix containing the estimated pre-treatment outcome of the SC unit(s).}
+\item{Y.post.fit}{a matrix containing the estimated post-treatment outcome of the SC unit(s).}
+\item{A.hat}{a matrix containing the predicted values of the features of the treated unit(s).}
 \item{res}{a matrix containing the residuals \eqn{\mathbf{A}-\widehat{\mathbf{A}}}.}
 \item{V}{a matrix containing the weighting matrix used in estimation.}
 \item{w.constr}{a list containing the specifics of the constraint set used on the weights.}
@@ -158,10 +169,12 @@ which optimizes the separate fit for each treated unit.}
 \item{if \code{V <- "pooled"}, then \eqn{\mathbf{V} = \frac{1}{I}\mathbf{1}\mathbf{1}'\otimes \mathbf{I}} and the minimized objective function is
 \deqn{\sum_{l=1}^{M} \sum_{t=1}^{T_{0}}\left(\frac{1}{N_1^2} \sum_{i=1}^{N_1}\left(a_{t, l}^{i}-\mathbf{b}_{t, l}^{i \prime} \mathbf{w}^{i}-\mathbf{c}_{t, l}^{i\prime} \mathbf{r}_{l}^{i}\right)\right)^{2},}
 which optimizes the pooled fit for the average of the treated units.}
-\item{if \code{V} is a user-provided matrix, then in must be a \eqn{v\times v} positive-definite matrix where \eqn{v} is the
-number of rows of \eqn{\mathbf{B}} (or \eqn{\mathbf{C}}) after missing values have been taken into account. In case the user
+\item{if the user wants to provide their own weighting matrix, then it must use the option \code{V.mat} to input a \eqn{v\times v} positive-definite matrix, where \eqn{v} is the
+number of rows of \eqn{\mathbf{B}} (or \eqn{\mathbf{C}}) after potential missing values have been removed. In case the user
 wants to provide their own \code{V}, we suggest to check the appropriate dimension \eqn{v} by inspecting the output
-of either \code{scdata} or \code{scdataMulti}.}
+of either \code{scdata} or \code{scdataMulti} and check the dimensions of \eqn{\mathbf{B}} (and \eqn{\mathbf{C}}). Note that
+the weighting matrix could cause problems to the optimizer if not properly scaled. For example, if \eqn{\mathbf{V}} is diagonal
+we suggest to divide each of its entries by \eqn{\|\mathrm{diag}(\mathbf{V})\|_1}.}
 }}
 }
 }
