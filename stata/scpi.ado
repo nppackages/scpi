@@ -220,7 +220,11 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 	else:
 		u_missp_bool = True
 
-	res_pi = scpi(df, w_constr, V, None, u_missp_bool, u_sigma, u_order, u_lags, None, u_alpha, str(e_method), e_order, e_lags, None, e_alpha, sims, rho, rho_max, lgapp, cores, False, None, None, True, True)
+	print(V)
+	res_pi = scpi(data=df, w_constr=w_constr, V=V, Vmat=None, P=None, u_missp=u_missp_bool, u_sigma=u_sigma, u_order=u_order, u_lags=u_lags, u_design=None, u_alpha=u_alpha,
+				  e_method=str(e_method), e_order=e_order, e_lags=e_lags, e_design=None, e_alpha=e_alpha, sims=sims, rho=rho, rho_max=rho_max, lgapp=lgapp, cores=cores,
+				  plot=False, w_bounds=None, e_bounds=None, verbose=True, pass_stata=True)
+	
 	class_type = res_pi.__class__.__name__
 	Macro.setLocal("class_type", class_type)
 	

@@ -150,7 +150,7 @@ def scest_wrapper(p, dir, QQ, lb, name, V, dfname):
 		else:
 			w_constr = {'name': str(name), 'Q': QQ}
 
-	res_est = scest(df, w_constr = w_constr, V = V)
+	res_est = scest(df, w_constr = w_constr, Vmat = None, V = V)
 
 	class_type = res_est.__class__.__name__
 	Macro.setLocal("class_type", class_type)

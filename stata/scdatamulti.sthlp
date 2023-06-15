@@ -41,7 +41,7 @@
 {p 4 8}{cmd:scdatamulti} prepares the data to be used by {help scest:scest} or {help scpi:scpi} to implement estimation and inference procedures for Synthetic Control (SC) methods
 in the general case of multiple treated units and staggered adoption. It allows the user to specify for each treated unit the features 
 to be matched, covariate-adjustment feature by feature, anticipation effects, and presence of cointegration. The command follows the terminology proposed in 
-{browse "https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}. The command is a wrapper of 
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}. The command is a wrapper of 
 the companion Python package. As such, the user needs to have a running version of Python with the package installed. A tutorial on how to install Python and link it to Stata can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
@@ -204,7 +204,7 @@ term for the second unit.{p_end}
 {it:Journal of Economic Literature}, 59(2), 391-425.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., and Titiunik, R. 2021. 
-{browse "https://mdcattaneo.github.io/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction intervals for synthetic control methods}. 
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction intervals for synthetic control methods}. 
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
