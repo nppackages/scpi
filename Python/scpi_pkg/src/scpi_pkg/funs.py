@@ -381,7 +381,7 @@ def shrinkage_EST(method, A, ZZ, V, J, KM):
 
         if len(Z) <= len(Z.columns) + 10:
             lasso_cols = b_est(A=A, Z=Z, J=J, KM=(KM - deltak), V=V,
-                               w_constr={'dir': "<=", 'lb': -numpy.inf, 'Q': 1, 'p': "L1"})
+                               w_constr={'name': 'lasso', 'dir': "<=", 'lb': 0, 'Q': 1, 'p': "L1"})
             active_cols = abs(lasso_cols) > 1e-8
             sumac = active_cols.sum()
             active_cols = active_cols[:, 0].tolist()

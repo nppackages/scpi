@@ -40,8 +40,8 @@ def scdata(df,
         a character with the name of the variable containing units IDs
 
     time_var : str
-        a character with the name of the time variable. The time variable has to be numpy.int64 or
-        numpy.datetime64. Input a numeric time variable is suggested when working with
+        a character with the name of the time variable. The time variable has to be numpy.int64,
+        numpy.datetime64, or pandas.Timestamp. Input a numeric time variable is suggested when working with
         yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.
 
     outcome_var : str
@@ -166,7 +166,7 @@ def scdata(df,
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
     Synthetic Control Estimators”.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2023), “Uncertainty Quantification in Synthetic
     Controls with Staggered Treatment Adoption”.
 
     See Also
@@ -255,6 +255,8 @@ def scdata(df,
         int2ts = {i: time_unique_ts[i] for i in range(len(time_unique_ts))}
         ts2int = {time_unique_ts[i]: i for i in range(len(time_unique_ts))}
         data['__time'] = data['__time'].map(ts2int)
+        period_pre = pandas.Series(period_pre).map(ts2int).to_numpy()
+        period_post = pandas.Series(period_post).map(ts2int).to_numpy()
         timeConvert = True
 
     if outcome_var not in var_names:
@@ -281,10 +283,10 @@ def scdata(df,
         raise Exception("The object period_post should be of type numpy.ndarray!")
 
     if not isinstance(period_pre[0], (numpy.int64, numpy.int32, numpy.int16, numpy.datetime64, pandas.Timestamp)):
-        raise Exception("Elements of period_pre should either be of type int or numpy.datetime64!")
+        raise Exception("Elements of period_pre should either be of type int, pandas.Timestamp, or numpy.datetime64!")
 
     if not isinstance(period_post[0], (numpy.int64, numpy.int32, numpy.int16, numpy.datetime64, pandas.Timestamp)):
-        raise Exception("Elements of period_post should either be of type int or numpy.datetime64!")
+        raise Exception("Elements of period_post should either be of type int pandas.Timestamp, or numpy.datetime64!")
 
     if not isinstance(unit_co, list):
         raise Exception("The object unit_co should be of type list!")
@@ -319,6 +321,7 @@ def scdata(df,
 
     # Create ID and time variables
     idd = list(set(data['__ID'].to_list()))   # unique IDs
+
     time = data['__time'].unique()             # unique periods
 
     # Check that specified units are in dataframe

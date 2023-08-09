@@ -79,7 +79,7 @@ def scplot(result,
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
     Synthetic Control Estimators”.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2023), “Uncertainty Quantification in Synthetic
     Controls with Staggered Treatment Adoption”.
 
     See Also

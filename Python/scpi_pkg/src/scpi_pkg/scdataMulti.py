@@ -38,8 +38,8 @@ def scdataMulti(df,
         a character with the name of the variable containing units' IDs.
 
     time_var : str
-        a character with the name of the time variable. The time variable has to be numpy.int64 or
-        numpy.datetime64. Input a numeric time variable is suggested when working with
+        a character with the name of the time variable. The time variable has to be numpy.int64,
+        numpy.datetime64, or pandas.Timestamp. Input a numeric time variable is suggested when working with
         yearly data, whereas for all other frequencies numpy.datetime64 type is preferred.
 
     outcome_var : str
@@ -193,7 +193,7 @@ def scdataMulti(df,
     Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
     Synthetic Control Estimators”.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2023), “Uncertainty Quantification in Synthetic
     Controls with Staggered Treatment Adoption”.
 
     See Also
@@ -519,6 +519,8 @@ def scdataMulti(df,
 
         if timeConvert is True:  # convert back to time series format to trigger hash maps in scdata
             df_aux['__time'] = df_aux['__time'].map(int2ts)
+            period_pre = pandas.Series(period_pre).map(int2ts).to_numpy()
+            period_post = pandas.Series(period_post).map(int2ts).to_numpy()
 
         try:
             scdata_out = scdata(df=df_aux,
