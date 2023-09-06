@@ -158,3 +158,20 @@ data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
                    cointegrated_data=cointegrated_data, constant=constant)
 
 data_prep.B
+
+################################################################################
+# Unbalanced panels
+
+# suppose we had an unbalanced panel structure
+data.drop(25, inplace=True)
+
+# If we run scdata() now we will get back an error. This is because scdata() requires
+# a balanced panel structure with missing values. To get it we can run
+
+data.set_index(['country', 'year'], append=False, drop=False, inplace=True)
+df_balanced = (data.reindex(pandas.MultiIndex.from_product([data.index.unique('country'),
+                                                            data.index.unique('year')],
+                                                           names=['country','year']))
+               .sort_index())
+
+# and then run scdata()

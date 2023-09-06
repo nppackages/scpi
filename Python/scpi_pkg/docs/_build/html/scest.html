@@ -1,58 +1,102 @@
-
 <!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-
-    <title>Point estimation for Synthetic Control (scest.scest) &#8212; scpi-pkg 2.2.2 documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/nature.css" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Point estimation for Synthetic Control (scest.scest) &mdash; scpi-pkg 2.2.2 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Prediction Intervals for Synthetic Control (scpi.scpi)" href="scpi.html" />
     <link rel="prev" title="Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti)" href="scdataMulti.html" /> 
-  </head><body>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="scpi.html" title="Prediction Intervals for Synthetic Control (scpi.scpi)"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="scdataMulti.html" title="Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti)"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</a></li> 
-      </ul>
-    </div>  
+</head>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
-            
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            scpi-pkg
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="scdata.html">Data Preparation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdata.scdata</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scdataMulti.html">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#syntax">Syntax</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#scpi_pkg.scest.scest"><code class="docutils literal notranslate"><span class="pre">scest()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scpi.html">Prediction Intervals for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scpi.scpi</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scplot.html">Plots for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scplot.scplot</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scplotMulti.html">Plots for Synthetic Control with Multiple Treated Units (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scplotMulti.scplotMulti</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Legal.html">License and funding</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">scpi-pkg</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/scest.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <section id="point-estimation-for-synthetic-control-scest-scest">
-<h1>Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)<a class="headerlink" href="#point-estimation-for-synthetic-control-scest-scest" title="Permalink to this heading">¶</a></h1>
+<h1>Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)<a class="headerlink" href="#point-estimation-for-synthetic-control-scest-scest" title="Permalink to this heading"></a></h1>
 <p>This page describes the function <code class="docutils literal notranslate"><span class="pre">scest</span></code> to implement point estimation for synthetic control methods
 using least squares, lasso, ridge, or simplex-type constraints.
 For further information see <a class="reference external" href="https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf">Cattaneo, Feng, and Titiunik (2021)</a>.
 The names of the output matrices follow the notation proposed in <a class="reference external" href="https://arxiv.org/abs/2210.05026">Cattaneo, Feng, Palomba, and Titiunik (2022)</a></p>
 <section id="syntax">
-<h2>Syntax<a class="headerlink" href="#syntax" title="Permalink to this heading">¶</a></h2>
+<h2>Syntax<a class="headerlink" href="#syntax" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="scpi_pkg.scest.scest">
-<span class="sig-prename descclassname"><span class="pre">scpi_pkg.scest.</span></span><span class="sig-name descname"><span class="pre">scest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_constr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'separate'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Vmat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scpi_pkg/scest.html#scest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scpi_pkg.scest.scest" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">scpi_pkg.scest.</span></span><span class="sig-name descname"><span class="pre">scest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_constr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'separate'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Vmat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/scpi_pkg/scest.html#scest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scpi_pkg.scest.scest" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -125,7 +169,7 @@ Aspects,” Journal of Economic Literature, 59, 391-425.</p>
 Methods,” Journal of the American Statistical Association, 116, 1865-1880.</p>
 <p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
 Synthetic Control Estimators”.</p>
-<p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “Uncertainty Quantification in Synthetic
+<p>Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2023), “Uncertainty Quantification in Synthetic
 Controls with Staggered Treatment Adoption”.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
@@ -135,7 +179,7 @@ Controls with Staggered Treatment Adoption”.</p>
 
 </section>
 <section id="dependencies">
-<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading">¶</a></h2>
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading"></a></h2>
 <p><strong>Python</strong>: <a class="reference external" href="https://www.cvxpy.org/">cvxpy</a>,</p>
 <blockquote>
 <div><p><a class="reference external" href="https://docs.dask.org/en/stable/">dask</a>,</p>
@@ -150,7 +194,7 @@ Controls with Staggered Treatment Adoption”.</p>
 <p><strong>scpi_pkg</strong>: scplot</p>
 </section>
 <section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h2>
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h2>
 <p>This example shows how to prepare the data and conduct estimation for synthetic control methods. The raw data can be downloaded
 <a class="reference external" href="https://raw.githubusercontent.com/nppackages/scpi/main/Python/scpi_germany.csv">here</a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span>
@@ -209,77 +253,34 @@ Controls with Staggered Treatment Adoption”.</p>
 </section>
 
 
-            <div class="clearer"></div>
+           </div>
           </div>
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-  <div>
-    <h3><a href="index.html">Table of Contents</a></h3>
-    <ul>
-<li><a class="reference internal" href="#">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</a><ul>
-<li><a class="reference internal" href="#syntax">Syntax</a><ul>
-<li><a class="reference internal" href="#scpi_pkg.scest.scest"><code class="docutils literal notranslate"><span class="pre">scest()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
-<li><a class="reference internal" href="#usage">Usage</a></li>
-</ul>
-</li>
-</ul>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scdataMulti.html" class="btn btn-neutral float-left" title="Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="scpi.html" class="btn btn-neutral float-right" title="Prediction Intervals for Synthetic Control (scpi.scpi)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.</p>
   </div>
-  <div>
-    <h4>Previous topic</h4>
-    <p class="topless"><a href="scdataMulti.html"
-                          title="previous chapter">Data Preparation for Synthetic Control with Staggered Adoption (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scdataMulti.scdataMulti</span></code>)</a></p>
-  </div>
-  <div>
-    <h4>Next topic</h4>
-    <p class="topless"><a href="scpi.html"
-                          title="next chapter">Prediction Intervals for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scpi.scpi</span></code>)</a></p>
-  </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/scest.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="scpi.html" title="Prediction Intervals for Synthetic Control (scpi.scpi)"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="scdataMulti.html" title="Data Preparation for Synthetic Control with Staggered Adoption (scdataMulti.scdataMulti)"
-             >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">scpi-pkg 2.2.2 documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Point estimation for Synthetic Control (<code class="xref py py-mod docutils literal notranslate"><span class="pre">scest.scest</span></code>)</a></li> 
-      </ul>
-    </div>
-    <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.2.3.
-    </div>
-  </body>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
 </html>

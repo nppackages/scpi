@@ -558,7 +558,6 @@ def u_des_prep(B, C, u_order, u_lags, coig_data, T0_tot, M, constant, index,
         u_des_0.columns = [B.columns[0]]
 
     elif u_order > 0:  # Include covariates when predicting u_mean
-
         # Create first differences feature-by-feature of the matrix B (not of C!!)
         if coig_data is True:
             B_diff = B - B.groupby('feature').shift(1)
@@ -866,6 +865,13 @@ def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, 
     res_ub = []
     res_lb = []
 
+    import pickle
+
+    # Saving the objects:
+    with open('objs_simplex.pkl', 'wb') as f:
+        pickle.dump([dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, J, Jtot, KM, KMI, iota,
+                     p, p_int, QQ, QQ2, dire, lb], f)
+
     for hor in range(0, len(P)):
         pt = numpy.array(P.iloc[hor, :])
 
@@ -973,7 +979,10 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
 
         client.close()
 
-        shutil.rmtree("dask-worker-space")
+        try:
+            shutil.rmtree("dask-worker-space")
+        except:
+            pass
 
         if verbose:
             print("")

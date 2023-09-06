@@ -602,6 +602,19 @@ def scdata(df,
     X_na = X.loc[complete_cases(X), ]
 
     A_na = X_na.loc[:, [unit_tr]]
+
+    # take care of donors that have been dropped because of absent pre-treatment observations
+    if len(unit_co_eff) < len(donor_order):
+        C_cols_bool = [col not in donor_order for col in P.columns.tolist()]  # P has C columns to be taken care of
+        C_cols = P.columns[C_cols_bool].tolist()
+
+        donor_order = unit_co_eff
+
+        Y_donors = Y_donors[donor_order]
+
+        P_col_sel = donor_order + C_cols
+        P = P[P_col_sel]
+
     B_na = X_na[donor_order]
     C_na = pandas.DataFrame(None)
     if len(C.columns) == 1:
@@ -754,6 +767,13 @@ def scdata(df,
     Y_pre.index.names = ['ID', 'Time']
     Y_post.index.names = ['ID', 'Time']
     Y_donors.index.names = ['ID', 'Time']
+
+    if cointegrated_data is True:
+        if any([t == 1 for t in T0_features.values()]) is True:
+            raise Exception("You have at least one feature with only one pre-treatment period, " +
+                            "thus you cannot specify cointegrated_data = True! Remember that this " +
+                            "option uses the difference of pre-treatment residuals rather than " +
+                            "their levels.")
 
     return scdata_output(A=A_na, B=B_na, C=C_na, P=P, Y_pre=Y_pre,
                          Y_post=Y_post, Y_donors=Y_donors, J=J, K=K,

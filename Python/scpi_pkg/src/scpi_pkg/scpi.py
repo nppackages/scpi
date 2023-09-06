@@ -11,7 +11,6 @@ pandas.options.mode.chained_assignment = None
 import numpy
 from copy import deepcopy
 import multiprocessing as mp
-from scipy.linalg import block_diag
 from sklearn.linear_model import LinearRegression
 from .funs import local_geom, u_des_prep, e_des_prep, complete_cases
 from .funs import df_EST, u_sigma_est, scpi_in, scpi_out, epskappaGet
@@ -40,7 +39,7 @@ def scpi(data,
          e_alpha=0.05,
          sims=200,
          rho=None,
-         rho_max=None,
+         rho_max=0.2,
          lgapp="generalized",
          cores=None,
          plot=False,
@@ -528,7 +527,7 @@ def scpi(data,
             raise Exception("You selected " + str(cores) + " cores, but only " + str(n_cores) +
                             " are available on your machine!")
     else:
-        cores = mp.cpu_count() - 1
+        cores = 1
 
     if pass_stata is False and verbose:
         constr_type = w_constr[tr_units[0]]['name']
@@ -606,7 +605,7 @@ def scpi(data,
 
         ##########################################################################
         # Prepare design matrix for in-sample uncertainty
-        ud0 = u_des_prep(B_dict[tr], C_dict[tr], u_order, 1, coig_data[tr],
+        ud0 = u_des_prep(B_dict[tr], C_dict[tr], u_order, u_lags, coig_data[tr],
                          T0_M[tr], M[tr], constant[tr], index_i, iw_dict[tr],
                          u_design, res_dict[tr])
 
@@ -743,7 +742,6 @@ def scpi(data,
 
     elif lgapp == "linear":  # we use rho to regularize w too
         beta = pandas.concat([w_star, r], axis=0).set_index(sc_pred.b.index)
-        Q_star = deepcopy(Q)
         lb = []
         for tr in tr_units:
             lb = lb + [w_constr_inf[tr]['lb']] * J[tr]
