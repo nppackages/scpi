@@ -9,7 +9,7 @@ import numpy
 from plotnine import ggplot, aes, geom_point, geom_errorbar, geom_vline, geom_line, geom_hline, theme, theme_bw, scale_x_datetime
 from plotnine import element_blank, labs, scale_color_manual, ggtitle, facet_wrap, coord_flip, geom_ribbon
 from copy import deepcopy
-from funs import CIrename, ix2rn
+from .funs import CIrename, ix2rn
 from math import ceil, floor
 from mizani.breaks import date_breaks
 from mizani.formatters import date_format

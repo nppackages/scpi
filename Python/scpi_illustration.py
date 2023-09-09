@@ -21,7 +21,7 @@ from scpi_pkg.scplotMulti import scplotMulti
 
 ########################################
 # Load database
-os.chdir("/Users/fpalomba/Dropbox (Princeton)/projects/scpi/packages/python/")
+os.chdir("YOUR_PATH_HERE")
 data = pandas.read_csv("scpi_germany.csv")
 
 filterwarnings("ignore")
@@ -104,7 +104,7 @@ cores = 1
 
 random.seed(8894)
 pi_si = scpi(data_prep, sims=sims, w_constr=w_constr, u_order=u_order, u_lags=u_lags,
-             e_order=e_order, e_lags=e_lags, e_method=e_method, u_missp=u_missp,
+             e_order=0, e_lags=e_lags, e_method=e_method, u_missp=u_missp,
              u_sigma=u_sigma, cores=cores, e_alpha=e_alpha, u_alpha=u_alpha)
 print(pi_si)
 
@@ -171,7 +171,7 @@ data.drop(25, inplace=True)
 data.set_index(['country', 'year'], append=False, drop=False, inplace=True)
 df_balanced = (data.reindex(pandas.MultiIndex.from_product([data.index.unique('country'),
                                                             data.index.unique('year')],
-                                                           names=['country','year']))
+                                                           names=['country', 'year']))
                .sort_index())
 
 # and then run scdata()

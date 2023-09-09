@@ -616,7 +616,7 @@ def scpi(data,
                                   out_feat[tr], J[tr], index_i, iw_dict[tr],
                                   coig_data[tr], T0[tr][outcome_var], T1[tr],
                                   constant[tr], e_design, outcome_var, Pd_dict[tr],
-                                  sc_effect, iota)
+                                  sc_effect, iota, tr)
 
         ###########################################################################
         # Remove NA - In sample uncertainty

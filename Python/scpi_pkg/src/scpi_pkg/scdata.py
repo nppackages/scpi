@@ -770,10 +770,12 @@ def scdata(df,
 
     if cointegrated_data is True:
         if any([t == 1 for t in T0_features.values()]) is True:
-            raise Exception("You have at least one feature with only one pre-treatment period, " +
-                            "thus you cannot specify cointegrated_data = True! Remember that this " +
-                            "option uses the difference of pre-treatment residuals rather than " +
-                            "their levels.")
+            if verbose is True:
+                warnings.warn("You have at least one feature with only one pre-treatment period, " +
+                              "thus you cannot specify cointegrated_data = True! Remember that this " +
+                              "option uses the difference of pre-treatment residuals rather than " +
+                              "their levels. We set cointegrated_data = False.")
+            cointegrated_data = False
 
     return scdata_output(A=A_na, B=B_na, C=C_na, P=P, Y_pre=Y_pre,
                          Y_post=Y_post, Y_donors=Y_donors, J=J, K=K,

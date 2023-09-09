@@ -666,6 +666,10 @@ def scdataMulti(df,
 
     if effect == "time":
         P_stacked = P_stacked / len(treated_units)
+        # overwrite T1_dict because now T1 is min(T1_i) where i are treated units
+        T1min = min(T1_dict.values())
+        for tr in treated_units:
+            T1_dict[tr] = T1min
 
     # number of treated units and number of covariates used for adjustment
     iota = len(treated_units)

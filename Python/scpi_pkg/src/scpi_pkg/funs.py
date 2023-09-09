@@ -613,7 +613,7 @@ def u_des_prep(B, C, u_order, u_lags, coig_data, T0_tot, M, constant, index,
 
 def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, index,
                index_w, coig_data, T0, T1, constant, e_design, outcome_var, P_diff_pre,
-               effect, iota):
+               effect, iota, tr):
 
     P, selp = trendRemove(P)
     C, selc = trendRemove(C)
@@ -647,11 +647,14 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
             ix = pandas.MultiIndex.from_product([[outcome_var], B.loc[(outcome_var,), :].index.tolist()])
             ix.rename(["feature", "Time"], inplace=True)
 
-            e_des_0 = pandas.DataFrame(numpy.ones(T0), index=ix)
+            aux_name = tr + "_constant"
+            e_des_0 = pandas.DataFrame({aux_name: numpy.ones(T0)}, index=ix)
             if effect == "time":
-                e_des_1 = pandas.DataFrame(numpy.ones(T1) / iota, index=P.index)
+                import ipdb
+                ipdb.set_trace()
+                e_des_1 = pandas.DataFrame({aux_name: numpy.ones(T1) / iota}, index=P.index)
             else:
-                e_des_1 = pandas.DataFrame(numpy.ones(T1), index=P.index)
+                e_des_1 = pandas.DataFrame({aux_name: numpy.ones(T1)}, index=P.index)
 
         elif e_order > 0:  # Include covariates when predicting u_mean
             # Create first differences feature-by-feature of the matrix B (not of C!!)

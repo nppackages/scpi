@@ -24,6 +24,7 @@ from scpi_pkg.scplotMulti import scplotMulti
 
 ########################################
 # Load database
+os.chdir("YOUR_PATH_HERE")
 data = pandas.read_csv("scpi_germany.csv")
 
 ##############################################################################
