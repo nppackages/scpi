@@ -650,8 +650,6 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
             aux_name = tr + "_constant"
             e_des_0 = pandas.DataFrame({aux_name: numpy.ones(T0)}, index=ix)
             if effect == "time":
-                import ipdb
-                ipdb.set_trace()
                 e_des_1 = pandas.DataFrame({aux_name: numpy.ones(T1) / iota}, index=P.index)
             else:
                 e_des_1 = pandas.DataFrame({aux_name: numpy.ones(T1)}, index=P.index)
@@ -868,12 +866,12 @@ def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, 
     res_ub = []
     res_lb = []
 
-    import pickle
+    # import pickle
 
     # Saving the objects:
-    with open('objs_simplex.pkl', 'wb') as f:
-        pickle.dump([dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, J, Jtot, KM, KMI, iota,
-                     p, p_int, QQ, QQ2, dire, lb], f)
+    # with open('objs_l1l2.pkl', 'wb') as f:
+    #     pickle.dump([dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, J, Jtot, KM, KMI, iota,
+    #                  p, p_int, QQ, QQ2, dire, lb], f)
 
     for hor in range(0, len(P)):
         pt = numpy.array(P.iloc[hor, :])
@@ -896,7 +894,6 @@ def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, 
                 res_lb.append(sol)
             else:
                 res_lb.append(numpy.nan)
-
         else:
             res_lb.append(numpy.nan)
 
@@ -1310,7 +1307,7 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
 
     return w_constr, w_star, index_w.values, rho, Q_star, Q2_star
 
-def localgeom2step(w, r, rho_dict, w_constr, Q, treated_units):
+def localgeom2step(w, r, rho_dict, rho_max, w_constr, Q, treated_units):
 
     w_dict = mat2dict(w, cols=False)
     rhoj_dict = {}
@@ -1328,7 +1325,7 @@ def localgeom2step(w, r, rho_dict, w_constr, Q, treated_units):
 
         elif w_constr[tr]['p'] in ["L1-L2", "L2"]:
             L1 = numpy.sum(abs(w_dict[tr]))[0]
-            rhoj_dict[tr] = 2 * L1 * rho_dict[tr]
+            rhoj_dict[tr] = min(2 * L1 * rho_dict[tr], rho_max)
             w_norm = numpy.sum(w_dict[tr]**2)[0]
 
         # Check if constraint is equality or inequality

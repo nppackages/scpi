@@ -738,7 +738,7 @@ def scpi(data,
 
     if lgapp == "generalized":  # we use rho only to impose sparsity on B when predicting moments
         beta = sc_pred.b
-        Q_star, lb = localgeom2step(w, r, rho_dict, w_constr, Q, tr_units)
+        Q_star, lb = localgeom2step(w, r, rho_dict, rho_max, w_constr, Q, tr_units)
 
     elif lgapp == "linear":  # we use rho to regularize w too
         beta = pandas.concat([w_star, r], axis=0).set_index(sc_pred.b.index)
