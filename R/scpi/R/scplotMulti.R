@@ -83,7 +83,6 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
                         col.treated = "black", col.synth = "mediumblue", scales = "fixed",
                         point.size = 1.5, ncols = 3, save.data = NULL, verbose = TRUE) {
 
-  # shortcut to avoid "no visible binding for global variable 'X' when checking the package
   Treatment <- ID <- Time <- Tdate <- Type <- tstd <- NULL
 
   if (!(result$data$specs$class.type %in% c("scpi_scest_multi", "scpi_scpi_multi"))) {
@@ -107,95 +106,26 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
                    " a fraction of the sample at a time!"), call. = FALSE, immediate. = TRUE)
   }
 
-  Y.pre.fit <- result$est.results$Y.pre.fit # matrix
-  Y.post.fit <- result$est.results$Y.post.fit # matrix
-  synth.mat <- rbind(Y.pre.fit, Y.post.fit)
+  class.type      <- result$data$specs$class.type
+  sparse.matrices <- result$data$specs$sparse.matrices
+  treated.units   <- result$data$specs$treated.units
+  anticipation    <- result$data$specs$anticipation
+  period.post     <- result$data$specs$period.post
+  units.est       <- result$data$specs$units.est
+  T1.outcome      <- result$data$specs$T1.outcome
+  Y.df            <- result$data$Y.df
+  Y.pre.fit       <- result$est.results$Y.pre.fit # matrix
+  Y.post.fit      <- result$est.results$Y.post.fit # matrix
 
-  names(result$data$Y.df) <- c(names(result$data$Y.df)[1:3], "Actual")
+  # create to plot object
+  toplot.obj <- outcomeGet(Y.pre.fit=Y.pre.fit, Y.post.fit=Y.post.fit, Y.df=Y.df,
+                           units.est=units.est, treated.units=treated.units, plot.type=plot.type,
+                           anticipation=anticipation, period.post=period.post,
+                           sparse.matrices = sparse.matrices)
 
-  res.df <- subset(result$data$Y.df, ID %in% result$data$specs$units.est)
-
-  if (plot.type == "unit") {
-    Y.actual.pre <- subset(res.df, Treatment == 0)
-    Y.actual.post <- subset(res.df, Treatment == 1)
-    Y.actual.post.agg <- aggregate(Actual ~ ID, data = Y.actual.post, mean)
-    Y.actual.post.agg$Treatment <- 1
-    names <- strsplit(rownames(Y.post.fit), "\\.")
-    Y.actual.post.agg$Time <- as.numeric(unlist(lapply(names, "[[", 2)))
-    Y.actual <- rbind(Y.actual.pre, Y.actual.post.agg)
-
-  } else {
-    Y.actual <- res.df # dataframe
-  }
-
-  treated.periods <- subset(Y.actual, Treatment == 1, select = c(Time, ID)) # post treatment period for each treated unit
-  treated.reception <- aggregate(Time ~ ID, data = treated.periods, min)
-  names(treated.reception) <- c("ID", "Tdate")
-  treated.reception$Tdate <- as.numeric(treated.reception$Tdate) - result$data$specs$anticipation - 1 / 2
-  treated.reception <- subset(treated.reception, ID %in% result$data$specs$units.est)
-
-  if (plot.type == "time") {
-    res.df <- merge(res.df, treated.reception, by = "ID")
-    Y.actual.pre <- subset(res.df, Time < Tdate)
-    Y.actual.post <- subset(res.df, Time > Tdate)
-    Y.actual.pre$Tdate <- Y.actual.pre$Tdate + 1/2
-    Y.actual.post$Tdate <- Y.actual.post$Tdate + 1/2
-    Y.actual.pre$tstd <- Y.actual.pre$Time - Y.actual.pre$Tdate
-    Y.actual.post$tstd <- Y.actual.post$Time - Y.actual.post$Tdate
-
-    names <- strsplit(rownames(synth.mat), "\\.")
-    unit <- unlist(lapply(names, "[[", 1))
-    no.agg <- unit %in% result$data$specs$treated.units
-    time <- unlist(lapply(names[1:sum(no.agg)], "[[", 2))
-    synth.pre <- data.frame(ID = unit[no.agg == TRUE],
-                            Synthetic = synth.mat[no.agg == TRUE, 1],
-                            Time = time)
-
-    Y.pre <- merge(Y.actual.pre, synth.pre, by=c("ID", "Time"))
-    max.pre <- max(aggregate(tstd ~ ID, data = Y.pre, min)$tstd)
-    min.post <- min(unlist(lapply(result$data$specs$period.post, length))) - 1
-
-    Y.pre.agg <- aggregate(x = Y.pre[c("Actual", "Synthetic")],
-                           by = Y.pre[c("tstd")],
-                           FUN = mean, na.rm = TRUE)
-    names(Y.pre.agg) <- c("Time", "Actual", "Synthetic")
-    Y.pre.agg <- subset(Y.pre.agg, Time >= max.pre)
-
-    Y.post.agg <- aggregate(x = Y.actual.post[c("Actual")],
-                           by = Y.actual.post[c("tstd")],
-                           FUN = mean, na.rm = TRUE)
-
-    Y.post.agg <- subset(Y.post.agg, tstd <= min.post)
-
-    Y.post.agg <- data.frame(ID = unit[no.agg == FALSE],
-                             Actual = Y.post.agg$Actual,
-                             Synthetic = synth.mat[no.agg == FALSE, 1],
-                             Time = c(0:(sum(no.agg==FALSE)-1))) 
-
-    Y.pre.agg$Treatment <- 1
-    Y.post.agg$Treatment <- 0
-
-    Y.pre.agg$ID <- "aggregate"
-    Y.post.agg$ID <- "aggregate"
-
-    Y.actual <- rbind(Y.pre.agg, Y.post.agg)
-    Y.actual$Tdate <- 0
-
-    plot.type <- "unit-time"
-    I <- 1
-    treated.reception <- data.frame(ID="aggregate", Tdate = 1/2)
-    toplot <- Y.actual
-    toplot$Time <- toplot$Time + 1
-
-  } else {
-    # Merge synthetic
-    names <- strsplit(rownames(synth.mat), "\\.")
-    unit <- unlist(lapply(names, "[[", 1))
-    period <- unlist(lapply(names, "[[", 2))
-
-    synth <- data.frame(ID = unit, Time = period, Synthetic = synth.mat)
-    toplot <- merge(Y.actual, synth, by = c("ID", "Time"), all = FALSE) # keep only treated units
-  }
+  toplot <- toplot.obj$toplot
+  treated.reception <- toplot.obj$treated.reception
+  plot.type <- toplot.obj$plot.type
 
   toplot$Effect <- toplot$Actual - toplot$Synthetic # compute treatment effect
 
@@ -227,7 +157,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
   } else if (plot.type == "unit" && type == "series") {
 
     # add number of post-treatment periods that have been averaged
-    auxdf <- data.frame(ID = names(result$data$specs$T1.outcome), T1 = unlist(result$data$specs$T1.outcome))
+    auxdf <- data.frame(ID = names(T1.outcome), T1 = unlist(T1.outcome))
     treated.reception <- merge(treated.reception, auxdf, by = "ID")
 
     toplot <- toplot[c("ID", "Time", "Actual", "Synthetic")]
@@ -244,7 +174,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
                                labels = c("Treated", "Synthetic Control"))
 
   } else if (plot.type == "unit" && type == "treatment") {
-    auxdf <- data.frame(ID = names(result$data$specs$T1.outcome), Periods = unlist(result$data$specs$T1.outcome))
+    auxdf <- data.frame(ID = names(T1.outcome), Periods = unlist(T1.outcome))
     toplot <- merge(toplot, auxdf, by = "ID")
     plot <- ggplot(subset(toplot, Treatment == 1)) + xlab("Unit") + ylab("Effect") +
             geom_point(aes(x=.data$ID, y=.data$Effect, size=.data$Periods), colour = col.synth, shape = 19) +
@@ -257,9 +187,10 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
   ## ADD UNCERTAINTY
   #############################################################################
 
-  if (result$data$specs$class.type == 'scpi_scpi_multi') {
+  if (class.type == 'scpi_scpi_multi') {
 
     e.method <- result$inference.results$e.method
+
     if (type == "series") {
       toplot <- merge(toplot, ci2df(result$inference.results$CI.in.sample, type = "insample"),
                       by = c("ID", "Time"), all = TRUE)
@@ -358,7 +289,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
 
       if (joint == TRUE && plot.type == "unit-time") {
         if (type == "treatment") {
-          timebd <- min(toplot[toplot$Treatment==1,]$Time) - result$data$specs$anticipation
+          timebd <- min(toplot[toplot$Treatment == 1,]$Time) - anticipation
           plotdf <- subset(toplot, Time >= timebd)
         } else if (type == "series") {
           plotdf <- subset(toplot, Type == "Synthetic")
@@ -397,7 +328,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
 
       if (joint == TRUE && plot.type == "unit-time") {
         if (type == "treatment") {
-          timebd <- min(toplot[toplot$Treatment==1,]$Time) - result$data$specs$anticipation
+          timebd <- min(toplot[toplot$Treatment==1,]$Time) - anticipation
           plotdf <- subset(toplot, Time >= timebd)
         }
         else if (type == "series") plotdf <- subset(toplot, Type == "Synthetic")
@@ -435,7 +366,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
 
       if (joint == TRUE & plot.type == "unit-time") {
         if (type == "treatment") {
-          timebd <- min(toplot[toplot$Treatment==1,]$Time) - result$data$specs$anticipation
+          timebd <- min(toplot[toplot$Treatment==1,]$Time) - anticipation
           plotdf <- subset(toplot, Time >= timebd)
         }
         else if (type == "series") plotdf <- subset(toplot, Type == "Synthetic")
@@ -459,7 +390,7 @@ scplotMulti <- function(result, type = "series", e.out = TRUE, joint = FALSE,
     }
   }
 
-  if (result$data$specs$class.type == 'scpi_scpi_multi') {
+  if (class.type == 'scpi_scpi_multi') {
     if (e.out == FALSE) {plots <- list('plot_in'= plot.w)}
     else if (e.method == 'gaussian') {plots <- list('plot_out'= plot.w1)}
     else if (e.method == 'ls') {plots <- list('plot_out'= plot.w2)}    

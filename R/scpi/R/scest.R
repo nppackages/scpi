@@ -376,7 +376,6 @@ scest <- function(data,
     
     for (i in seq_len(I)) {
       i.ub <- i.lb + T0.features[[i]][outcome.var] - 1
-      
       if (out.in.features[[i]] == TRUE) {
         fit.pre.i  <- A.hat[i.lb:i.ub, , drop = FALSE]
         names    <- strsplit(rownames(fit.pre.i), "\\.")
@@ -423,19 +422,21 @@ scest <- function(data,
     # Y.pre and Y.post might require some extra work
     # if the predictand of interest is aggregate (either over units or over time)
     # The next function process the data in the same way it's done in scplotMulti
-    treated.units <- data$specs$treated.units
-    anticipation  <- data$specs$anticipation
-    period.post   <- data$specs$period.post
-    units.est     <- data$specs$units.est
-    effect        <- data$specs$effect
-    Y.df          <- data$Y.df
-    Y.pre.fit     <- fit.pre
-    Y.post.fit    <- fit.post
+    treated.units   <- data$specs$treated.units
+    sparse.matrices <- data$specs$sparse.matrices
+    anticipation    <- data$specs$anticipation
+    period.post     <- data$specs$period.post
+    units.est       <- data$specs$units.est
+    effect          <- data$specs$effect
+    Y.df            <- data$Y.df
+    Y.pre.fit       <- fit.pre
+    Y.post.fit      <- fit.post
     
     # create to plot object
     Yprocessed <- outcomeGet(Y.pre.fit=Y.pre.fit, Y.post.fit=Y.post.fit, Y.df=Y.df,
                              units.est=units.est, treated.units=treated.units, plot.type=effect,
-                             anticipation=anticipation, period.post=period.post)
+                             anticipation=anticipation, period.post=period.post,
+                             sparse.matrices=sparse.matrices)
 
     Ydf.pre <- subset(Yprocessed$toplot, Treatment == 0)
     Ydf.post <- subset(Yprocessed$toplot, Treatment == 1)

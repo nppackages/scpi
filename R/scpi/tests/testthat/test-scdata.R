@@ -16,8 +16,7 @@ test.data <- function(df = NULL,
                       cov.adj = NULL,
                       cointegrated.data = FALSE,
                       anticipation = 0,
-                      constant = TRUE, 
-                      mv = F) {
+                      constant = TRUE) {
   
   
   if (is.null(df)) df <- scpi_germany

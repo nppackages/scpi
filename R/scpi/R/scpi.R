@@ -595,7 +595,7 @@ scpi  <- function(data,
     loc.geom <- local.geom(w.constr.list[[i]], rho, rho.max, res.list[[i]], B.list[[i]], 
                            C.list[[i]], coig.data[[i]], T0.M[[i]], J[[i]], w.list[[i]],
                            verbose)
-    
+
     w.star       <- c(w.star, loc.geom$w.star)
     index.w      <- c(index.w, loc.geom$index.w)
     w.constr.inf <- append(w.constr.inf, list(loc.geom$w.constr))
@@ -603,7 +603,7 @@ scpi  <- function(data,
     Q.star       <- c(Q.star, loc.geom$Q.star)
     Q2.star      <- c(Q2.star, loc.geom$Q2.star)
     index.i      <- c(loc.geom$index.w, rep(TRUE, KM[[i]]))
-    
+
     # Extract feature id from rownames of B
     feature.id <- unlist(purrr::map(stringr::str_split(rownames(B.list[[i]]), "\\."), 2))
 
@@ -644,7 +644,7 @@ scpi  <- function(data,
       rnames <- paste(trname, as.character(c(1:nrow(e.des$e.des.1))), sep=".")
       e1.rownames <- c(e1.rownames, rnames)
     }
-    
+
     e.des.0 <- Matrix::bdiag(e.des.0, e.des$e.des.0)
     e.des.1 <- Matrix::bdiag(e.des.1, e.des$e.des.1)
   }
@@ -659,10 +659,10 @@ scpi  <- function(data,
       Q <- c(Q, w.constr.list[[i]]$Q)
     }
 
-    reg.geom <- local.geom.2step(w, r, rho.vec, w.constr.list, Q, I)
+    reg.geom <- local.geom.2step(w, r, rho.vec, rho.max, w.constr.list, Q, I)
     Q.star <- reg.geom$Q
     lb <- reg.geom$lb
-    
+
   } else if (lgapp == "linear") { # we use rho to regularize w too
     beta  <- c(w.star, r)
     lb <- c()
@@ -809,7 +809,7 @@ scpi  <- function(data,
 
   ## Define constrained problem to be simulated
   if (w.lb.est == TRUE || w.ub.est == TRUE) {
-    
+
     vsigg <- insampleUncertaintyGet(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I,
                                     w.constr.inf[[1]], Q.star, Q2.star, lb, TT, sims, cores, verbose, 
                                     w.lb.est, w.ub.est)
@@ -953,7 +953,7 @@ scpi  <- function(data,
   e.des.1.list <- mat2list(e.des.1)
   e1.rnames <- rownames(e.des.1)
   e0.rnames <- rownames(e.des.0.na)
-  
+
   for (i in seq_len(I)) {
     e.des.0.na.list[[i]] <- detectConstant(e.des.0.na.list[[i]])
     e.des.1.list[[i]] <- detectConstant(e.des.1.list[[i]], scale.x)
