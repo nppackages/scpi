@@ -70,7 +70,7 @@ net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/
 
 ### Software and Implementation
 
-- Cattaneo, Feng, Palomba and Titiunik (2023): [scpi: Uncertainty Quantification for Synthetic Control Methods](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2023_scpi.pdf).<br>
+- Cattaneo, Feng, Palomba and Titiunik (2024): [scpi: Uncertainty Quantification for Synthetic Control Methods](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2024_JSS.pdf).<br>
 Working paper.
 
 ### Technical and Methodological
