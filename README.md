@@ -75,9 +75,9 @@ _Journal of Statistical Software_, forthcoming.
 
 ### Technical and Methodological
 
-- Cattaneo, Feng, Palomba and Titiunik (2023): [Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2023_wp.pdf).<br>
+- Cattaneo, Feng, Palomba and Titiunik (2024): [Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2024_RESTAT.pdf).<br>
 Working paper.<br>
-[Supplemental](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2023_wp--Supplement.pdf)<br>
+[Supplemental](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2024_RESTAT--Supplement.pdf)<br>
 
 - Cattaneo, Feng and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf).<br>
 _Journal of the American Statistical Association_ 116(536): 1865-1880.<br>
