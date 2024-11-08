@@ -122,8 +122,8 @@ summary.scest <- function(object, ...) {
     KM      <- object$data$specs$KM
     T0      <- object$data$specs$T0.features
     tr.unit <- colnames(object$data$A)
-    pt.in   <- strsplit(rownames(object$data$Y.pre)[1], "\\.")[2]
-    pt.fi   <- strsplit(rownames(object$data$Y.pre)[length(object$data$Y.pre)], "\\.")[2]  
+    pt.in   <- strsplit(rownames(object$data$Y.pre)[1], "\\.")[[1]][2]
+    pt.fi   <- strsplit(rownames(object$data$Y.pre)[length(object$data$Y.pre)], "\\.")[[1]][2]  
     w.cons  <- object$est.results$w.constr[["name"]]
     if (is.null(object$est.results$w.constr[["Q"]])) {
       w.size <- "-"

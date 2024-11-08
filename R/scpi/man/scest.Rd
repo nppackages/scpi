@@ -157,7 +157,7 @@ list(name = "ridge", Q = 1)}).}
 is estimated via ordinary least squares.}
 
 \item{If \code{name == "L1-L2"}, then
-\deqn{||\mathbf{w}||_1 = 1,\:\:\: ||\mathbf{w}||_2 \leq Q,}
+\deqn{||\mathbf{w}||_1 = 1,\:\:\: ||\mathbf{w}||_2 \leq Q, \:\:\: w_j \geq 0,\:\: j =1,\ldots,J.}
 where \eqn{Q} is a tuning parameter computed as in the "ridge" case.}
 }}
 

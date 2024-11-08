@@ -12,14 +12,15 @@ import numpy
 from copy import deepcopy
 import multiprocessing as mp
 from sklearn.linear_model import LinearRegression
-from .funs import local_geom, u_des_prep, e_des_prep, complete_cases
-from .funs import df_EST, u_sigma_est, scpi_in, scpi_out, epskappaGet
+from .funs import local_geom, u_des_prep, e_des_prep, complete_cases, isDiagonal
+from .funs import df_EST, u_sigma_est, scpi_in, scpi_in_diag, scpi_out, epskappaGet
 from .funs import executionTime, createPoly, DUflexGet, mat2dict
 from .funs import localgeom2step, detectConstant, simultaneousPredGet
 from .scest import scest
 from .scplot import scplot
 from .scplotMulti import scplotMulti
 from scipy.linalg import sqrtm
+
 
 def scpi(data,
          w_constr=None,
@@ -45,6 +46,7 @@ def scpi(data,
          plot=False,
          w_bounds=None,
          e_bounds=None,
+         force_joint_PI_optim=False,
          verbose=True,
          pass_stata=False):
 
@@ -137,7 +139,8 @@ def scpi(data,
         with linear constraints only.
 
     cores : integer, default multiprocessing.cpu_count() - 1
-        number of cores to be used by the command. The default is half the cores available.
+        number of cores to be used by the command. The default is the number of cores available minus 1. This option is not
+        effective if the weighting matrix V is diagonal (the default) and force_joint_PI_optim is False (the default).
 
     plot : bool, default False
         a logical specifying whether scplot should be called and a plot saved in the current working directory.
@@ -152,6 +155,13 @@ def scpi(data,
         a T1 x 2 array with the user-provided bounds on e. If e_bounds is provided, then
         the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or
         the upper bound by filling the other column with NAs.
+
+    force_joint_PI_optim: bool, default False
+        This option is here mostly for backward-compatibility. If False (the default) it solves a separate optimization problem for each
+        treated unit when it comes to quantify in-sample uncertainty
+        as long as the weighting matrix is block-diagonal. If True it solves a joint optimization problem for all treated units to
+        quantify in-sample uncertainty. Both are valid approaches as we detail in the main paper. The former is faster and less
+        conservative.
 
     verbose : bool, default True
         if False prevents printing additional information in the console.
@@ -558,7 +568,6 @@ def scpi(data,
     else:
         Pd_dict = dict(zip(tr_units, [None] * iota))
 
-    V_dict = mat2dict(V)
     w_dict = mat2dict(w, cols=False)
     res_dict = mat2dict(res, cols=False)
     Yd_dict = mat2dict(Y_donors)
@@ -830,27 +839,60 @@ def scpi(data,
         if sum(numpy.isnan(w_bounds[:, 1])) == 0:
             w_ub_est = False
 
-    vsig = numpy.empty((2 * T1_tot, sims))
-    vsig[:] = numpy.nan
+    # if V is diagonal, we can solve the optimization problem independently for
+    # each treated unit, otherwise we solve it jointly
+    if (isDiagonal(V.to_numpy()) is True) and (force_joint_PI_optim is False):
 
-    # Define constrained problem to be simulated
-    if w_lb_est is True or w_ub_est is True:
-        Q = numpy.array(Z_na).T.dot(V_na).dot(numpy.array(Z_na)) / TT
-        b_arr = numpy.array(beta).flatten()
-        dire = w_constr_inf[tr]['dir']
-        p = w_constr_inf[tr]['p']
+        # Define constrained problem to be simulated
+        if w_lb_est is True or w_ub_est is True:
+            Q = numpy.array(Z_na).T.dot(V_na).dot(numpy.array(Z_na)) / TT
+            aux = Z_na.columns.tolist()
+            csel = [c.split("_")[0] for c in Z_na.columns.tolist()]
+            idx = pandas.MultiIndex.from_product([csel, ["feature"]],
+                                                 names=['ID', 'feature'])
+            Q = pandas.DataFrame(Q,
+                                 index=idx,
+                                 columns=Z_na.columns)
+            zeta = numpy.random.normal(loc=0, scale=1, size=(len(beta) * sims)).reshape(len(beta), sims)
+            zeta = Sigma_root @ zeta  # multiply each column (sim) of zeta by Sigma_root
+            zeta = pandas.DataFrame(zeta, index=idx)
 
-        if p == "no norm":
-            p_int = 0
-        elif p == "L1":
-            p_int = 1
-        elif p == "L2":
-            p_int = 2
-        elif p == "L1-L2":
-            p_int = None
+            dire = w_constr_inf[tr]['dir']
+            p = w_constr_inf[tr]['p']
 
-        vsig = scpi_in(sims, b_arr, Sigma_root, Q, P_na, J, KM, iota, w_lb_est,
-                       w_ub_est, p, p_int, Q_star, Q2_star, dire, lb, cores, pass_stata, verbose)
+            if p == "no norm":
+                p_int = 0
+            elif p == "L1":
+                p_int = 1
+            elif p == "L2":
+                p_int = 2
+            elif p == "L1-L2":
+                p_int = None
+
+            vsig = scpi_in_diag(sims, beta, Q, P_na, J, KM, iota, w_lb_est,
+                                w_ub_est, p, p_int, Q_star, Q2_star, dire, lb, pass_stata,
+                                verbose, tr_units, zeta, sc_effect)
+
+    else:
+
+        # Define constrained problem to be simulated
+        if w_lb_est is True or w_ub_est is True:
+            Q = numpy.array(Z_na).T.dot(V_na).dot(numpy.array(Z_na)) / TT
+            b_arr = numpy.array(beta).flatten()
+            dire = w_constr_inf[tr]['dir']
+            p = w_constr_inf[tr]['p']
+
+            if p == "no norm":
+                p_int = 0
+            elif p == "L1":
+                p_int = 1
+            elif p == "L2":
+                p_int = 2
+            elif p == "L1-L2":
+                p_int = None
+
+            vsig = scpi_in(sims, b_arr, Sigma_root, Q, P_na, J, KM, iota, w_lb_est,
+                           w_ub_est, p, p_int, Q_star, Q2_star, dire, lb, cores, pass_stata, verbose)
 
     if w_lb_est is True:
         w_lb = numpy.nanquantile(vsig[:, :len(P_na)], q=u_alpha / 2, axis=0)
@@ -935,7 +977,10 @@ def scpi(data,
 
         for tr in tr_units:
             edict0 = pandas.DataFrame(numpy.ones(len(ed0_dict[tr])), columns=[tr])
-            edict1 = pandas.DataFrame(numpy.ones(len(ed1_dict[tr])), columns=[tr])
+            if sc_effect == "time":
+                edict1 = pandas.DataFrame(numpy.ones(len(ed1_dict[tr])) / sc_pred.iota, columns=[tr])
+            else:
+                edict1 = pandas.DataFrame(numpy.ones(len(ed1_dict[tr])), columns=[tr])
             edict0.insert(0, "ID", tr)
             edict0.set_index('ID', append=False, drop=True, inplace=True)
             edict1.insert(0, "ID", tr)

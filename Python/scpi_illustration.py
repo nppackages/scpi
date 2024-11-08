@@ -8,7 +8,6 @@
 # Load SCPI_PKG package
 import pandas
 import numpy
-import random
 import os
 from copy import deepcopy
 from warnings import filterwarnings
@@ -42,7 +41,7 @@ period_post = numpy.arange(1991, 2004)
 unit_tr = 'West Germany'
 unit_co = list(set(data[id_var].to_list()))
 unit_co = [cou for cou in unit_co if cou != 'West Germany']
-constant = True
+constant = False
 cointegrated_data = True
 
 data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
@@ -56,6 +55,7 @@ data_prep = scdata(df=data, id_var=id_var, time_var=time_var,
 # SC - point estimation with simplex
 est_si = scest(data_prep, w_constr={'name': "simplex"})
 print(est_si)
+
 est_si2 = scest(data_prep, w_constr={'p': 'L1', 'dir': '==', 'Q': 1, 'lb': 0})
 print(est_si2)
 
@@ -102,9 +102,9 @@ u_alpha = 0.05
 sims = 200
 cores = 1
 
-random.seed(8894)
+numpy.random.seed(8894)
 pi_si = scpi(data_prep, sims=sims, w_constr=w_constr, u_order=u_order, u_lags=u_lags,
-             e_order=0, e_lags=e_lags, e_method=e_method, u_missp=u_missp,
+             e_order=e_order, e_lags=e_lags, e_method=e_method, u_missp=u_missp,
              u_sigma=u_sigma, cores=cores, e_alpha=e_alpha, u_alpha=u_alpha)
 print(pi_si)
 

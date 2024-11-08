@@ -713,6 +713,7 @@ class scest_output:
 
         return ''
 
+
 class scest_multi_output:
     def __init__(self, b, w, r, Y_pre_fit, Y_post_fit, Y_pre, Y_post, Y_actual, A_hat, res, V, w_constr,
                  A, B, C, P, P_diff, Y_df, Y_donors, J, K, KM, M, iota, KMI,

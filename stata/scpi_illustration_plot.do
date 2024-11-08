@@ -19,7 +19,8 @@ scdata gdp, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
 
 ** SC - Inference 
 set seed 8894
-scpi, dfname("python_scdata") name(simplex) u_missp sims(100) e_method(gaussian) 
+scpi, dfname("python_scdata") name(simplex) u_missp sims(100) ///
+	e_method(gaussian) set_seed(8894)
 
 scplot , savedata("scplot_data") joint
 

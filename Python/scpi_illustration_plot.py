@@ -8,7 +8,6 @@
 # Load SCPI_PKG package
 import pandas
 import numpy
-import random
 import os
 from copy import deepcopy
 from plotnine import ggplot, aes, geom_point, geom_errorbar, geom_vline, geom_line, theme, theme_bw
@@ -67,7 +66,7 @@ u_alpha = 0.05
 sims = 200
 cores = 1
 
-random.seed(8894)
+numpy.random.seed(8894)
 result = scpi(data_prep, sims=sims, w_constr=w_constr, u_order=u_order, u_lags=u_lags,
               e_order=e_order, e_lags=e_lags, e_method=e_method, u_missp=u_missp,
               u_sigma=u_sigma, cores=cores, e_alpha=e_alpha, u_alpha=u_alpha)

@@ -7,6 +7,7 @@
 ########################################
 # Load SCPI_PKG package
 import pandas
+import numpy
 import os
 from warnings import filterwarnings
 from scpi_pkg.scdataMulti import scdataMulti
@@ -20,6 +21,7 @@ os.chdir("YOUR_PATH_HERE")
 data = pandas.read_csv("scpi_germany.csv")
 
 filterwarnings("ignore")
+numpy.random.seed(8894)
 
 ##############################################################################
 # MULTIPLE TREATED UNITS

@@ -39,6 +39,14 @@ def crossprod(x, y=None):
     else:
         return x.T @ y
 
+
+def isDiagonal(mat):
+    sumTot = abs(mat).sum()
+    sumDiag = abs(numpy.diag(mat)).sum()
+    boolean = sumTot == sumDiag  # if True, then mat is diagonal
+    return boolean.item()  # item() converts boolean from numpy.bool_ to bool
+
+
 def ECOS_get_n_slacks(p, dire, Jtot, iota):
 
     ns = 1  # simplex, ols
@@ -53,6 +61,7 @@ def ECOS_get_n_slacks(p, dire, Jtot, iota):
         ns = iota + ns
 
     return ns
+
 
 def ECOS_get_dims(Jtot, J, KMI, p, dire, iota, red):
 
@@ -72,6 +81,7 @@ def ECOS_get_dims(Jtot, J, KMI, p, dire, iota, red):
         dims = {'l': 1, 'q': [Jtot + KMI + 2 - red]}
 
     return dims
+
 
 def blockdiag(iota, Jtot, J, KMI, ns, slack=False):
 
@@ -114,6 +124,7 @@ def blockdiagRidge(Jtot, J, KMI, iota):
         mat[i_lb:i_ub, j_lb:j_ub] = numpy.diag([-2] * J[i])
 
     return mat
+
 
 def ECOS_get_A(J, Jtot, KMI, iota, p, dire, ns):
 
@@ -211,6 +222,7 @@ def ECOS_get_G(Jtot, KMI, J, iota, a, Q, p, dire, ns, red, scale):
 
     return sparse.csc_matrix(numpy.real(G))
 
+
 def ECOS_get_h(d, lb, J, Jtot, KMI, iota, p, dire, Q1, Q2, red):
 
     if p == "L1" and dire == "==":
@@ -239,6 +251,7 @@ def ECOS_get_h(d, lb, J, Jtot, KMI, iota, p, dire, Q1, Q2, red):
         h = [-d] + [1] + [1] + [0] * (Jtot + KMI - red)
 
     return numpy.array(h, dtype=numpy.float32)
+
 
 def w_constr_prep(cons, names, A, Z, V, J, KM):
     # Default method to estimate weights as in Abadie et al. (2010)
@@ -452,6 +465,7 @@ def b_est(A, Z, J, KM, w_constr, V):
 
     return b
 
+
 def b_est_multi(A, Z, J, KM, iota, w_constr, V):
 
     lb = w_constr[0]['lb']
@@ -518,6 +532,7 @@ def b_est_multi(A, Z, J, KM, iota, w_constr, V):
 
     return b
 
+
 def V_prep(type, B, T0_features, iota):
     if type == "separate":
         V = numpy.identity(len(B))
@@ -546,6 +561,7 @@ def V_prep(type, B, T0_features, iota):
                          columns=B.index.get_level_values('ID'))
 
     return V
+
 
 def u_des_prep(B, C, u_order, u_lags, coig_data, T0_tot, M, constant, index,
                index_w, u_design, res):
@@ -742,6 +758,7 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
 
     return e_res, e_des_0, e_des_1
 
+
 def createPoly(u_order, e_order, index_w, u_des_0_na, e_des_0_na, e_des_1, out_feat):
     if u_order > 1:
         poly = PolynomialFeatures(u_order, include_bias=False)     # create pipeline
@@ -767,6 +784,7 @@ def createPoly(u_order, e_order, index_w, u_des_0_na, e_des_0_na, e_des_1, out_f
 
     return u_des_0_na, e_des_0_na, e_des_1
 
+
 def DUflexGet(u_des_0, C):
 
     sel_u_des_B = [u not in C.columns.tolist() for u in u_des_0.columns]
@@ -789,6 +807,7 @@ def DUflexGet(u_des_0, C):
 
     return Du
 
+
 def df_EST(w_constr, w, B, J, KM):
     if (w_constr['name'] == "ols") or (w_constr['p'] == "no norm"):
         df = J
@@ -808,6 +827,7 @@ def df_EST(w_constr, w, B, J, KM):
     df = df + KM
 
     return df
+
 
 def u_sigma_est(u_mean, u_sigma, res, Z, V, index, TT, df):
     ZZ = numpy.array(Z)
@@ -851,8 +871,169 @@ def cond_pred(y, x, xpreds, method, tau=None):
     return pred
 
 
+def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
+            w_ub_est, p, p_int, QQ, QQ2, dire, lb, cores, pass_stata, verbose):
+
+    # Progress bar
+    iters = ceil(sims / 10)
+    perc = 0
+
+    Jtot = sum(J.values())
+    KMI = sum(KM.values())
+    Jval = [v for v in J.values()]
+    KMval = [v for v in KM.values()]
+    Qval = [v for v in QQ.values()]
+    Q2val = [v for v in QQ2.values()]
+
+    dataEcos = {}
+    ns = ECOS_get_n_slacks(p, dire, Jtot, iota)
+
+    scale, Qreg = matRegularize(Q)
+    dimred = numpy.shape(Q)[0] - numpy.shape(Qreg)[0]
+
+    dataEcos['dims'] = ECOS_get_dims(Jtot, Jval, KMI, p, dire, iota, dimred)
+    dataEcos['A'] = ECOS_get_A(Jval, Jtot, KMI, iota, p, dire, ns)
+    dataEcos['b'] = ECOS_get_b(Qval, p, dire)
+    sims_res = []
+
+    if cores == 1:
+        for i in range(sims):
+            rem = (i + 1) % iters
+            perc = printIter(i, rem, perc, pass_stata, verbose, sims)
+
+            res = scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, Jval, Jtot, KMval, KMI, iota,
+                                w_lb_est, w_ub_est, p, p_int, Qval, Q2val, dire, lb)
+            sims_res.append(res)
+
+        vsig = numpy.array(sims_res)
+
+    if cores > 1:
+        if verbose:
+            print("Starting parallelization with " + str(cores) + " cores...")
+        from dask import compute, delayed, config
+        from dask.distributed import Client
+
+        config.set(scheduler='multiprocessing')
+        client = Client(n_workers=cores)
+        for i in range(sims):
+            res = delayed(scpi_in_simul)(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, Jval, Jtot, KMval, KMI, iota, w_lb_est,
+                                         w_ub_est, p, p_int, Qval, Q2val, dire, lb)
+            sims_res.append(res)
+
+        vs = compute(sims_res)
+        vsig = numpy.array(vs[0])
+
+        client.close()
+
+        try:
+            shutil.rmtree("dask-worker-space")
+        except:
+            pass
+
+        if verbose:
+            print("")
+            print("Closing working clusters...")
+
+    return vsig
+
+
+def scpi_in_diag(sims, beta, Q, P, J, KM, iota, w_lb_est,
+                 w_ub_est, p, p_int, QQ, QQ2, dire, lb, pass_stata,
+                 verbose, tr_units, zeta, sc_effect):
+
+    # prepare dictionaries
+    Jdict = deepcopy(J)
+    Qdict = mat2dict(Q)
+
+    if sc_effect != "time":
+        Pdict = mat2dict(P)
+    else:
+        Pdict = {}
+        for tr in tr_units:
+            csel = [c.split("_")[0] == tr for c in P.columns.tolist()]
+            Pdict[tr] = P.loc[:, csel]
+
+    betadict = mat2dict(beta)
+    zetadict = mat2dict(zeta, cols=False)
+    QQdict = deepcopy(QQ)
+    QQ2dict = deepcopy(QQ2)
+    lbdict = {}
+    jmin = 0
+    for tr in tr_units:
+        jmax = jmin + Jdict[tr]
+        lbdict[tr] = lb[jmin:jmax]
+        jmin = jmax
+
+    Ieff = deepcopy(iota)
+    iota = 1
+
+    j = 1
+    for tr in tr_units:
+        # Progress bar
+        iters = ceil(sims / 10)
+        perc = 0
+
+        P = Pdict[tr]
+        Q = Qdict[tr].to_numpy()
+        KMI = KM[tr]
+        KMval = KM[tr]
+        beta = betadict[tr].to_numpy().flatten()
+        Qval = [QQdict[tr]]
+        Q2val = [QQ2dict[tr]]
+        Jval = [Jdict[tr]]
+        Jtot = deepcopy(Jdict[tr])
+        zeta = zetadict[tr].to_numpy()
+        lb = lbdict[tr]
+
+        dataEcos = {}
+        ns = ECOS_get_n_slacks(p, dire, Jtot, iota)
+
+        scale, Qreg = matRegularize(Q)
+        dimred = numpy.shape(Q)[0] - numpy.shape(Qreg)[0]
+
+        dataEcos['dims'] = ECOS_get_dims(Jtot, Jval, KMI, p, dire, iota, dimred)
+        dataEcos['A'] = ECOS_get_A(Jval, Jtot, KMI, iota, p, dire, ns)
+        dataEcos['b'] = ECOS_get_b(Qval, p, dire)
+
+        sims_res_lb = []
+        sims_res_ub = []
+
+        for i in range(sims):
+            rem = (i + 1) % iters
+            perc = printIter(i, rem, perc, pass_stata, verbose, sims, tr)
+
+            res_lb, res_ub = scpi_in_simul_diag(i, dataEcos, ns, beta, Q, Qreg, scale, dimred,
+                                                P, Jval, Jtot, KMval, KMI, iota,
+                                                w_lb_est, w_ub_est, p, p_int, Qval, Q2val, dire, lb, zeta[:, i])
+            sims_res_lb.append(res_lb)
+            sims_res_ub.append(res_ub)
+
+        vsig_lb_tr = numpy.array(sims_res_lb)  # the list of lists becomes a sims X horizon array
+        vsig_ub_tr = numpy.array(sims_res_ub)
+
+        if j == 1:
+            if sc_effect != "time":
+                vsig_lb = vsig_lb_tr
+                vsig_ub = vsig_ub_tr
+            else:
+                vsig_lb = vsig_lb_tr / Ieff
+                vsig_ub = vsig_ub_tr / Ieff
+            j = 2
+        else:
+            if sc_effect != "time":
+                vsig_lb = numpy.concatenate((vsig_lb, vsig_lb_tr), axis=1)
+                vsig_ub = numpy.concatenate((vsig_ub, vsig_ub_tr), axis=1)
+            else:
+                vsig_lb = numpy.add(numpy.nan_to_num(vsig_lb, nan=0), numpy.nan_to_num(vsig_lb_tr, nan=0) / Ieff)
+                vsig_ub = numpy.add(numpy.nan_to_num(vsig_ub, nan=0), numpy.nan_to_num(vsig_ub_tr, nan=0) / Ieff)
+
+    vsig = numpy.concatenate((vsig_lb, vsig_ub), axis=1)
+
+    return vsig
+
+
 def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, J, Jtot, KM, KMI, iota, w_lb_est,
-                  w_ub_est, p, p_int, QQ, QQ2, dire, lb, cores):
+                  w_ub_est, p, p_int, QQ, QQ2, dire, lb):
 
     zeta = numpy.random.normal(loc=0, scale=1, size=len(beta))
     G = Sigma_root.dot(zeta)
@@ -924,71 +1105,66 @@ def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, 
     return res_lb
 
 
-def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
-            w_ub_est, p, p_int, QQ, QQ2, dire, lb, cores, pass_stata, verbose):
+def scpi_in_simul_diag(i, dataEcos, ns, beta, Q, Qreg, scale, dimred, P, J, Jtot,
+                       KM, KMI, iota, w_lb_est, w_ub_est, p, p_int, QQ, QQ2, dire, lb, zeta):
 
-    # Progress bar
-    iters = ceil(sims / 10)
-    perc = 0
+    G = zeta
+    a = -2 * G - 2 * beta.T.dot(Q)
+    d = 2 * G.dot(beta) + beta.dot(Q.dot(beta))
 
-    Jtot = sum(J.values())
-    KMI = sum(KM.values())
-    Jval = [v for v in J.values()]
-    KMval = [v for v in KM.values()]
-    Qval = [v for v in QQ.values()]
-    Q2val = [v for v in QQ2.values()]
+    dataEcos['G'] = ECOS_get_G(Jtot, KMI, J, iota, a, Qreg, p, dire, ns, dimred, scale)
+    dataEcos['h'] = ECOS_get_h(d, lb, J, Jtot, KMI, iota, p, dire, QQ, QQ2, dimred)
 
-    dataEcos = {}
-    ns = ECOS_get_n_slacks(p, dire, Jtot, iota)
+    res_ub = []
+    res_lb = []
 
-    scale, Qreg = matRegularize(Q)
-    dimred = numpy.shape(Q)[0] - numpy.shape(Qreg)[0]
+    for hor in range(0, len(P)):
+        pt = numpy.array(P.iloc[hor, :])
 
-    dataEcos['dims'] = ECOS_get_dims(Jtot, Jval, KMI, p, dire, iota, dimred)
-    dataEcos['A'] = ECOS_get_A(Jval, Jtot, KMI, iota, p, dire, ns)
-    dataEcos['b'] = ECOS_get_b(Qval, p, dire)
+        # minimization
+        if w_lb_est is True:
+            dataEcos['c'] = ECOS_get_c(-pt, ns)
 
-    sims_res = []
+            solution = ecos.solve(c=dataEcos['c'],
+                                  G=dataEcos['G'],
+                                  h=dataEcos['h'],
+                                  dims=dataEcos['dims'],
+                                  A=dataEcos['A'],
+                                  b=dataEcos['b'],
+                                  verbose=False)
 
-    if cores == 1:
-        for i in range(sims):
-            rem = (i + 1) % iters
-            perc = printIter(i, rem, perc, pass_stata, verbose, sims)
+            if solution['info']['infostring'] in ['Optimal solution found', 'Close to optimal solution found']:
+                xx = solution['x'][0:(Jtot + KMI)]
+                sol = sum(pt * (beta - xx))
+                res_lb.append(sol)
+            else:
+                res_lb.append(numpy.nan)
+        else:
+            res_lb.append(numpy.nan)
 
-            res = scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, Jval, Jtot, KMval, KMI, iota,
-                                w_lb_est, w_ub_est, p, p_int, Qval, Q2val, dire, lb, cores)
-            sims_res.append(res)
+        # maximization
+        if w_ub_est is True:
+            dataEcos['c'] = ECOS_get_c(pt, ns)
 
-        vsig = numpy.array(sims_res)
+            solution = ecos.solve(c=dataEcos['c'],
+                                  G=dataEcos['G'],
+                                  h=dataEcos['h'],
+                                  dims=dataEcos['dims'],
+                                  A=dataEcos['A'],
+                                  b=dataEcos['b'],
+                                  verbose=False)
 
-    if cores > 1:
-        if verbose:
-            print("Starting parallelization with " + str(cores) + " cores...")
-        from dask import compute, delayed, config
-        from dask.distributed import Client
+            if solution['info']['infostring'] in ['Optimal solution found', 'Close to optimal solution found']:
+                xx = solution['x'][0:(Jtot + KMI)]
+                sol = sum(pt * (beta - xx))
+                res_ub.append(sol)
+            else:
+                res_ub.append(numpy.nan)
+        else:
+            res_ub.append(numpy.nan)
 
-        config.set(scheduler='multiprocessing')
-        client = Client(n_workers=cores)
-        for i in range(sims):
-            res = delayed(scpi_in_simul)(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, Jval, Jtot, KMval, KMI, iota, w_lb_est,
-                                         w_ub_est, p, p_int, Qval, Q2val, dire, lb, cores)
-            sims_res.append(res)
+    return res_lb, res_ub
 
-        vs = compute(sims_res)
-        vsig = numpy.array(vs[0])
-
-        client.close()
-
-        try:
-            shutil.rmtree("dask-worker-space")
-        except:
-            pass
-
-        if verbose:
-            print("")
-            print("Closing working clusters...")
-
-    return vsig
 
 def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect, out_feat):
     e_1 = e_2 = None
@@ -1134,13 +1310,6 @@ def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_de
     for i in range(iota):
         jmax = T1[i] + jmin
 
-        # if w_name in ['simplex', 'ridge', 'ols', 'L1-L2'] and effect != "time":
-        #     lb_joint = numpy.nanquantile(numpy.nanquantile(vsigLB[:, jmin:jmax], q=0.05, axis=0),
-        #                                  q=(u_alpha / 2), axis=0)
-        #     ub_joint = numpy.nanquantile(numpy.nanquantile(vsigUB[:, jmin:jmax], q=0.95, axis=0),
-        #                                  q=(1 - u_alpha / 2), axis=0)
-
-        # else:
         lb_joint = numpy.nanquantile(numpy.nanmin(vsigLB[:, jmin:jmax], axis=0), q=(u_alpha / 2), axis=0)
         ub_joint = numpy.nanquantile(numpy.nanmax(vsigUB[:, jmin:jmax], axis=0), q=(1 - u_alpha / 2), axis=0)
 
@@ -1168,6 +1337,7 @@ def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_de
 
     return pandas.DataFrame(ML), pandas.DataFrame(MU)
 
+
 def epskappaGet(P, rho_dict, beta, tr_units, effect, joint=False):
 
     if effect == "time":
@@ -1193,6 +1363,7 @@ def epskappaGet(P, rho_dict, beta, tr_units, effect, joint=False):
 
     return epskappa
 
+
 def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
 
     if rho == 'type-1':
@@ -1206,7 +1377,7 @@ def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
         ssr = (res - res.mean())**2
         sigma_u = sqrt(ssr.mean())
         sigma_bj2 = min(B.var(axis=0))
-        sigma_bj = max(B.var(axis=0))
+        sigma_bj = max(B.std(axis=0))
         denomCheck(sigma_bj2)
         CC = sigma_u * sigma_bj / sigma_bj2
 
@@ -1214,8 +1385,8 @@ def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
         sigma_bj2 = min(B.var(axis=0))
         denomCheck(sigma_bj2)
         tempdf = pandas.concat([res, B], axis=1)
-        sigma_bju = max(tempdf.cov().iloc[:, 0])
-        CC = sigma_bju / sigma_bj2
+        sigma_bju = max(tempdf.cov().iloc[1:, 0])
+        CC = abs(sigma_bju) / sigma_bj2
 
     if coig_data is True:
         c = 1
@@ -1229,31 +1400,62 @@ def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
 
     return rho
 
+
 def denomCheck(den):
     if abs(den) == 0:
         raise Exception("One of your donors has no variation in the pre-treatment period!")
 
-def regularize_check(w, index_w, rho, verbose):
+
+def regularize_check(w, index_w, rho, verbose, B):
     # If regularization is ill-behaved just select the first weight
     if sum(index_w) == 0:
         sel = w.rank(ascending=False) <= 1
         index_w = index_w | sel[0]
         if verbose:
-            warnings.warn("Regularization paramater was too high (" + str(round(rho, 3)) + "). " +
+            tr_id = B.columns.tolist()[0].split('_')[0]
+            warnings.warn("Regularization paramater was too high (" + str(round(rho, 3)) + ") " +
+                          "for the treated unit with id " + str(tr_id) + ". " +
                           "We set it so that at least one component in w is non-zero.")
     return index_w
+
+
+def regularize_check_lb(w, rho, rho_max, res, B, C, coig_data, T0_tot, verbose):
+    rho_old = rho
+
+    if rho < 0.001:
+        rho = max(regularize_w("type-1", 0.2, res, B, C, coig_data, T0_tot),
+                  regularize_w("type-2", 0.2, res, B, C, coig_data, T0_tot),
+                  regularize_w("type-3", 0.2, res, B, C, coig_data, T0_tot))
+
+        # strong evidence in favor of collinearity, thus heavy shrinkage
+        if rho < 0.05:
+            rho = rho_max
+    
+            if verbose is True:
+                tr_id = B.columns.tolist()[0].split('_')[0]
+                warnings.warn("Regularization paramater was too low (" + str(round(rho_old, 5)) + ") " +
+                              "for the treated unit with id " + str(tr_id) + ". "
+                              "We increased it to " + str(round(rho, 3)) + " to favor shrinkage " +
+                              "and avoid overfitting issues when computing out-of-sample uncertainty!" +
+                              "Please check that there is no collinearity among the donors you used for " +
+                              "this treated unit. To do so run a linear regression of the features (matrix A) onto B and C.")
+
+    return rho
 
 
 def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbose):
     Q = w_constr['Q']
     Q2_star = None
 
+    # if rho is not given by the user we use our own routine to compute it
     if isinstance(rho, str):
         rho = regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot)
+        # here we check that our rho is not too low to prevent overfitting later on
+        rho = regularize_check_lb(w, rho, rho_max, res, B, C, coig_data, T0_tot, verbose)
 
     if (w_constr['name'] == "simplex") | ((w_constr['p'] == "L1") & (w_constr['dir'] == "==")):
         index_w = w[0] > rho
-        index_w = regularize_check(w, index_w, rho, verbose)
+        index_w = regularize_check(w, index_w, rho, verbose, B)
         w_star = deepcopy(w)
         to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
         w_star.loc[to_regularize, ] = 0
@@ -1267,7 +1469,7 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
             Q_star = Q
 
         index_w = abs(w[0]) > rho
-        index_w = regularize_check(w, index_w, rho, verbose)
+        index_w = regularize_check(w, index_w, rho, verbose, res, B)
         w_star = deepcopy(w)
         to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
         w_star.loc[to_regularize, ] = 0
@@ -1284,7 +1486,7 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
 
     elif (w_constr['name'] == "L1-L2"):
         index_w = w[0] > rho
-        index_w = regularize_check(w, index_w, rho, verbose)
+        index_w = regularize_check(w, index_w, rho, verbose, res, B)
         w_star = deepcopy(w)
         to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
         w_star.loc[to_regularize, ] = 0
@@ -1306,6 +1508,7 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
     w_constr['Q'] = Q_star
 
     return w_constr, w_star, index_w.values, rho, Q_star, Q2_star
+
 
 def localgeom2step(w, r, rho_dict, rho_max, w_constr, Q, treated_units):
 
@@ -1342,6 +1545,7 @@ def localgeom2step(w, r, rho_dict, rho_max, w_constr, Q, treated_units):
 
     return Q_star, lb
 
+
 def executionTime(T0, T1, J, iota, cores, sims, name):
 
     tincr = T0 / 1000
@@ -1376,6 +1580,7 @@ def executionTime(T0, T1, J, iota, cores, sims, name):
 
     print(toprint)
 
+
 def mat2dict(mat, cols=True):
     X = deepcopy(mat)
     tr_units = X.index.get_level_values('ID').unique().tolist()
@@ -1387,7 +1592,7 @@ def mat2dict(mat, cols=True):
     if cols is True:
         for tr in tr_units:
             X_r = X.loc[pandas.IndexSlice[tr, :, :]]
-            csel = [c.split("_")[0] == tr for c in X_r.columns.tolist()]
+            csel = [str(c).split("_")[0] == tr for c in X_r.columns.tolist()]
             X_rc = X_r.loc[:, numpy.array(csel)]
             # to ensure backward compatibility with Python 3.7 (IndexSlice did not remove the column automatically)
             if 'ID' in X_rc.index.names:
@@ -1402,11 +1607,13 @@ def mat2dict(mat, cols=True):
 
     return matdict
 
+
 def CIrename(ci, citype):
     CI = deepcopy(ci)
     CI.columns = [c + "_" + citype for c in ci.columns]
 
     return CI
+
 
 def detectConstant(x, tr, scale_x=1):
     x = x * scale_x
@@ -1417,6 +1624,7 @@ def detectConstant(x, tr, scale_x=1):
     x.insert(0, tr + "_constant", 1, allow_duplicates=True)
     x = x / scale_x
     return x
+
 
 def trendRemove(xxx):
     x = deepcopy(xxx)
@@ -1434,19 +1642,25 @@ def trendRemove(xxx):
 
     return xx, sel
 
-def printIter(i, rem, perc, pass_stata, verbose, sims):
+
+def printIter(i, rem, perc, pass_stata, verbose, sims, tr=0):
     if rem == 0:
         perc = perc + 10
         if pass_stata is False and verbose:
             if any('SPYDER' in name for name in os.environ) and pass_stata is False:
-                print(str(i + 1) + "/" + str(sims) +
-                      " iterations completed (" + str(perc) + "%)", end="\n")
+                if tr == 0:
+                    print(str(i + 1) + "/" + str(sims) +
+                          " iterations completed (" + str(perc) + "%)", end="\n")
+                else:
+                    print("Treated unit " + str(tr) + ": " + str(i + 1) + "/" + str(sims) +
+                          " iterations completed (" + str(perc) + "%)", end="\n")
             else:
                 print('\x1b[1A\x1b[2K')
                 print(str(i + 1) + "/" + str(sims) +
                       " iterations completed (" + str(perc) + "%)", end="\r")
 
     return perc
+
 
 def matRegularize(P, cond=None):
 
@@ -1487,6 +1701,7 @@ def matRegularize(P, cond=None):
         Qreg = M2.transpose()
 
     return scale, Qreg
+
 
 def ix2rn(s):
     return str(s).replace('(', '').replace(')', '').replace("'", '')

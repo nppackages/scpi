@@ -12,6 +12,7 @@ from math import ceil
 from copy import deepcopy
 from .scdata import scdata
 
+
 def scdataMulti(df,
                 id_var,
                 time_var,
@@ -77,7 +78,7 @@ def scdataMulti(df,
         an integer or string specifying the number of post-treatment periods for which treatment effects have to be estimated for each
         treated unit. It must be an integer when time_var is integer, otherwise it must be a string of the form "10 years", "2 months",
         "1 day" and so on. Possible options are: 'year(s)', 'month(s)', 'week(s)', 'day(s), and 'hour(s)'.
-        If effect = "unit" it indicates the number of periods over which the average post-treatment effect is computed.
+        It is only effective when effect = "unit-time".
 
     units_est : list, default None
         a list specifying the treated units for which treatment effects have to be estimated.
@@ -485,17 +486,20 @@ def scdataMulti(df,
 
         if post_est is not None:
             if timeConvert is False:
-                T1_last = treated_unit_T0 + post_est
+                T1_last = treated_unit_T0 + post_est - anticipation_tr
             else:
-                T1_last = treated_unit_T0 + numpy.timedelta64(post_est_delta, post_est_freq)
+                T1_last = treated_unit_T0 + numpy.timedelta64(post_est_delta, post_est_freq) - anticipation_tr
 
             treated_donors = data[(data['__ID'].isin(treated_post)) &
                                   (data['__time'] < T1_last)]
             tr_donors_count = treated_donors[['__ID', '__Treatment']].groupby('__ID').sum()
             tr_donors_units = tr_donors_count[tr_donors_count['__Treatment'] == 0].index.values.tolist()
-            donors_units.extend(tr_donors_units)
-            donors_units = (list(set(donors_units)))
-            donors_units.sort()
+
+            # not-yet-treated are used as donors only with unit-time predictands
+            if effect in ["unit-time", "unit"]:
+                donors_units.extend(tr_donors_units)
+                donors_units = (list(set(donors_units)))
+                donors_units.sort()
 
         if donors_est is not None:
             if len(donors_est) == 1:

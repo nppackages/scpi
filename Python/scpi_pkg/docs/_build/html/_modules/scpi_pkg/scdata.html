@@ -680,6 +680,19 @@
     <span class="n">X_na</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">complete_cases</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="p">]</span>
 
     <span class="n">A_na</span> <span class="o">=</span> <span class="n">X_na</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">[</span><span class="n">unit_tr</span><span class="p">]]</span>
+
+    <span class="c1"># take care of donors that have been dropped because of absent pre-treatment observations</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unit_co_eff</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">donor_order</span><span class="p">):</span>
+        <span class="n">C_cols_bool</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">donor_order</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">P</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>  <span class="c1"># P has C columns to be taken care of</span>
+        <span class="n">C_cols</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">C_cols_bool</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="n">donor_order</span> <span class="o">=</span> <span class="n">unit_co_eff</span>
+
+        <span class="n">Y_donors</span> <span class="o">=</span> <span class="n">Y_donors</span><span class="p">[</span><span class="n">donor_order</span><span class="p">]</span>
+
+        <span class="n">P_col_sel</span> <span class="o">=</span> <span class="n">donor_order</span> <span class="o">+</span> <span class="n">C_cols</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">P</span><span class="p">[</span><span class="n">P_col_sel</span><span class="p">]</span>
+
     <span class="n">B_na</span> <span class="o">=</span> <span class="n">X_na</span><span class="p">[</span><span class="n">donor_order</span><span class="p">]</span>
     <span class="n">C_na</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -832,6 +845,15 @@
     <span class="n">Y_pre</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">]</span>
     <span class="n">Y_post</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">]</span>
     <span class="n">Y_donors</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">cointegrated_data</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">t</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">T0_features</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;You have at least one feature with only one pre-treatment period, &quot;</span> <span class="o">+</span>
+                              <span class="s2">&quot;thus you cannot specify cointegrated_data = True! Remember that this &quot;</span> <span class="o">+</span>
+                              <span class="s2">&quot;option uses the difference of pre-treatment residuals rather than &quot;</span> <span class="o">+</span>
+                              <span class="s2">&quot;their levels. We set cointegrated_data = False.&quot;</span><span class="p">)</span>
+            <span class="n">cointegrated_data</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">return</span> <span class="n">scdata_output</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A_na</span><span class="p">,</span> <span class="n">B</span><span class="o">=</span><span class="n">B_na</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="n">C_na</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="n">P</span><span class="p">,</span> <span class="n">Y_pre</span><span class="o">=</span><span class="n">Y_pre</span><span class="p">,</span>
                          <span class="n">Y_post</span><span class="o">=</span><span class="n">Y_post</span><span class="p">,</span> <span class="n">Y_donors</span><span class="o">=</span><span class="n">Y_donors</span><span class="p">,</span> <span class="n">J</span><span class="o">=</span><span class="n">J</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="n">K</span><span class="p">,</span>

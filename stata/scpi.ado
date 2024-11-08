@@ -1,5 +1,4 @@
-*! Date        : 14 Mar 2023
-*! Version     : 2.2.1
+*! Date        : 24 Aug 2024
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Synthetic control inference
@@ -9,7 +8,7 @@ program define scpi, eclass
 version 16.0           
 
 	syntax , dfname(string) [p(integer 1) direc(string) q(real -11.92) lb(string) V(string) name(string) u_missp u_sigma(string) u_order(integer 1) u_lags(integer 0) u_alpha(real 0.05) sims(integer 200) ///
-			 e_method(string) e_order(integer 1) e_lags(integer 0) e_alpha(real 0.05) lgapp(string) rho(real -11) rho_max(real -11) cores(integer 1) pypinocheck]
+			 e_method(string) e_order(integer 1) e_lags(integer 0) e_alpha(real 0.05) lgapp(string) rho(real -11) rho_max(real 0.2) cores(integer 1) pypinocheck set_seed(integer -1) force_joint_pi_optim]
 
 	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
 		python: version_checker()
@@ -90,7 +89,21 @@ version 16.0
 	if mi("`e_method'") {
 		local e_method "gaussian"
 	}
-	
+
+	if `set_seed' < 0 {
+		local setTheSeed = "False"
+	}
+	else {
+		local setTheSeed = "True"
+	}
+
+	if mi("`force_joint_pi_optim'") {
+		local force_joint_pi_optim = "False"
+	}
+	else {
+		local force_joint_pi_optim = "True"
+	}
+
 	python: executionTime(`cores', `sims', "`dfname'")
 	
 	di ""
@@ -102,7 +115,7 @@ version 16.0
 	sleep 500
 
 	python: scpi_wrapper("`p_str'", "`direc'", `q', "`lb'", "`name'", "`V'", "`u_missp'", "`u_sigma'", `u_order', `u_lags', `u_alpha', "`e_method'", `e_order', `e_lags', ///
-						 `e_alpha', `sims', "`lgapp'", `rho', `rho_max', `cores', "`dfname'")
+						 `e_alpha', `sims', "`lgapp'", `rho', `rho_max', `cores', "`dfname'", "`setTheSeed'", `set_seed', "`force_joint_pi_optim'")
 	
 	ereturn clear
 	
@@ -170,14 +183,15 @@ end
 
 version 16.0
 python:
-import pickle, numpy, urllib, luddite
+import pickle, numpy, urllib, luddite, random
 from scpi_pkg.scpi import scpi
 from scpi_pkg import version as lver
 from sfi import Scalar, Matrix, Macro
 from math import ceil, floor
 
 
-def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_alpha, e_method, e_order, e_lags, e_alpha, sims, lgapp, rho, rho_max, cores, dfname):
+def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_alpha, e_method, e_order, e_lags,
+				 e_alpha, sims, lgapp, rho, rho_max, cores, dfname, setTheSeed, set_seed, force_joint_pi_optim):
 
 	filename = dfname + '.obj'
 	filehandler = open(filename, 'rb') 
@@ -211,8 +225,6 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 				
 	if rho == -11:
 		rho = None
-	if rho_max == -11:
-		rho_max = None
 		
 	# Parse u_missp
 	if u_missp == "False":
@@ -220,10 +232,19 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 	else:
 		u_missp_bool = True
 
-	print(V)
+	# Backward compatibility
+	if force_joint_pi_optim == "False":
+		force_joint_pi_optim = False
+	else:
+		force_joint_pi_optim = True
+
+	# Check if user required to set the seed
+	if setTheSeed == "True":
+		numpy.random.seed(set_seed)
+
 	res_pi = scpi(data=df, w_constr=w_constr, V=V, Vmat=None, P=None, u_missp=u_missp_bool, u_sigma=u_sigma, u_order=u_order, u_lags=u_lags, u_design=None, u_alpha=u_alpha,
 				  e_method=str(e_method), e_order=e_order, e_lags=e_lags, e_design=None, e_alpha=e_alpha, sims=sims, rho=rho, rho_max=rho_max, lgapp=lgapp, cores=cores,
-				  plot=False, w_bounds=None, e_bounds=None, verbose=True, pass_stata=True)
+				  plot=False, w_bounds=None, e_bounds=None, verbose=True, pass_stata=True, force_joint_PI_optim=force_joint_pi_optim)
 	
 	class_type = res_pi.__class__.__name__
 	Macro.setLocal("class_type", class_type)

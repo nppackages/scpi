@@ -3,7 +3,6 @@
 \docType{package}
 \name{scpi-package}
 \alias{scpi-package}
-\alias{_PACKAGE}
 \title{\code{scpi}: A Package to Compute Synthetic Control Prediction Intervals With Multiple Treated Units and Staggered Adoption}
 \description{
 The package implements estimation, inference procedures, and produces plots for Synthetic Control (SC) methods

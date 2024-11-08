@@ -89,7 +89,6 @@
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
-<span class="kn">from</span> <span class="nn">scipy.linalg</span> <span class="kn">import</span> <span class="n">block_diag</span>
 <span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
 <span class="kn">from</span> <span class="nn">.funs</span> <span class="kn">import</span> <span class="n">local_geom</span><span class="p">,</span> <span class="n">u_des_prep</span><span class="p">,</span> <span class="n">e_des_prep</span><span class="p">,</span> <span class="n">complete_cases</span>
 <span class="kn">from</span> <span class="nn">.funs</span> <span class="kn">import</span> <span class="n">df_EST</span><span class="p">,</span> <span class="n">u_sigma_est</span><span class="p">,</span> <span class="n">scpi_in</span><span class="p">,</span> <span class="n">scpi_out</span><span class="p">,</span> <span class="n">epskappaGet</span>
@@ -118,7 +117,7 @@
          <span class="n">e_alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
          <span class="n">sims</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
          <span class="n">rho</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-         <span class="n">rho_max</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+         <span class="n">rho_max</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
          <span class="n">lgapp</span><span class="o">=</span><span class="s2">&quot;generalized&quot;</span><span class="p">,</span>
          <span class="n">cores</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
          <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -606,7 +605,7 @@
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;You selected &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">cores</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; cores, but only &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">n_cores</span><span class="p">)</span> <span class="o">+</span>
                             <span class="s2">&quot; are available on your machine!&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">cores</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">cores</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="k">if</span> <span class="n">pass_stata</span> <span class="ow">is</span> <span class="kc">False</span> <span class="ow">and</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="n">constr_type</span> <span class="o">=</span> <span class="n">w_constr</span><span class="p">[</span><span class="n">tr_units</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
@@ -684,7 +683,7 @@
 
         <span class="c1">##########################################################################</span>
         <span class="c1"># Prepare design matrix for in-sample uncertainty</span>
-        <span class="n">ud0</span> <span class="o">=</span> <span class="n">u_des_prep</span><span class="p">(</span><span class="n">B_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">C_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">u_order</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">coig_data</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span>
+        <span class="n">ud0</span> <span class="o">=</span> <span class="n">u_des_prep</span><span class="p">(</span><span class="n">B_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">C_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">u_order</span><span class="p">,</span> <span class="n">u_lags</span><span class="p">,</span> <span class="n">coig_data</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span>
                          <span class="n">T0_M</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">M</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">constant</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">index_i</span><span class="p">,</span> <span class="n">iw_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span>
                          <span class="n">u_design</span><span class="p">,</span> <span class="n">res_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">])</span>
 
@@ -695,7 +694,7 @@
                                   <span class="n">out_feat</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">J</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">index_i</span><span class="p">,</span> <span class="n">iw_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span>
                                   <span class="n">coig_data</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">T0</span><span class="p">[</span><span class="n">tr</span><span class="p">][</span><span class="n">outcome_var</span><span class="p">],</span> <span class="n">T1</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span>
                                   <span class="n">constant</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span> <span class="n">e_design</span><span class="p">,</span> <span class="n">outcome_var</span><span class="p">,</span> <span class="n">Pd_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">],</span>
-                                  <span class="n">sc_effect</span><span class="p">,</span> <span class="n">iota</span><span class="p">)</span>
+                                  <span class="n">sc_effect</span><span class="p">,</span> <span class="n">iota</span><span class="p">,</span> <span class="n">tr</span><span class="p">)</span>
 
         <span class="c1">###########################################################################</span>
         <span class="c1"># Remove NA - In sample uncertainty</span>
@@ -817,11 +816,10 @@
 
     <span class="k">if</span> <span class="n">lgapp</span> <span class="o">==</span> <span class="s2">&quot;generalized&quot;</span><span class="p">:</span>  <span class="c1"># we use rho only to impose sparsity on B when predicting moments</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="n">sc_pred</span><span class="o">.</span><span class="n">b</span>
-        <span class="n">Q_star</span><span class="p">,</span> <span class="n">lb</span> <span class="o">=</span> <span class="n">localgeom2step</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">rho_dict</span><span class="p">,</span> <span class="n">w_constr</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">tr_units</span><span class="p">)</span>
+        <span class="n">Q_star</span><span class="p">,</span> <span class="n">lb</span> <span class="o">=</span> <span class="n">localgeom2step</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">rho_dict</span><span class="p">,</span> <span class="n">rho_max</span><span class="p">,</span> <span class="n">w_constr</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">tr_units</span><span class="p">)</span>
 
     <span class="k">elif</span> <span class="n">lgapp</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span><span class="p">:</span>  <span class="c1"># we use rho to regularize w too</span>
         <span class="n">beta</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">w_star</span><span class="p">,</span> <span class="n">r</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">sc_pred</span><span class="o">.</span><span class="n">b</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-        <span class="n">Q_star</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
         <span class="n">lb</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tr_units</span><span class="p">:</span>
             <span class="n">lb</span> <span class="o">=</span> <span class="n">lb</span> <span class="o">+</span> <span class="p">[</span><span class="n">w_constr_inf</span><span class="p">[</span><span class="n">tr</span><span class="p">][</span><span class="s1">&#39;lb&#39;</span><span class="p">]]</span> <span class="o">*</span> <span class="n">J</span><span class="p">[</span><span class="n">tr</span><span class="p">]</span>

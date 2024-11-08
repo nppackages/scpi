@@ -744,6 +744,10 @@
 
     <span class="k">if</span> <span class="n">effect</span> <span class="o">==</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
         <span class="n">P_stacked</span> <span class="o">=</span> <span class="n">P_stacked</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">)</span>
+        <span class="c1"># overwrite T1_dict because now T1 is min(T1_i) where i are treated units</span>
+        <span class="n">T1min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">T1_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">treated_units</span><span class="p">:</span>
+            <span class="n">T1_dict</span><span class="p">[</span><span class="n">tr</span><span class="p">]</span> <span class="o">=</span> <span class="n">T1min</span>
 
     <span class="c1"># number of treated units and number of covariates used for adjustment</span>
     <span class="n">iota</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">treated_units</span><span class="p">)</span>

@@ -49,7 +49,7 @@ not in the variables specified in \code{features}, we force \code{cov.adj<-NULL}
 \item{cointegrated.data}{a logical that indicates if there is a belief that the data is cointegrated or not. The default value is \code{FALSE}.}
 
 \item{post.est}{a scalar specifying the number of post-treatment periods or a list specifying the periods
-for which treatment effects have to be computed for each treated unit.}
+for which treatment effects have to be computed for each treated unit. It is only effective when effect = "unit-time".}
 
 \item{units.est}{a list specifying the treated units for which treatment effects have to be computed.}
 
@@ -164,7 +164,8 @@ df.unit <- scdataMulti(datager, id.var = id.var, outcome.var = outcome.var,
 }
 \references{
 \itemize{
-\item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
+\item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}.
+Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 \emph{Journal of Economic Literature}, 59(2), 391-425.}
 \item{\href{https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}

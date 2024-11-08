@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 2.2.1 2023-03-14}{...}
+{* *!version 2.2.8 2024-08-24}{...}
 {viewerjumpto "Syntax" "scpi##syntax"}{...}
 {viewerjumpto "Description" "scpi##description"}{...}
 {viewerjumpto "Options" "scpi##options"}{...}
@@ -39,7 +39,9 @@
 {cmd:rho_max(}{it:#}{cmd:)}
 {cmd:opt_est(}{it:string}{cmd:)}
 {cmd:opt_inf(}{it:string}{cmd:)}
-{cmd:pypinocheck}]{p_end}
+{cmd:pypinocheck}
+{cmd:set_seed(}{it:#}{cmd:)}
+{cmd:force_joint_pi_optim}]{p_end}
 {p_end}
 
 {synoptset 28 tabbed}{...}
@@ -48,9 +50,13 @@
 {title:Description}
 
 {p 4 8}{cmd:scpi} implements estimation and inference procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints according to
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}. The command is a wrapper of the companion Python package. 
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)} for a single treated unit and 
+{browse "https://arxiv.org/abs/2210.05026":Cattaneo, Feng, Palomba, and Titiunik (2023)} for multiple treated units and staggered adoption. The command is a wrapper of the companion Python package. 
 As such, the user needs to have a running version of Python with the package installed. A tutorial on how to install Python and link it to Stata
 can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
+
+{p 4 8} Note that it is not possible to control the random number generation in Python through Stata. To do so we 
+offer the dedicated option {opt set_seed}. {p_end}
 
 {p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
 {browse "https://arxiv.org/abs/2202.05984":Cattaneo, Feng, Palomba and Titiunik (2022)}.{p_end}
@@ -115,6 +121,9 @@ pseudo-residuals is at least 20.{p_end}
 If there is risk of over-fitting the option is automatically set to 0 (see u_order for more information).{p_end}
 {p 4 8}{cmd:u_alpha(}{it:#}{cmd:)} specifies the confidence level for in-sample uncertainty, that is the confidence level is 1 - u_alpha. Default is {cmd:u_alpha(0.05)}.{p_end}
 {p 4 8}{cmd:sims(}{it:#}{cmd:)} specifies the number of simulations to be used in quantifying in-sample uncertainty. Default is {cmd:sims(200)}.{p_end}
+{p 4 8}{cmd:force_joint_pi_optim} an option used for backward-compatibility. If not specified it solves a separate optimization problem for each
+        treated unit when it comes to quantify in-sample uncertainty as long as the weighting matrix is block-diagonal. If specified solves a joint optimization problem for all treated units to
+        quantify in-sample uncertainty. Both are valid approaches as we detail in the main paper. The former is faster and less conservative.{p_end}
 
 {dlgtab:Out-of-sample Uncertainty}
 
@@ -138,7 +147,7 @@ If there is risk of over-fitting the option is automatically set to 0 (see u_ord
         and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid with linear constraints only.{p_end}
 {p 4 8}{cmd:rho(}{it:#}{cmd:)} specifies the regularizing parameter that imposes sparsity on the estimated vector of weights. If unspecified, the tuning parameter is computed 
 based on optimization inequalities.{p_end}
-{p 4 8}{cmd:rho_max(}{it:#}{cmd:)} specifies the maximum value attainable by the tuning parameter {opt rho}. {p_end}
+{p 4 8}{cmd:rho_max(}{it:#}{cmd:)} specifies the maximum value attainable by the tuning parameter {opt rho}. The defaul value is {cmd:rho_max(0.2)}. {p_end}
 
 {dlgtab:Others}
 
@@ -152,7 +161,8 @@ based on optimization inequalities.{p_end}
     In case a lasso-type constraint is implemented, the method of moving asymptotes (MMA) is used. The default value is 
     {cmd:opt("'maxeval' = 5000, 'xtol_rel' = 1e-8, 'xtol_abs' = 1e-8, 'ftol_rel' = 1e-4, 'ftol_abs' = 1e-4, 'tol_eq' = 1e-8, 'tol_ineq' = 1e-8")}.{p_end}
 
-{p 4 8}{cmd:pypinocheck)} if specified avoids to check that the version of scpi_pkg in Python is the one required by {cmd:scpi} in Stata. When not specified performs the check and stores a macro called to avoid checking it multiple times.{p_end}
+{p 4 8}{cmd:pypinocheck} if specified avoids to check that the version of scpi_pkg in Python is the one required by {cmd:scpi} in Stata. When not specified performs the check and stores a macro called to avoid checking it multiple times.{p_end}
+{p 4 8}{cmd:set_seed(}{it:#}{cmd:)} if specified uses the input positive integer to set the seed in Python.{p_end}
 
     {hline}
 
@@ -244,7 +254,7 @@ marker stored_results}{...}
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
 {browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}, {it:arXiv}:2202.05984.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2023. 
 {browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}, {it:arXiv}:2210.05026. {p_end}
 
 {marker authors}{...}

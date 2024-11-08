@@ -8,7 +8,6 @@
 # Load SCPI_PKG package
 import pandas
 import numpy
-import random
 import os
 from copy import deepcopy
 from plotnine import ggplot, aes, geom_point, geom_errorbar, geom_vline, geom_line, theme, theme_bw
@@ -27,6 +26,7 @@ from scpi_pkg.scplotMulti import scplotMulti
 os.chdir("YOUR_PATH_HERE")
 data = pandas.read_csv("scpi_germany.csv")
 
+numpy.random.seed(8894)
 ##############################################################################
 # MULTIPLE TREATED UNITS
 ##############################################################################

@@ -56,12 +56,10 @@ For overviews and introductions, see [nppackages website](https://nppackages.git
 
 ### Software and Implementation
 
-- Cattaneo, Feng, Palomba, and Titiunik (2022) [scpi: Uncertainty Quantification for Synthetic Control Estimators](https://arxiv.org/abs/2202.05984).
+- Cattaneo, Feng, Palomba, and Titiunik (2024+) [scpi: Uncertainty Quantification for Synthetic Control Estimators](https://arxiv.org/abs/2202.05984). forthcoming at *Journal of Statistical Software.*
 
 ### Technical and Methodological
 
-- Cattaneo, Feng, and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf).`<br>`
+- Cattaneo, Feng, and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf).
   _Journal of the American Statistical Association_.
-- Cattaneo, Feng, Palomba, and Titiunik (2022): Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, working paper.
-
-`<br><br>`
+- Cattaneo, Feng, Palomba, and Titiunik (2023): [Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption](https://arxiv.org/abs/2210.05026), working paper.

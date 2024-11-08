@@ -199,6 +199,8 @@ def scdata(df,
         features = [outcome_var]
     elif not isinstance(features, list):
         raise Exception("The object 'features' should be a list!")
+    else:
+        features.sort()
 
     # Check covariates for adjustment are in dataframe
     if cov_adj is not None:
@@ -598,7 +600,8 @@ def scdata(df,
     if len(C.columns) > 0:
         C.set_index(B.index, drop=True, inplace=True)
 
-    X = pandas.concat([A, B, C], axis=1)
+    X = A.join([B, C], how='outer', sort=True)
+    # X = pandas.concat([A, B, C], axis=1)
     X_na = X.loc[complete_cases(X), ]
 
     A_na = X_na.loc[:, [unit_tr]]
@@ -787,6 +790,7 @@ def scdata(df,
                          treated_units=[unit_tr], donors_units=unit_co_eff, units_est=[unit_tr],
                          anticipation={unit_tr: anticipation}, effect="unit-time",
                          timeConvert=timeConvert)
+
 
 class scdata_output:
     def __init__(self, A, B, C, P, Y_pre, Y_post, Y_donors, J, K, KM, KMI, M, iota,

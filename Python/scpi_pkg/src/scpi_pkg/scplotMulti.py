@@ -14,6 +14,7 @@ from math import ceil, floor
 from mizani.breaks import date_breaks
 from mizani.formatters import date_format
 
+
 def scplotMulti(result,
                 ptype="series",
                 e_out=True,

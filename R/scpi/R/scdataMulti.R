@@ -37,7 +37,7 @@
 #' @param cov.adj a list specifying the names of the covariates to be used for adjustment for each feature. If \code{outcome.var} is
 #' not in the variables specified in \code{features}, we force \code{cov.adj<-NULL}. See the \strong{Details} section for more.
 #' @param post.est a scalar specifying the number of post-treatment periods or a list specifying the periods
-#' for which treatment effects have to be computed for each treated unit.
+#' for which treatment effects have to be computed for each treated unit. It is only effective when effect = "unit-time".
 #' @param units.est a list specifying the treated units for which treatment effects have to be computed.
 #' @param donors.est a list specifying the donors units to be used. If the list has length 1, then all treated units share the same
 #' potential donors. Otherwise, if the user requires different donor pools for different treated units, the list must be of the same
@@ -117,7 +117,8 @@
 #'
 #' @references
 #'\itemize{
-#' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}. Using synthetic controls: Feasibility, data requirements, and methodological aspects.
+#' \item{\href{https://www.aeaweb.org/articles?id=10.1257/jel.20191450}{Abadie, A. (2021)}.
+#' Using synthetic controls: Feasibility, data requirements, and methodological aspects.
 #' \emph{Journal of Economic Literature}, 59(2), 391-425.}
 #' \item{\href{https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf}{Cattaneo, M. D., Feng, Y., and Titiunik, R.
 #' (2021)}. Prediction intervals for synthetic control methods. \emph{Journal of the American Statistical Association}, 116(536), 1865-1880.}
@@ -203,7 +204,7 @@ scdataMulti <- function(df,
     stop("You should specify the name of treatment.var as a character! (eg. treatment.var = 'treatment')")
   }
 
-  if (is.null(cov.adj) == FALSE){
+  if (is.null(cov.adj) == FALSE) {
     if (is.list(cov.adj) == FALSE) {
       stop("The argument cov.adj should be a list!")
     }
@@ -239,25 +240,25 @@ scdataMulti <- function(df,
     stop("Treatment variable (treatment.var) not found in the input dataframe!")
   }
 
-  time.var.class = var.class[var.names == time.var]
-  if (!time.var.class %in% c("numeric","integer","Date")) {
+  time.var.class <- var.class[var.names == time.var]
+  if (!time.var.class %in% c("numeric", "integer", "Date")) {
     stop("Time variable (time.var) must be either numeric or Date format!")
   }
 
-  if (!var.class[var.names == outcome.var] %in% c("numeric","integer")) {
+  if (!var.class[var.names == outcome.var] %in% c("numeric", "integer")) {
     stop("Outcome variable (outcome.var) must be numeric!")
   }
 
-  if (!var.class[var.names == treatment.var] %in% c("numeric","integer")) {
-    stop("Outcome variable (treatment.var) must be numeric!")
+  if (!var.class[var.names == treatment.var] %in% c("numeric", "integer")) {
+    stop("Treatment variable (treatment.var) must be numeric!")
   }
 
   if (is.character(effect) == FALSE) {
     stop("The option 'effect' must be a character (eg. effect = 'unit-time')!")
   }
 
-  if (!(effect %in% c('unit-time', 'unit', 'time'))) {
-    stop("The option 'effect' should be either 'unit-time', 'time', or 'unit'." )
+  if (!(effect %in% c("unit-time", "unit", "time"))) {
+    stop("The option 'effect' should be either 'unit-time', 'time', or 'unit'.")
   }
 
   # Rename treatment, time, and ID variables
@@ -265,10 +266,9 @@ scdataMulti <- function(df,
   var.names[var.names == id.var]   <- "ID"
   var.names[var.names == time.var]   <- "Time"
   names(data) <- var.names
-  if (is.numeric(data[,"Treatment"])) {
-    data[,"ID"] <- as.character(data[,"ID"])
+  if (is.numeric(data[, "Treatment"])) {
+    data[, "ID"] <- as.character(data[, "ID"])
   }
-  time <- unique(data[,"Time"])                
   Y.df <- data[c("ID", "Time", "Treatment", outcome.var)]
 
   # Identify treated units
@@ -329,7 +329,7 @@ scdataMulti <- function(df,
       }
     } else if (is.numeric(post.est) == TRUE) {
       if (length(post.est) > 1) {
-        stop(paste0("When post.est is not a list it should be a single scalar indicating the number of post-treatment ", 
+        stop(paste0("When post.est is not a list it should be a single scalar indicating the number of post-treatment ",
                     "for which treatment effects have to be computed for each treated unit!"))
       }
     }
@@ -342,7 +342,7 @@ scdataMulti <- function(df,
 
     if (!(length(donors.est) %in% c(1, length(treated.units)))) {
       stop(paste0("The option 'donors.est' must be a list of either length 1 or ", length(treated.units),
-      " (the number of treated units for which treatment effects have to be computed)!"))
+                  " (the number of treated units for which treatment effects have to be computed)!"))
     }
 
     if (length(donors.est) > 1) {
@@ -385,12 +385,19 @@ scdataMulti <- function(df,
 
   tr.count <- 1
   for (treated.unit in treated.units) {
-    treated.unit <- as.character(treated.unit)  # handle numeric identifier for treated units
-    treated.unit.T0 <- min(treated.periods$Time[treated.periods$ID == treated.unit])   # get first treatment period of treated unit
-    donors <- subset(data, !(ID %in% treated.post) & Time < treated.unit.T0, select = c(ID, Treatment))   # get all other units before treatment of treated unit
-    if (nrow(donors) == 0) stop(paste0("The current specification for ", treated.unit, " does not have observations!"))
-    donors.count <- aggregate(donors[,"Treatment"], by=list(unit=donors$ID), FUN=sum) # number of periods units have been treated before treatment of treated unit
-    donors.units <- donors.count$unit[donors.count$x == 0] # donors are those unit that have never been treated before treatment of treated unit
+
+    # handle numeric identifier for treated units
+    treated.unit <- as.character(treated.unit)
+    # get first treatment period of treated unit
+    treated.unit.T0 <- min(treated.periods$Time[treated.periods$ID == treated.unit])
+    # get all other units before treatment of treated unit
+    donors <- subset(data, !(data$ID %in% treated.post) & Time < treated.unit.T0, select = c(ID, Treatment))
+    if (nrow(donors) == 0) stop(paste0("The current specification for ", treated.unit, " does not have observations! One reason could be that all ",
+                                       "your units eventually receive the treatment. Remember that we require the donor units to be never treated."))
+    # number of periods units have been treated before treatment of treated unit
+    donors.count <- aggregate(donors[, "Treatment"], by = list(unit = donors$ID), FUN = sum)
+    # donors are those unit that have never been treated before treatment of treated unit
+    donors.units <- donors.count$unit[donors.count$x == 0]
 
     if (!is.null(donors.est)) {
       donors.units <- donors.units[donors.units %in% donors.est[[treated.unit]]]
@@ -398,16 +405,26 @@ scdataMulti <- function(df,
 
     if (is.null(post.est) == FALSE) {
       if (is.list(post.est)) {
-        T1.last <- post.est[[treated.unit]][length(post.est[[treated.unit]])]
+        T1.last <- post.est[[treated.unit]][length(post.est[[treated.unit]])] - anticipation
       } else {
-        T1.last <- treated.unit.T0 + post.est
+        T1.last <- treated.unit.T0 + post.est - anticipation
       }
-      
-      treated.donors <- subset(data, ID %in% treated.post & Time < T1.last, select = c(ID, Treatment))   # get all other units before treatment of treated unit
-      tr.donors.count <- aggregate(treated.donors[,"Treatment"], by=list(unit=treated.donors$ID), FUN=sum) # number of periods units have been treated before treatment of treated unit
-      tr.donors.units <- tr.donors.count$unit[tr.donors.count$x == 0] # donors are those unit that have never been treated before treatment of treated unit
 
-      donors.units <- sort(c(donors.units, tr.donors.units))
+      # get all other units before treatment of treated unit
+      treated.donors <- subset(data, ID %in% treated.post & Time < T1.last, select = c(ID, Treatment))
+      # number of periods units have been treated before treatment of treated unit
+      tr.donors.count <- aggregate(treated.donors[, "Treatment"], by = list(unit = treated.donors$ID), FUN = sum)
+      # donors are those unit that have never been treated before treatment of treated unit
+      tr.donors.units <- tr.donors.count$unit[tr.donors.count$x == 0]
+
+      # not-yet-treated are used as donors only with unit-time and predictands
+      if (effect %in% c("unit-time", "unit")) {
+        donors.units <- sort(c(donors.units, tr.donors.units))
+      }
+
+      if (!is.null(donors.est)) {
+        donors.units <- donors.units[donors.units %in% donors.est[[treated.unit]]]
+      }
     }
 
     df.aux <- subset(data, ID %in% c(donors.units, treated.unit)) # subset dataset
@@ -425,49 +442,49 @@ scdataMulti <- function(df,
     }
 
     scdata.out <- tryCatch(
-                      {
-                         scdata(df.aux, id.var = "ID",
-                         time.var = "Time",
-                         outcome.var = outcome.var,
-                         period.pre = period.pre,
-                         period.post = period.post,
-                         unit.tr = treated.unit,
-                         unit.co = donors.units,
-                         cov.adj = cov.adj.list[[treated.unit]],
-                         features = features.list[[treated.unit]],
-                         constant = constant.list[[treated.unit]],
-                         cointegrated.data = cointegrated.data.list[[treated.unit]],
-                         anticipation = anticipation.list[[treated.unit]], verbose = verbose)
-                      },
+      {
+        scdata(df.aux, id.var = "ID",
+               time.var = "Time",
+               outcome.var = outcome.var,
+               period.pre = period.pre,
+               period.post = period.post,
+               unit.tr = treated.unit,
+               unit.co = donors.units,
+               cov.adj = cov.adj.list[[treated.unit]],
+               features = features.list[[treated.unit]],
+               constant = constant.list[[treated.unit]],
+               cointegrated.data = cointegrated.data.list[[treated.unit]],
+               anticipation = anticipation.list[[treated.unit]], verbose = verbose)
+      },
 
-                      warning = function(war) {
-                        message(paste("There is a warning related to your specification for the treated unit:", treated.unit))
-                        message("Here's the original warning message:")
-                        if (verbose) warning(war, call. = FALSE, immediate. = TRUE)
+      warning = function(war) {
+        message(paste("There is a warning related to your specification for the treated unit:", treated.unit))
+        message("Here's the original warning message:")
+        if (verbose) warning(war, call. = FALSE, immediate. = TRUE)
 
-                        aux <- scdata(df.aux, id.var = "ID", 
-                                      time.var = "Time", 
-                                      outcome.var = outcome.var, 
-                                      period.pre = period.pre, 
-                                      period.post = period.post, 
-                                      unit.tr = treated.unit, 
-                                      unit.co = donors.units, 
-                                      cov.adj = cov.adj.list[[treated.unit]], 
-                                      features = features.list[[treated.unit]],
-                                      constant = constant.list[[treated.unit]], 
-                                      cointegrated.data = cointegrated.data.list[[treated.unit]],
-                                      anticipation = anticipation.list[[treated.unit]], verbose = FALSE)
-                        return(aux)
-                      },
+        aux <- scdata(df.aux, id.var = "ID",
+                      time.var = "Time",
+                      outcome.var = outcome.var,
+                      period.pre = period.pre,
+                      period.post = period.post,
+                      unit.tr = treated.unit,
+                      unit.co = donors.units,
+                      cov.adj = cov.adj.list[[treated.unit]],
+                      features = features.list[[treated.unit]],
+                      constant = constant.list[[treated.unit]],
+                      cointegrated.data = cointegrated.data.list[[treated.unit]],
+                      anticipation = anticipation.list[[treated.unit]], verbose = FALSE)
+        return(aux)
+      },
 
-                      error = function(err) {
-                        message(paste("There is a problem with your specification for the treated unit:", treated.unit))
-                        message("Here's the original error message:")
-                        stop(err)
-                      },
+      error = function(err) {
+        message(paste("There is a problem with your specification for the treated unit:", treated.unit))
+        message("Here's the original error message:")
+        stop(err)
+      },
 
-                      finally = {}
-                      )
+      finally = {}
+    )
 
     # Store matrices with data
     A.tr <- scdata.out$A
@@ -475,12 +492,12 @@ scdataMulti <- function(df,
     C.tr <- scdata.out$C
     Y.pre.tr <- scdata.out$Y.pre
     Y.post.tr <- scdata.out$Y.post
-    
+
     if (is.null(C.tr)) { # to avoid bdiag to crash when C is null
       C.tr <- as.matrix(data.frame()[1:nrow(B.tr), ])
     }
     Y.donors.tr <- scdata.out$Y.donors
-    P.tr <- scdata.out$P 
+    P.tr <- scdata.out$P
     if (!(effect == "unit" && cointegrated.data.list[[treated.unit]])) {
       P.diff <- NULL
     }
@@ -499,7 +516,7 @@ scdataMulti <- function(df,
           ## Take first differences of P
           # Remove last observation of first feature from first period of P
           P.first <- c((P.tr[1, (1:JJ), drop = FALSE] - B.tr[feature.id == outcome.var, , drop = FALSE][T0.sel, ]),
-                      P.tr[1 ,-(1:JJ), drop = FALSE])
+                       P.tr[1, -(1:JJ), drop = FALSE])
           # Take differences of other periods
           if (nrow(P.tr) > 2) {
             Pdiff <- apply(P.tr[, (1:JJ), drop = FALSE], 2, diff)
@@ -526,7 +543,7 @@ scdataMulti <- function(df,
     colnames.B <- c(colnames.B, colnames(B.tr))
     rownames.Y.pre <- c(rownames.Y.pre, rownames(Y.pre.tr))
     rownames.Y.post <- c(rownames.Y.post, rownames(Y.post.tr))
-    
+
     if (!is.null(cov.adj.list[[treated.unit]]) || constant.list[[treated.unit]]) {
       colnames.C <- c(colnames.C, colnames(C.tr))
     }
@@ -557,7 +574,7 @@ scdataMulti <- function(df,
       Y.donors.stacked <- Y.donors.tr
       Y.pre.stacked <- Y.pre.tr
       Y.post.stacked <- Y.post.tr
-      
+
     } else {
       A.stacked <- rbind(A.stacked, A.tr)
       B.stacked <- Matrix::bdiag(B.stacked, B.tr)
@@ -594,7 +611,7 @@ scdataMulti <- function(df,
   rownames(Y.donors.stacked) <- rownames.Y.donors
   rownames(Y.pre.stacked) <- rownames.Y.pre
   rownames(Y.post.stacked) <- rownames.Y.post
-  
+
   if (effect == "time") {
     P.stacked$aux_id <- NULL
   } else {
@@ -622,9 +639,9 @@ scdataMulti <- function(df,
       Pd.stacked <- Pd.stacked[, colnames.B, drop = FALSE]
     }
   }
-  
+
   if (effect == "time") {
-    P.stacked <- P.stacked/length(treated.units)
+    P.stacked <- P.stacked / length(treated.units)
     P.stacked <- na.omit(P.stacked)
   }
 
@@ -677,7 +694,7 @@ scdataMulti <- function(df,
                       specs = specs)
   }
 
-  class(df.sc) <- 'scdataMulti'
+  class(df.sc) <- "scdataMulti"
 
   return(df.sc = df.sc)
 }

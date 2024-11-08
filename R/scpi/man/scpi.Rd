@@ -31,6 +31,7 @@ scpi(
   plot.name = NULL,
   w.bounds = NULL,
   e.bounds = NULL,
+  force.joint.PI.optim = FALSE,
   save.data = NULL,
   verbose = TRUE
 )
@@ -116,7 +117,8 @@ with their own value for \code{rho}. Other options are described in the \strong{
 and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid
 with linear constraints only.}
 
-\item{cores}{number of cores to be used by the command. The default is one.}
+\item{cores}{number of cores to be used by the command. The default is one. When the weighting matrix \eqn{\mathbf{V}} is diagonal
+this option has no effect.}
 
 \item{plot}{a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working
 directory. For more options see \code{\link{scplot}}.}
@@ -131,6 +133,11 @@ by filling the other column with \code{NA}s.}
 \widehat{\mathbf{r}})^{\prime}}. If \code{e.bounds} is provided, then
 the quantification of out-of-sample uncertainty is skipped. It is possible to provide only the lower bound or the upper bound
 by filling the other column with \code{NA}s.}
+
+\item{force.joint.PI.optim}{this option is here mostly for backward-compatibility. If FALSE (the default) it solves a separate optimization problem for each
+treated unit when it comes to quantify in-sample uncertainty as long as the weighting matrix \eqn{\mathbf{V}} is diagonal.
+If TRUE it solves a joint optimization problem for all treated units to quantify in-sample uncertainty. Both are valid approaches as
+we detail in the main paper (Cattaneo, Feng, Palomba, and Titiunik (2024)). The former is faster and less conservative.}
 
 \item{save.data}{a character specifying the name and the path of the saved dataframe containing the processed data used to produce the plot.}
 
@@ -270,7 +277,7 @@ list(name = "ridge", Q = 1)}).}
 is estimated via ordinary least squares.}
 
 \item{If \code{name == "L1-L2"}, then
-\deqn{||\mathbf{w}||_1 = 1,\:\:\: ||\mathbf{w}||_2 \leq Q,}
+\deqn{||\mathbf{w}||_1 = 1,\:\:\: ||\mathbf{w}||_2 \leq Q, \:\:\: w_j \geq 0,\:\: j =1,\ldots,J.}
 where \eqn{Q} is a tuning parameter computed as in the "ridge" case.}
 }}
 
@@ -341,7 +348,7 @@ df <- scdata(df = data, id.var = "country", time.var = "year",
 result <- scpi(df, w.constr = list(name = "simplex", Q = 1), cores = 1, sims = 10)
 result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1),
                cores = 1, sims = 10)
-                           
+
 }
 \references{
 \itemize{

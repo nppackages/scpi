@@ -32,12 +32,12 @@ global covs "constant, trend"
 					
 scdatamulti gdp trade, dfname("python_scdatamulti") ///
 			id(country) outcome(gdp) time(year) treatment(status) cointegrated($coint)   ///
-			constant($consta) covadj($covs)
+			constant($consta) covadj($covs) pypinocheck
 			
 scest, dfname("python_scdatamulti") name(simplex) 
 scplotmulti, scest 
 
-scpi, dfname("python_scdatamulti") name(simplex) sims(200) 
+scpi, dfname("python_scdatamulti") name(simplex) sims(50) set_seed(8894)
 
 * plot series
 scplotmulti, uncertainty("gaussian") ptype("series") 
@@ -62,7 +62,7 @@ scdatamulti (Italy: gdp trade) (West Germany: gdp infrate), dfname("python_scdat
 scest, dfname("python_scdatamulti") name(simplex) 
 scplotmulti, scest 
 
-scpi, dfname("python_scdatamulti") name(simplex) sims(200) 
+scpi, dfname("python_scdatamulti") name(simplex) sims(50) set_seed(8894)
 
 * plot series
 scplotmulti, uncertainty("gaussian") ptype("series") 
@@ -86,7 +86,7 @@ scdatamulti (Italy: gdp trade) (West Germany: gdp infrate), dfname("python_scdat
 scest, dfname("python_scdatamulti") name(simplex) 
 scplotmulti, scest 
 
-scpi, dfname("python_scdatamulti") name(simplex) sims(200) 
+scpi, dfname("python_scdatamulti") name(simplex) sims(50) set_seed(8894)
 
 * plot series
 scplotmulti, uncertainty("gaussian") ptype("series") 

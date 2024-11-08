@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
-Name: scpi-pkg
-Version: 2.2.7
-Summary: The package computes point estimates and prediction intervals for Synthetic Control methods as proposed in Cattaneo, Feng, and Titiunik (2021).
+Name: scpi_pkg
+Version: 2.2.8
+Summary: The package computes point estimates and prediction intervals for Synthetic Control methods with multiple treated units and staggered adoption as proposed in Cattaneo, Feng, Palomba, and Titiunik (2024).
 Home-page: https://nppackages.github.io/scpi/
 Author: Filippo Palomba
 Author-email: fpalomba@princeton.edu
@@ -16,6 +16,7 @@ Requires-Dist: cvxpy>=1.1.18
 Requires-Dist: dask>=2021.04.0
 Requires-Dist: ecos>=2.0.7
 Requires-Dist: luddite>=1.0.2
+Requires-Dist: mizani>=0.8.1
 Requires-Dist: numpy>=1.20.1
 Requires-Dist: pandas>=1.5.0
 Requires-Dist: plotnine>=0.8.0
@@ -81,12 +82,10 @@ For overviews and introductions, see [nppackages website](https://nppackages.git
 
 ### Software and Implementation
 
-- Cattaneo, Feng, Palomba, and Titiunik (2022) [scpi: Uncertainty Quantification for Synthetic Control Estimators](https://arxiv.org/abs/2202.05984).
+- Cattaneo, Feng, Palomba, and Titiunik (2024+) [scpi: Uncertainty Quantification for Synthetic Control Estimators](https://arxiv.org/abs/2202.05984). forthcoming at *Journal of Statistical Software.*
 
 ### Technical and Methodological
 
-- Cattaneo, Feng, and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf).`<br>`
+- Cattaneo, Feng, and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf).
   _Journal of the American Statistical Association_.
-- Cattaneo, Feng, Palomba, and Titiunik (2022): Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption, working paper.
-
-`<br><br>`
+- Cattaneo, Feng, Palomba, and Titiunik (2023): [Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption](https://arxiv.org/abs/2210.05026), working paper.

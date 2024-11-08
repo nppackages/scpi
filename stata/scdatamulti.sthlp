@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 2.2.1 2023-03-14}{...}
+{* *!version 2.2.8 2024-08-24}{...}
 {viewerjumpto "Syntax" "scdatamulti##syntax"}{...}
 {viewerjumpto "Description" "scdatamulti##description"}{...}
 {viewerjumpto "Options" "scdatamulti##options"}{...}
@@ -41,7 +41,8 @@
 {p 4 8}{cmd:scdatamulti} prepares the data to be used by {help scest:scest} or {help scpi:scpi} to implement estimation and inference procedures for Synthetic Control (SC) methods
 in the general case of multiple treated units and staggered adoption. It allows the user to specify for each treated unit the features 
 to be matched, covariate-adjustment feature by feature, anticipation effects, and presence of cointegration. The command follows the terminology proposed in 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}. The command is a wrapper of 
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)} for a single treated unit and 
+{browse "https://arxiv.org/abs/2210.05026":Cattaneo, Feng, Palomba, and Titiunik (2023)} for multiple treated units and staggered adoption. The command is a wrapper of 
 the companion Python package. As such, the user needs to have a running version of Python with the package installed. A tutorial on how to install Python and link it to Stata can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
@@ -56,6 +57,9 @@ the companion Python package. As such, the user needs to have a running version 
 
 {p 4 8}For an introduction to synthetic control methods, see {browse "https://economics.mit.edu/files/17847":Abadie (2021)} and 
 references therein.{p_end}
+
+{p 4 8}In case of unbalanced panel datasets, the preferred data structure should be a balanced panel with missing values. See
+ {help tsfill:tsfill, full} for a useful command to create balanced structures.{p_end}
 
 {marker options}{...}
 {title:Options}
@@ -99,8 +103,8 @@ See Details section for more.{p_end}
         treatment effects for each treated unit-time combination; 'unit', which estimates the treatment effect for each unit by averaging post-treatment features over time;
         'time', which estimates the average treatment effect on the treated at various horizons.{p_end}
 
-{p 4 8}{cmd:post_est(}{it:string}{cmd:)} a string specifying the number of post-treatment periods for which treatment effects have to be estimated for each treated unit. If
-        effect = "unit" it indicates the number of periods over which the average post-treatment effect is computed. Note that it has to be a string, e.g. {cmd: post_est("1")}.{p_end}
+{p 4 8}{cmd:post_est(}{it:string}{cmd:)} a string specifying the number of post-treatment periods for which treatment effects have to be estimated for each treated unit.
+        It is only effective when effect = "unit-time". Note that it has to be a string, e.g. {cmd: post_est("1")}.{p_end}
 
 {p 4 8}{cmd:units_est(}{it:string}{cmd:)} a string specifying the treated units for which treatment effects have to be estimated. Treated 
         units must be separated by commas, e.g. {cmd:units_est("unit1, unit2, unit3")}.{p_end}
@@ -210,7 +214,7 @@ term for the second unit.{p_end}
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
 {browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}, {it:arXiv}:2202.05984.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2023. 
 {browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}, {it:arXiv}:2210.05026. {p_end}
 
 {marker authors}{...}

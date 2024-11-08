@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 2.2.1 2023-03-14}{...}
+{* *!version 2.2.8 2024-08-24}{...}
 {viewerjumpto "Syntax" "scest##syntax"}{...}
 {viewerjumpto "Description" "scest##description"}{...}
 {viewerjumpto "Options" "scest##options"}{...}
@@ -35,7 +35,8 @@
 {title:Description}
 
 {p 4 8}{cmd:scest} implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints according to
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}. The command is a wrapper of the companion Python package. 
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)} for a single treated unit and 
+{browse "https://arxiv.org/abs/2210.05026":Cattaneo, Feng, Palomba, and Titiunik (2023)} for multiple treated units and staggered adoption. The command is a wrapper of the companion Python package. 
 As such, the user needs to have a running version of Python with the package installed. A tutorial on how to install Python and link it to Stata
 can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
@@ -168,7 +169,7 @@ some popular constraints can be selected through the option {opt name}. A detail
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
 {browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}, {it:arXiv}:2202.05984.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2023. 
 {browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}, {it:arXiv}:2210.05026. {p_end}
 
 {marker authors}{...}

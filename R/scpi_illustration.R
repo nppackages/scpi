@@ -1,7 +1,7 @@
 ################################################################################
 ## SCPI R Package
 ## R-file for Empirical Illustration - Single Treated Unit
-## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik
+## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, and Rocio Titiunik
 ################################################################################
 ### Clear R environment
 rm(list = ls(all = TRUE))
@@ -14,12 +14,14 @@ library(scpi)
 library(ggplot2)
 library(latex2exp)
 
+set.seed(8894)
 ###############################################################################
 # SINGLE TREATED UNIT
 ###############################################################################
 
 ### Load data
-data <- scpi_germany
+#data <- scpi_germany
+data <- read.csv("/Users/fpalomba/Princeton Dropbox/Filippo Palomba/projects/scpi/packages/python/scpi_germany.csv")
 
 ####################################
 ### Set options for data preparation
@@ -33,7 +35,6 @@ outcome.var <- "gdp"                                  # Outcome variable
 cov.adj     <- NULL                                   # Covariates for adjustment
 features    <- NULL                                   # No features other than outcome
 constant    <- FALSE                                  # No constant term
-report.missing <- FALSE                               # To check where missing values are
 cointegrated.data <- TRUE                             # Belief that the data are cointegrated
 
 
@@ -101,7 +102,7 @@ summary(est.ls2)
 u.alpha  <- 0.05                         # Confidence level (in-sample uncertainty)
 e.alpha  <- 0.05                         # Confidence level (out-of-sample uncertainty)
 rho      <- NULL                         # Regularization parameter (if NULL it is estimated)
-rho.max  <- 1                            # Maximum value attainable by rho
+rho.max  <- 0.2                          # Maximum value attainable by rho
 sims     <- 200                          # Number of simulations
 u.order  <- 1                            # Degree of polynomial in B and C when modelling u
 u.lags   <- 0                            # Lags of B to be used when modelling u

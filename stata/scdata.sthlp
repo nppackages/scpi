@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 2.2.1 2023-03-14}{...}
+{* *!version 2.2.8 2024-08-24}{...}
 {viewerjumpto "Syntax" "scdata##syntax"}{...}
 {viewerjumpto "Description" "scdata##description"}{...}
 {viewerjumpto "Options" "scdata##options"}{...}
@@ -50,6 +50,9 @@ can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 4 8}For an introduction to synthetic control methods, see {browse "https://economics.mit.edu/files/17847":Abadie (2021)} and 
 references therein.{p_end}
+
+{p 4 8}In case of unbalanced panel datasets, the preferred data structure should be a balanced panel with missing values. See
+ {help tsfill:tsfill, full} for a useful command to create balanced structures.{p_end}
 
 {marker options}{...}
 {title:Options}
@@ -136,7 +139,7 @@ references therein.{p_end}
 {p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
 {browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}, {it:arXiv}:2202.05984.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2023. 
 {browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}, {it:arXiv}:2210.05026. {p_end}
 
 {marker authors}{...}

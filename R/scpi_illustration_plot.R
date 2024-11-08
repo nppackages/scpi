@@ -1,7 +1,7 @@
 ################################################################################
 ## SCPI R Package
 ## R-file for Empirical Illustration - Single Treated Unit
-## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik  
+## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, and Rocio Titiunik  
 ################################################################################
 ### Clear R environment
 rm(list=ls(all=TRUE))
@@ -13,6 +13,7 @@ rm(list=ls(all=TRUE))
 library(scpi)
 library(ggplot2)
 
+set.seed(8894)
 theme_set(theme_bw())
 
 ##############################################################################

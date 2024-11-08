@@ -75,7 +75,7 @@ scest, dfname("python_scdata") p(0) lb("-inf") 	// equivalent
 *****************************************************************************************
 set seed 8894
 scpi, dfname("python_scdata") name(simplex) u_missp u_order(1) u_lags(0) ///
-	  u_sigma("HC1") e_order(1) e_lags(0) e_method(gaussian)
+	  u_sigma("HC1") e_order(1) e_lags(0) e_method(gaussian) set_seed(8894)
 
 
 *****************************************************************************************

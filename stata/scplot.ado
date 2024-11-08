@@ -1,5 +1,4 @@
-*! Date        : 14 Mar 2023
-*! Version     : 2.2.1
+*! Date        : 24 Aug 2024
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Plot Synthetic Control
