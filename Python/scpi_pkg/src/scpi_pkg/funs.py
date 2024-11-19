@@ -1430,7 +1430,7 @@ def regularize_check_lb(w, rho, rho_max, res, B, C, coig_data, T0_tot, verbose):
         # strong evidence in favor of collinearity, thus heavy shrinkage
         if rho < 0.05:
             rho = rho_max
-    
+
             if verbose is True:
                 tr_id = B.columns.tolist()[0].split('_')[0]
                 warnings.warn("Regularization paramater was too low (" + str(round(rho_old, 5)) + ") " +
@@ -1469,7 +1469,7 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
             Q_star = Q
 
         index_w = abs(w[0]) > rho
-        index_w = regularize_check(w, index_w, rho, verbose, res, B)
+        index_w = regularize_check(w, index_w, rho, verbose, B)
         w_star = deepcopy(w)
         to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
         w_star.loc[to_regularize, ] = 0
@@ -1486,7 +1486,7 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
 
     elif (w_constr['name'] == "L1-L2"):
         index_w = w[0] > rho
-        index_w = regularize_check(w, index_w, rho, verbose, res, B)
+        index_w = regularize_check(w, index_w, rho, verbose, B)
         w_star = deepcopy(w)
         to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
         w_star.loc[to_regularize, ] = 0
