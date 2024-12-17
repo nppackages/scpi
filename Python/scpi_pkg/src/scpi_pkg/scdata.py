@@ -552,7 +552,7 @@ def scdata(df,
                 else:
                     covs_adj = deepcopy(cov_adj[m - 1])
 
-                if m == 1:
+                if features[m - 1] == outcome_var:
 
                     if 'constant' in covs_adj:
                         const = numpy.ones(len(rows_tr_post))

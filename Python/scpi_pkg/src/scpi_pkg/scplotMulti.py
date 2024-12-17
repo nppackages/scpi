@@ -127,6 +127,9 @@ def scplotMulti(result,
     if ptype not in ["series", "treatment"]:
         raise Exception("'type' should be either 'series' or 'treatment'!")
 
+    if e_method_input not in [None, "gaussian", "ls", "qreg"]:
+        raise Exception("'e_method_input' should be either None, 'gaussian', 'ls', or 'qreg'!")
+
     plot_type = deepcopy(result.effect)
     iota = deepcopy(result.iota)
 
@@ -513,14 +516,14 @@ def scplotMulti(result,
             if ptype == "treatment" and plot_type == "unit":
                 plot_w2 = (plot +
                            geom_errorbar(data=toplot,
-                                         mapping=aes(x='ID', ymin='Lower_ls', ymax='Lower_ls'),
+                                         mapping=aes(x='ID', ymin='Lower_ls', ymax='Upper_ls'),
                                          colour="#FD6467", width=0.25, linetype="solid") +
                            ggtitle("In and Out of Sample Uncertainty - Location-scale Model"))
 
             else:
                 plot_w2 = (plot +
                            geom_errorbar(data=toplot,
-                                         mapping=aes(x='Time', ymin='Lower_ls', ymax='Lower_ls'),
+                                         mapping=aes(x='Time', ymin='Lower_ls', ymax='Upper_ls'),
                                          colour=col_synth, width=0.5, linetype="solid") +
                            ggtitle("In and Out of Sample Uncertainty - Location-scale Model"))
 

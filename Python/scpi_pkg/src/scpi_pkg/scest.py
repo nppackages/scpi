@@ -334,7 +334,8 @@ def scest(df, w_constr=None, V="separate", Vmat=None, plot=False):
     # Pre-treatment fit of outcome of interest
     if class_type == "scpi_data":
         if out_in_features is True:   # outcome is among features
-            fit_pre = A_hat.iloc[:T0_features[outcome_var], ].reset_index(level='feature', drop=True)
+            # fit_pre = A_hat.iloc[:T0_features[outcome_var], ].reset_index(level='feature', drop=True)
+            fit_pre = A_hat.loc[pandas.IndexSlice[:, outcome_var, :]]
         else:  # outcome is not among features
             fit_pre = Y_donors.dot(w)
 

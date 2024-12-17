@@ -1176,9 +1176,11 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect, out_feat)
     if e_lb_est is True or e_ub_est is True:
 
         if e_method == 'gaussian':
+
             x_more = numpy.vstack((preds, x))
             fit = cond_pred(y=y, x=x, xpreds=x_more, method='lm')
             e_mean = fit[:len(preds)]
+
             if effect == "time":
                 e_mean = pandas.DataFrame(data=e_mean, index=idx)
                 e_mean = e_mean.groupby(level='Time').mean().values[:, 0]

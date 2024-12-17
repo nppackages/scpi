@@ -969,6 +969,7 @@ def scpi(data,
 
     T_e = len(e_des_0_na)
     params_e = len(e_des_0_na.columns)
+
     if (T_e - 10) <= params_e:
         ix0 = e_des_0_na.index
         ix1 = e_des_1.index
@@ -978,13 +979,17 @@ def scpi(data,
         for tr in tr_units:
             edict0 = pandas.DataFrame(numpy.ones(len(ed0_dict[tr])), columns=[tr])
             if sc_effect == "time":
-                edict1 = pandas.DataFrame(numpy.ones(len(ed1_dict[tr])) / sc_pred.iota, columns=[tr])
+                edict1 = pandas.DataFrame(numpy.ones(len(ed1_dict[tr])) / sc_pred.iota, columns=[f"{tr}_constant"])
             else:
-                edict1 = pandas.DataFrame(numpy.ones(len(ed1_dict[tr])), columns=[tr])
-            edict0.insert(0, "ID", tr)
-            edict0.set_index('ID', append=False, drop=True, inplace=True)
-            edict1.insert(0, "ID", tr)
-            edict1.set_index('ID', append=False, drop=True, inplace=True)
+                edict1 = pandas.DataFrame(numpy.ones(len(ed1_dict[tr])), columns=[f"{tr}_constant"])
+
+            # copy index from old dictionary
+            edict0.set_index(ed0_dict[tr].index, append=False, inplace=True)
+            edict1.set_index(ed1_dict[tr].index, append=False, inplace=True)
+
+            # replace old dictionary with new one
+            ed0_dict[tr] = edict0
+            ed1_dict[tr] = edict1
             e_des_0_na = pandas.concat([e_des_0_na, edict0], axis=0)
             e_des_1 = pandas.concat([e_des_1, edict1], axis=0)
 
