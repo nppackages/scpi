@@ -14,7 +14,7 @@ import multiprocessing as mp
 from sklearn.linear_model import LinearRegression
 from .funs import local_geom, u_des_prep, e_des_prep, complete_cases, isDiagonal
 from .funs import df_EST, u_sigma_est, scpi_in, scpi_in_diag, scpi_out, epskappaGet
-from .funs import executionTime, createPoly, DUflexGet, mat2dict
+from .funs import executionTime, createPoly, DUflexGet, mat2dict, avoidCollin
 from .funs import localgeom2step, detectConstant, simultaneousPredGet
 from .scest import scest
 from .scplot import scplot
@@ -352,7 +352,7 @@ def scpi(data,
         an integer indicating the number of simulations.
 
     failed_sims : numpy.array
-        an array containing the number of failed simulations per post-treatment period to estimate
+        an array containing the percentage of failed simulations per post-treatment period to estimate
         lower and upper bounds.
 
 
@@ -743,7 +743,7 @@ def scpi(data,
 
     Q = {}
     for tr in tr_units:
-        Q[tr] = w_constr_aux[tr]['Q']
+        Q[tr] = w_constr[tr]['Q']
 
     if lgapp == "generalized":  # we use rho only to impose sparsity on B when predicting moments
         beta = sc_pred.b
@@ -846,7 +846,6 @@ def scpi(data,
         # Define constrained problem to be simulated
         if w_lb_est is True or w_ub_est is True:
             Q = numpy.array(Z_na).T.dot(V_na).dot(numpy.array(Z_na)) / TT
-            aux = Z_na.columns.tolist()
             csel = [c.split("_")[0] for c in Z_na.columns.tolist()]
             idx = pandas.MultiIndex.from_product([csel, ["feature"]],
                                                  names=['ID', 'feature'])
@@ -963,7 +962,7 @@ def scpi(data,
         if sum(numpy.isnan(e_bounds[1])) == len(Y_post_fit):
             e_ub_est = False
 
-    er_dict = mat2dict(e_res_na, cols=False)
+    # er_dict = mat2dict(e_res_na, cols=False)
     ed0_dict = mat2dict(e_des_0_na)
     ed1_dict = mat2dict(e_des_1)
 
@@ -1018,6 +1017,7 @@ def scpi(data,
     for tr in tr_units:
         ed0_dict[tr] = detectConstant(ed0_dict[tr], tr)
         ed1_dict[tr] = detectConstant(ed1_dict[tr], tr, scale_x)
+        ed0_dict[tr], ed1_dict[tr] = avoidCollin(ed0_dict[tr], ed1_dict[tr], scale_x, tr)
         ed0_dict[tr].insert(0, "ID", tr)
         ed0_dict[tr].set_index('ID', append=False, drop=True, inplace=True)
         ed1_dict[tr].insert(0, "ID", tr)

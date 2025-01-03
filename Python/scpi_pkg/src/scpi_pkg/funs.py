@@ -338,6 +338,7 @@ def w_constr_prep(cons, names, A, Z, V, J, KM):
 
         if len(Qfeat) == 0:
             Qest, lambd = shrinkage_EST("ridge", A, Z, V, J, KM)
+            Qfeat.append(Qest)
 
         Qest = max(numpy.nanmin(Qfeat), .5)
 
@@ -373,24 +374,25 @@ def shrinkage_EST(method, A, ZZ, V, J, KM):
 
     if method == "ridge":
 
-        Z_columns = [c.split('_') for c in Z.columns.tolist()]
-        selZ = []
-        for z in Z_columns:
-            if len(z) <= 2:
-                selZ.append(True)
-            else:
-                if z[2] == "constant":
-                    selZ.append(False)
-                else:
-                    selZ.append(True)
-        Z = Z.loc[:, selZ]
-        Z['constant'] = 1
-        deltak = len(Z_columns) - sum(selZ) - 1
+        # Z_columns = [c.split('_') for c in Z.columns.tolist()]
+        # selZ = []
+        # for z in Z_columns:
+        #     if len(z) <= 2:
+        #         selZ.append(True)
+        #     else:
+        #         if "constant":
+        #             selZ.append(False)
+        #         else:
+        #             selZ.append(True)
+        # Z = Z.loc[:, selZ]
+        # Z['constant'] = 1
+        # deltak = len(Z_columns) - sum(selZ) - 1
+        deltak = 0
         wls = sm.WLS(A, Z, weights=numpy.diag(V)).fit()
         sig = wls.scale
         L2 = sum(wls.params**2)
         lamb = sig * (J + KM) / L2            # rule of thumb
-        Q = sqrt(L2) / (1 + lamb)                   # convert lambda into Q
+        Q = sqrt(L2) / (1 + lamb)             # convert lambda into Q
 
         if len(Z) <= len(Z.columns) + 10:
             lasso_cols = b_est(A=A, Z=Z, J=J, KM=(KM - deltak), V=V,
@@ -408,7 +410,7 @@ def shrinkage_EST(method, A, ZZ, V, J, KM):
             wls = sm.WLS(A, Z_sel, weights=numpy.diag(V)).fit()
             sig = wls.scale
             L2 = sum(wls.params**2)
-            lamb = sig * (J + KM) / L2
+            lamb = sig * (len(Z_sel.columns) + KM) / L2
             Q = sqrt(L2) / (1 + lamb)
 
     return Q, lamb
@@ -435,7 +437,8 @@ def b_est(A, Z, J, KM, w_constr, V):
         if dire == "==":
             constraints = [cvxpy.sum(x[0:J]) == w_constr['Q'], x[0:J] >= lb]
         elif dire == "<=":
-            constraints = [cvxpy.norm1(x[0:J]) <= w_constr['Q'], x[0:J] >= lb]
+            # constraints = [cvxpy.norm1(x[0:J]) <= w_constr['Q'], x[0:J] >= lb]
+            constraints = [cvxpy.norm1(x[0:J]) <= w_constr['Q']]
 
     elif p == "L2":
         if dire == "==":
@@ -451,8 +454,10 @@ def b_est(A, Z, J, KM, w_constr, V):
 
     if w_constr['name'] == 'lasso' or (p == "L1" and dire == "<="):
         prob.solve(solver=cvxpy.OSQP)
+
     else:
         prob.solve(solver=cvxpy.ECOS)
+
     b = x.value
     alert = prob.status != 'optimal'
 
@@ -1459,8 +1464,9 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
         index_w = w[0] > rho
         index_w = regularize_check(w, index_w, rho, verbose, B)
         w_star = deepcopy(w)
-        to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
-        w_star.loc[to_regularize, ] = 0
+        # to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
+        # w_star.loc[to_regularize, ] = 0
+        w_star.loc[index_w, ] = 0
         Q_star = numpy.sum(w_star)[0]
 
     elif (w_constr['name'] == "lasso") | ((w_constr['p'] == "L1") & (w_constr['dir'] == "<=")):
@@ -1473,8 +1479,9 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
         index_w = abs(w[0]) > rho
         index_w = regularize_check(w, index_w, rho, verbose, B)
         w_star = deepcopy(w)
-        to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
-        w_star.loc[to_regularize, ] = 0
+        # to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
+        # w_star.loc[to_regularize, ] = 0
+        w_star.loc[index_w, ] = 0
 
     elif (w_constr['name'] == "ridge") or (w_constr['p'] == "L2"):
         l2 = float(sqrt(numpy.sum(w**2)))
@@ -1490,15 +1497,17 @@ def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbo
         index_w = w[0] > rho
         index_w = regularize_check(w, index_w, rho, verbose, B)
         w_star = deepcopy(w)
-        to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
-        w_star.loc[to_regularize, ] = 0
+        # to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
+        # w_star.loc[to_regularize, ] = 0
+        w_star.loc[index_w, ] = 0
         Q_star = numpy.sum(w_star)[0]
 
         l2 = float(sqrt(numpy.sum(w**2)))
+
         if (l2 >= Q - rho) & (l2 <= Q):
             Q2_star = l2
         else:
-            Q2_star = Q
+            Q2_star = float(w_constr['Q2'])
 
         w_constr['Q2'] = Q2_star
 
@@ -1560,7 +1569,7 @@ def executionTime(T0, T1, J, iota, cores, sims, name):
     time = time * tincr
     time = time * T1
     time = time * iota
-    time = time / 60
+    time = time / 600
     time = ceil(time) * 2
 
     if name == "lasso":
@@ -1626,6 +1635,30 @@ def detectConstant(x, tr, scale_x=1):
     x.insert(0, tr + "_constant", 1, allow_duplicates=True)
     x = x / scale_x
     return x
+
+
+def avoidCollin(mat_0, mat_1, scale_x, tr):
+
+    # Check if number of columns >= (number of rows - 1)
+    if mat_0.shape[1] >= (mat_0.shape[0] - 1):
+        # Create a single column named `<tr>_constant`
+        new_col_name = f"{tr}_constant"
+
+        # mat_0: replace with a column of 1s, preserving original index
+        mat_0 = pandas.DataFrame(
+            data=1,
+            index=mat_0.index,
+            columns=[new_col_name]
+        )
+
+        # mat_1: replace with a column of 1/scale_x, preserving original index
+        mat_1 = pandas.DataFrame(
+            data=(1.0 / scale_x),
+            index=mat_1.index,
+            columns=[new_col_name]
+        )
+
+    return mat_0, mat_1
 
 
 def trendRemove(xxx):
