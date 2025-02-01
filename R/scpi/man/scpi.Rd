@@ -25,7 +25,6 @@ scpi(
   sims = 200,
   rho = NULL,
   rho.max = 0.2,
-  lgapp = "generalized",
   cores = 1,
   plot = FALSE,
   plot.name = NULL,
@@ -107,15 +106,10 @@ to be used when modeling the estimated out-of-sample residuals \eqn{\mathbf{e}}.
 
 \item{sims}{a scalar providing the number of simulations to be used in quantifying in-sample uncertainty.}
 
-\item{rho}{a string specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
-\code{rho = 'type-1'} (the default), then the tuning parameter is computed based on optimization inequalities. Users can provide a scalar
-with their own value for \code{rho}. Other options are described in the \strong{Details} section.}
+\item{rho}{a string specifying the formula used for the regularizing parameter that imposes sparsity on the estimated vector of
+weights. Users can provide a scalar with their own value for \code{rho}. Other options are described in the \strong{Details} section.}
 
 \item{rho.max}{a scalar indicating the maximum value attainable by the tuning parameter \code{rho}.}
-
-\item{lgapp}{selects the way local geometry is approximated in simulation. The options are "generalized"
-and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid
-with linear constraints only.}
 
 \item{cores}{number of cores to be used by the command. The default is one. When the weighting matrix \eqn{\mathbf{V}} is diagonal
 this option has no effect.}
@@ -217,9 +211,8 @@ The third list is labeled 'inference.results' and contains all the inference-rel
 \item{e.D}{the design matrix used to predict moments of \eqn{\mathbf{u}},}
 \item{rho}{an integer specifying the estimated regularizing parameter that imposes sparsity on the estimated vector of weights.}
 \item{Q.star}{a list containing the regularized constraint on the norm.}
-\item{epskappa}{a vector containing the estimates for \eqn{\epsilon_{\kappa}}.}
 \item{sims}{an integer indicating the number of simulations used in quantifying in-sample uncertainty.}
-\item{failed.sims}{a matrix containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.}
+\item{failed.sims}{a matrix containing the percentage of failed simulations per post-treatment period to estimate lower and upper bounds.}
 }
 \description{
 The command implements estimation and inference procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints. Uncertainty is quantified using prediction
@@ -298,12 +291,11 @@ we suggest to divide each of its entries by \eqn{\|\mathrm{diag}(\mathbf{V})\|_1
 }}
 
 \item{\strong{Regularization.} \code{rho} is estimated through the formula
-\deqn{\varrho = \mathcal{C}\frac{\log (T_0)^c}{T_0^{1/2}}}
-where \eqn{\mathcal{C} = \widehat{\sigma}_u / \min_j \widehat{\sigma}_{b_j}} if \code{rho = 'type-1'},
-\eqn{\mathcal{C} = \max_{j}\widehat{\sigma}_{b_j}\widehat{\sigma}_{u} / \min_j \widehat{\sigma}_{b_j}^2} if \code{rho = 'type-2'}, and
-\eqn{\mathcal{C} = \max_{j}\widehat{\sigma}_{b_ju} / \min_j \widehat{\sigma}_{b_j}^2} if \code{rho = 'type-3'},
-
-\code{rho} defines a new sparse weight vector as
+\deqn{\varrho = \sqrt{d_0\log(d)\log(T_0)}\mathcal{C}T_0^{-1/2}}
+where \eqn{d} is the dimension of \eqn{\widehat{\boldsymbol{\beta}}} and \eqn{d_0} denote the number of nonzeros in \eqn{\widehat{\boldsymbol{\beta}}}
+\eqn{\mathcal{C} = \widehat{\sigma}_u / \min_j \widehat{\sigma}_{b_j}} if \code{rho = 'type-1'} and
+\eqn{\mathcal{C} = \max_{j}\widehat{\sigma}_{b_j}\widehat{\sigma}_{u} / \min_j \widehat{\sigma}_{b_j}^2} if \code{rho = 'type-2'},
+\code{rho = 'type-2'} is the default option from version 3.0.0 onwards, while previously 'type-1' was the default option. \code{rho} defines a new sparse weight vector as
 \deqn{\widehat{w}^\star_j = \mathbf{1}(\widehat{w}_j\geq \varrho)}
 }
 

@@ -13,8 +13,8 @@ from copy import deepcopy
 import multiprocessing as mp
 from sklearn.linear_model import LinearRegression
 from .funs import local_geom, u_des_prep, e_des_prep, complete_cases, isDiagonal
-from .funs import df_EST, u_sigma_est, scpi_in, scpi_in_diag, scpi_out, epskappaGet
-from .funs import executionTime, createPoly, DUflexGet, mat2dict, avoidCollin
+from .funs import df_EST, u_sigma_est, scpi_in, scpi_in_diag, scpi_out
+from .funs import createPoly, DUflexGet, mat2dict, avoidCollin
 from .funs import localgeom2step, detectConstant, simultaneousPredGet
 from .scest import scest
 from .scplot import scplot
@@ -41,7 +41,6 @@ def scpi(data,
          sims=200,
          rho=None,
          rho_max=0.2,
-         lgapp="generalized",
          cores=None,
          plot=False,
          w_bounds=None,
@@ -125,18 +124,12 @@ def scpi(data,
     sims : int, default 200
         an integer providing the number of simulations to be used in quantifying in-sample uncertainty.
 
-    rho : float/str, default 'type-1'
-        a float specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
-        rho = 'type-1', then the tuning parameter is computed based on optimization inequalities. Other options are
-        'type-2', and 'type-3'. See the software article for more information.
+    rho : float/str, default 'type-2'
+        a float specifying the regularizing parameter that imposes sparsity on the estimated vector of weights.
+        The two options are 'type-1' and 'type-2'. See the software article for more information.
 
     rho_max : float, default 1
         a float indicating the maximum value attainable by the tuning parameter rho.
-
-    lgapp : str, default "generalized"
-        selects the way local geometry is approximated in simulation. The options are "generalized"
-        and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid
-        with linear constraints only.
 
     cores : integer, default multiprocessing.cpu_count() - 1
         number of cores to be used by the command. The default is the number of cores available minus 1. This option is not
@@ -345,9 +338,6 @@ def scpi(data,
     Q_star : dict
         a dictionary containing the regularized constraint on the norm of the weights.
 
-    epskappa : pandas.DataFrame
-        a dataframe containing the estimates for epsilon_kappa.
-
     sims : int
         an integer indicating the number of simulations.
 
@@ -525,10 +515,10 @@ def scpi(data,
     # Check rho
     if rho is not None:
         if isinstance(rho, str):
-            if rho not in ['type-1', 'type-2', 'type-3']:
-                raise Exception("When not a scalar, 'rho' must be 'type-1', 'type-2', or 'type-3'.")
+            if rho not in ['type-1', 'type-2']:
+                raise Exception("When not a scalar, 'rho' must be 'type-1' or 'type-2'.")
     else:
-        rho = 'type-1'
+        rho = 'type-2'
 
     # Check on number of cores
     if cores is not None:
@@ -542,8 +532,6 @@ def scpi(data,
     if pass_stata is False and verbose:
         constr_type = w_constr[tr_units[0]]['name']
         print("Quantifying Uncertainty")
-        executionTime(T0_tot, T1_tot, Jtot, iota, cores, sims, constr_type)
-        print(" ")
 
     # create lists of matrices
     A_dict = mat2dict(A, cols=False)
@@ -598,10 +586,9 @@ def scpi(data,
         # Regularize w
         w_constr_inf[tr], ws, iw_dict[tr], rho_dict[tr], Q_star[tr], Q2_star[tr] = local_geom(w_constr_aux[tr], rho,
                                                                                               rho_max, res_dict[tr],
-                                                                                              B_dict[tr], C_dict[tr],
-                                                                                              coig_data[tr], T0_M[tr],
-                                                                                              J[tr], w_dict[tr],
-                                                                                              verbose)
+                                                                                              B_dict[tr], T0_M[tr],
+                                                                                              J[tr], KM[tr],
+                                                                                              w_dict[tr], verbose)
 
         w_star = pandas.concat([w_star, ws.reset_index(drop=True)], axis=0, ignore_index=True)
         index_i = iw_dict[tr].tolist() + [True] * KM[tr]
@@ -741,19 +728,21 @@ def scpi(data,
         index = deepcopy(index_w)
     index.extend([True] * KMI)
 
+    beta = sc_pred.b
     Q = {}
     for tr in tr_units:
-        Q[tr] = w_constr[tr]['Q']
+        if w_constr_inf[tr]['p'] == "L1-L2":
+            Q[tr] = w_constr[tr]['Q2']
+        else:
+            Q[tr] = w_constr[tr]['Q']
 
-    if lgapp == "generalized":  # we use rho only to impose sparsity on B when predicting moments
-        beta = sc_pred.b
-        Q_star, lb = localgeom2step(w, r, rho_dict, rho_max, w_constr, Q, tr_units)
+    Q_star, lb = localgeom2step(w, r, rho_dict, rho_max, w_constr, Q, tr_units)
 
-    elif lgapp == "linear":  # we use rho to regularize w too
-        beta = pandas.concat([w_star, r], axis=0).set_index(sc_pred.b.index)
-        lb = []
+    if w_constr_inf[tr]['p'] == "L1-L2":
+        Q2_star = deepcopy(Q_star)
+        Q_star = {}
         for tr in tr_units:
-            lb = lb + [w_constr_inf[tr]['lb']] * J[tr]
+            Q_star[tr] = w_constr[tr]['Q']
 
     ###########################################################################
     # Estimate E[u|H], V[u|H], and Sigma
@@ -942,14 +931,6 @@ def scpi(data,
     ######################################
     ######################################
 
-    if w_constr_inf[tr_units[0]]['p'] in ["L1-L2", "L2"]:
-        epsk = epskappaGet(P, rho_dict, beta, tr_units, effect=sc_effect)
-        epsk = pandas.DataFrame(epsk, index=w_lb.index)
-        epsk_j = epskappaGet(P, rho_dict, beta, tr_units, effect=sc_effect, joint=True)
-    else:
-        epsk = pandas.DataFrame([0] * len(w_lb), index=w_lb.index)
-        epsk_j = 0
-
     sc_l_1 = sc_l_2 = sc_l_3 = sc_r_1 = sc_r_2 = sc_r_3 = None
     e_mean = e_var = numpy.nan
     # Auxiliary logical values to estimate bounds for e
@@ -1048,8 +1029,8 @@ def scpi(data,
         if e_ub_est is False:
             e_ub_gau = e_bounds[1]
 
-        sc_l_1 = sc_l_0.iloc[:, 0] + e_lb_gau.iloc[:, 0] - epsk.iloc[:, 0]
-        sc_r_1 = sc_r_0.iloc[:, 0] + e_ub_gau.iloc[:, 0] + epsk.iloc[:, 0]
+        sc_l_1 = sc_l_0.iloc[:, 0] + e_lb_gau.iloc[:, 0]
+        sc_r_1 = sc_r_0.iloc[:, 0] + e_ub_gau.iloc[:, 0]
         len_1 = sc_r_1 - sc_l_1
 
         e_mean = e_1
@@ -1067,8 +1048,8 @@ def scpi(data,
         if e_ub_est is False:
             e_ub_ls = e_bounds[1]
 
-        sc_l_2 = sc_l_0.iloc[:, 0] + e_lb_ls.iloc[:, 0] - epsk.iloc[:, 0]
-        sc_r_2 = sc_r_0.iloc[:, 0] + e_ub_ls.iloc[:, 0] + epsk.iloc[:, 0]
+        sc_l_2 = sc_l_0.iloc[:, 0] + e_lb_ls.iloc[:, 0]
+        sc_r_2 = sc_r_0.iloc[:, 0] + e_ub_ls.iloc[:, 0]
         len_2 = sc_r_2 - sc_l_2
 
     if e_method == 'qreg' or e_method == 'all':
@@ -1089,8 +1070,8 @@ def scpi(data,
         if e_ub_est is False:
             e_ub_qreg = e_bounds[1]
 
-        sc_l_3 = sc_l_0.iloc[:, 0] + e_lb_qreg.iloc[:, 0] - epsk.iloc[:, 0]
-        sc_r_3 = sc_r_0.iloc[:, 0] + e_ub_qreg.iloc[:, 0] + epsk.iloc[:, 0]
+        sc_l_3 = sc_l_0.iloc[:, 0] + e_lb_qreg.iloc[:, 0]
+        sc_r_3 = sc_r_0.iloc[:, 0] + e_ub_qreg.iloc[:, 0]
         len_3 = sc_r_3 - sc_l_3
 
     ####################################################
@@ -1131,31 +1112,31 @@ def scpi(data,
     df_insample = df_insample.apply(pandas.to_numeric, errors='coerce', axis=1)
 
     if e_method == "all" or e_method == "gaussian":
-        sub_lb = w_lb.iloc[:, 0] + e_lb_gau.iloc[:, 0] - epsk.iloc[:, 0]
-        sub_ub = w_ub.iloc[:, 0] + e_ub_gau.iloc[:, 0] + epsk.iloc[:, 0]
+        sub_lb = w_lb.iloc[:, 0] + e_lb_gau.iloc[:, 0]
+        sub_ub = w_ub.iloc[:, 0] + e_ub_gau.iloc[:, 0]
         df_subgaussian = pandas.DataFrame(numpy.c_[sub_lb, sub_ub], columns=["Lower", "Upper"], index=idx)
         df_subgaussian = df_subgaussian.apply(pandas.to_numeric, errors='coerce', axis=1)
     else:
         df_subgaussian = None
 
     if e_method == "all" or e_method == "ls":
-        ls_lb = w_lb.iloc[:, 0] + e_lb_ls.iloc[:, 0] - epsk.iloc[:, 0]
-        ls_ub = w_ub.iloc[:, 0] + e_lb_ls.iloc[:, 0] + epsk.iloc[:, 0]
+        ls_lb = w_lb.iloc[:, 0] + e_lb_ls.iloc[:, 0]
+        ls_ub = w_ub.iloc[:, 0] + e_lb_ls.iloc[:, 0]
         df_ls = pandas.DataFrame(numpy.c_[ls_lb, ls_ub], columns=["Lower", "Upper"], index=idx)
         df_ls = df_ls.apply(pandas.to_numeric, errors='coerce', axis=1)
     else:
         df_ls = None
 
     if e_method == "all" or e_method == "qreg":
-        qreg_lb = w_lb.iloc[:, 0] + e_lb_qreg.iloc[:, 0] - epsk.iloc[:, 0]
-        qreg_ub = w_ub.iloc[:, 0] + e_ub_qreg.iloc[:, 0] + epsk.iloc[:, 0]
+        qreg_lb = w_lb.iloc[:, 0] + e_lb_qreg.iloc[:, 0]
+        qreg_ub = w_ub.iloc[:, 0] + e_ub_qreg.iloc[:, 0]
         df_qreg = pandas.DataFrame(numpy.c_[qreg_lb, qreg_ub], columns=["Lower", "Upper"], index=idx)
         df_qreg = df_qreg.apply(pandas.to_numeric, errors='coerce', axis=1)
     else:
         df_qreg = None
 
-    Mlb = ML.iloc[:, 0] - epsk_j
-    Mub = MU.iloc[:, 0] + epsk_j
+    Mlb = ML.iloc[:, 0]
+    Mub = MU.iloc[:, 0]
     df_joint = pandas.DataFrame(numpy.c_[Mlb, Mub], columns=["Lower", "Upper"], index=idx)
     df_joint = df_joint.apply(pandas.to_numeric, errors='coerce', axis=1)
 
@@ -1276,7 +1257,6 @@ def scpi(data,
                                  Q_star=Q_star,
                                  u_alpha=u_alpha,
                                  e_alpha=e_alpha,
-                                 epskappa=epsk,
                                  sims=sims,
                                  failed_sims=failed_sims,
                                  plotres=None,
@@ -1350,7 +1330,6 @@ def scpi(data,
                                         Q_star=Q_star,
                                         u_alpha=u_alpha,
                                         e_alpha=e_alpha,
-                                        epskappa=epsk,
                                         sims=sims,
                                         failed_sims=failed_sims,
                                         plotres=plotres,
@@ -1428,7 +1407,6 @@ def scpi(data,
                            Q_star=Q_star,
                            u_alpha=u_alpha,
                            e_alpha=e_alpha,
-                           epskappa=epsk,
                            sims=sims,
                            failed_sims=failed_sims,
                            plotres=plotres,
@@ -1501,7 +1479,6 @@ def scpi(data,
                                  Q_star=Q_star,
                                  u_alpha=u_alpha,
                                  e_alpha=e_alpha,
-                                 epskappa=epsk,
                                  sims=sims,
                                  failed_sims=failed_sims,
                                  plotres=plotres,
@@ -1522,7 +1499,7 @@ class scpi_output:
                  CI_in_sample, CI_all_gaussian, CI_all_ls, CI_all_qreg, bounds, Sigma,
                  u_mean, u_var, e_mean, e_var, u_missp, u_lags, u_order,
                  u_sigma, u_user, u_T, u_params, u_D, e_method, e_lags, e_order, e_user, e_T,
-                 e_params, e_D, rho, Q_star, u_alpha, e_alpha, epskappa, sims, failed_sims, plotres,
+                 e_params, e_D, rho, Q_star, u_alpha, e_alpha, sims, failed_sims, plotres,
                  donors_dict, treated_units, units_est, timeConvert):
 
         self.b = b
@@ -1587,7 +1564,6 @@ class scpi_output:
         self.Q_star = Q_star
         self.u_alpha = u_alpha
         self.e_alpha = e_alpha
-        self.epskappa = epskappa
         self.sims = sims
         self.failed_sims = failed_sims
         self.plotres = plotres
@@ -1755,7 +1731,7 @@ class scpi_multi_output:
                  CI_in_sample, CI_all_gaussian, CI_all_ls, CI_all_qreg, bounds, Sigma,
                  u_mean, u_var, e_mean, e_var, u_missp, u_lags, u_order,
                  u_sigma, u_user, u_T, u_params, u_D, e_method, e_lags, e_order, e_user, e_T,
-                 e_params, e_D, rho, Q_star, u_alpha, e_alpha, epskappa, sims, failed_sims, plotres,
+                 e_params, e_D, rho, Q_star, u_alpha, e_alpha, sims, failed_sims, plotres,
                  effect, donors_dict, treated_units, units_est, timeConvert):
 
         self.b = b
@@ -1822,7 +1798,6 @@ class scpi_multi_output:
         self.Q_star = Q_star
         self.u_alpha = u_alpha
         self.e_alpha = e_alpha
-        self.epskappa = epskappa
         self.sims = sims
         self.failed_sims = failed_sims
         self.plotres = plotres

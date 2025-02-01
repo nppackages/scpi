@@ -43,7 +43,7 @@ ggsave("germany_est_multi_1.png", height=6, width=9, dpi="retina")
 
 
 respi <- scpi(df, w.constr = list("name" = "simplex"), cores = 1, sims = 50,
-               e.method = "gaussian")
+              e.method = "gaussian")
 
 # plot series
 scplotMulti(respi, type = "series")

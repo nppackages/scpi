@@ -374,19 +374,6 @@ def shrinkage_EST(method, A, ZZ, V, J, KM):
 
     if method == "ridge":
 
-        # Z_columns = [c.split('_') for c in Z.columns.tolist()]
-        # selZ = []
-        # for z in Z_columns:
-        #     if len(z) <= 2:
-        #         selZ.append(True)
-        #     else:
-        #         if "constant":
-        #             selZ.append(False)
-        #         else:
-        #             selZ.append(True)
-        # Z = Z.loc[:, selZ]
-        # Z['constant'] = 1
-        # deltak = len(Z_columns) - sum(selZ) - 1
         deltak = 0
         wls = sm.WLS(A, Z, weights=numpy.diag(V)).fit()
         sig = wls.scale
@@ -1345,33 +1332,7 @@ def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_de
     return pandas.DataFrame(ML), pandas.DataFrame(MU)
 
 
-def epskappaGet(P, rho_dict, beta, tr_units, effect, joint=False):
-
-    if effect == "time":
-        rho_avg = sum([r for r in rho_dict.values()]) / len(rho_dict)
-        pnorm = abs(P).sum(axis=1)
-        epskappai = pnorm * rho_avg**2 / (2 * sqrt(numpy.sum(beta**2)[0]))
-        epskappa = epskappai.tolist()
-
-        if joint is True:
-            epskappa = max(epskappa)
-    else:
-        P_dict = mat2dict(P)
-        beta_dict = mat2dict(beta, cols=False)
-
-        epskappa = []
-        for tr in tr_units:
-            pnorm = abs(P_dict[tr]).sum(axis=1)
-            epskappai = pnorm * rho_dict[tr]**2 / (2 * sqrt(numpy.sum(beta_dict[tr]**2)[0]))
-            epskappa = epskappa + epskappai.tolist()
-
-        if joint is True:
-            epskappa = max(epskappa)
-
-    return epskappa
-
-
-def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
+def regularize_w(rho, rho_max, res, B, T0_tot, J, KM, d0):
 
     if rho == 'type-1':
         ssr = (res - res.mean())**2
@@ -1388,19 +1349,8 @@ def regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot):
         denomCheck(sigma_bj2)
         CC = sigma_u * sigma_bj / sigma_bj2
 
-    elif rho == 'type-3':
-        sigma_bj2 = min(B.var(axis=0))
-        denomCheck(sigma_bj2)
-        tempdf = pandas.concat([res, B], axis=1)
-        sigma_bju = max(tempdf.cov().iloc[1:, 0])
-        CC = abs(sigma_bju) / sigma_bj2
-
-    if coig_data is True:
-        c = 1
-    else:
-        c = 0.5
-
-    rho = (CC * (log(T0_tot))**c) / (sqrt(T0_tot))
+    d = J + KM
+    rho = CC * sqrt(log(d) * d0 * log(T0_tot)) / (sqrt(T0_tot))
 
     if rho_max is not None:
         rho = min(rho, rho_max)
@@ -1426,13 +1376,12 @@ def regularize_check(w, index_w, rho, verbose, B):
     return index_w
 
 
-def regularize_check_lb(w, rho, rho_max, res, B, C, coig_data, T0_tot, verbose):
+def regularize_check_lb(w, rho, rho_max, res, B, T0_tot, J, KM, d0, verbose):
     rho_old = rho
 
     if rho < 0.001:
-        rho = max(regularize_w("type-1", 0.2, res, B, C, coig_data, T0_tot),
-                  regularize_w("type-2", 0.2, res, B, C, coig_data, T0_tot),
-                  regularize_w("type-3", 0.2, res, B, C, coig_data, T0_tot))
+        rho = max(regularize_w("type-1", 0.2, res, B, T0_tot, J, KM, d0),
+                  regularize_w("type-2", 0.2, res, B, T0_tot, J, KM, d0))
 
         # strong evidence in favor of collinearity, thus heavy shrinkage
         if rho < 0.05:
@@ -1450,15 +1399,16 @@ def regularize_check_lb(w, rho, rho_max, res, B, C, coig_data, T0_tot, verbose):
     return rho
 
 
-def local_geom(w_constr, rho, rho_max, res, B, C, coig_data, T0_tot, J, w, verbose):
+def local_geom(w_constr, rho, rho_max, res, B, T0_tot, J, KM, w, verbose):
     Q = w_constr['Q']
     Q2_star = None
+    d0 = sum(abs(w.iloc[:, 0].values) >= 1e-6) + KM
 
     # if rho is not given by the user we use our own routine to compute it
     if isinstance(rho, str):
-        rho = regularize_w(rho, rho_max, res, B, C, coig_data, T0_tot)
+        rho = regularize_w(rho, rho_max, res, B, T0_tot, J, KM, d0)
         # here we check that our rho is not too low to prevent overfitting later on
-        rho = regularize_check_lb(w, rho, rho_max, res, B, C, coig_data, T0_tot, verbose)
+        rho = regularize_check_lb(w, rho, rho_max, res, B, T0_tot, J, KM, d0, verbose)
 
     if (w_constr['name'] == "simplex") | ((w_constr['p'] == "L1") & (w_constr['dir'] == "==")):
         index_w = w[0] > rho
@@ -1538,58 +1488,22 @@ def localgeom2step(w, r, rho_dict, rho_max, w_constr, Q, treated_units):
             w_norm = numpy.sum(abs(w_dict[tr]))[0]
 
         elif w_constr[tr]['p'] in ["L1-L2", "L2"]:
-            L1 = numpy.sum(abs(w_dict[tr]))[0]
-            rhoj_dict[tr] = min(2 * L1 * rho_dict[tr], rho_max)
             w_norm = numpy.sum(w_dict[tr]**2)[0]
+            rhoj_dict[tr] = min(2 * numpy.sqrt(w_norm) * rho_dict[tr], rho_max)
 
         # Check if constraint is equality or inequality
         if w_constr[tr]['dir'] in ["<=", "==/<="]:
             active = 1 * ((w_norm - Q[tr]) > - rhoj_dict[tr])
-            Q_star[tr] = active * (w_norm - Q[tr]) + Q[tr]
+            Q_star[tr] = active * (w_norm + rho_dict[tr] - Q[tr]) + Q[tr]
 
         # Constraint on lower bound of the weights
         if w_constr[tr]['lb'] == 0:
-            active = 1 * (w_dict[tr][0] < rhoj_dict[tr])
+            active = 1 * (w_dict[tr][0] < rho_dict[tr])
             lb = lb + (active * w_dict[tr][0]).tolist()
         else:
             lb = lb + [-numpy.inf] * len(w_dict[tr])
 
     return Q_star, lb
-
-
-def executionTime(T0, T1, J, iota, cores, sims, name):
-
-    tincr = T0 / 1000
-
-    coefsJ = numpy.array([-0.54755616, 0.09985644])
-
-    time = numpy.array([1, J]) @ coefsJ
-    time = ceil(time) * sims / 10
-    time = time / cores
-    time = time * tincr
-    time = time * T1
-    time = time * iota
-    time = time / 600
-    time = ceil(time) * 2
-
-    if name == "lasso":
-        time = 8 * time
-
-    if time < 60:
-        if time < 1:
-            toprint = "Maximum expected execution time: less than a minute."
-        elif time == 1:
-            toprint = "Maximum expected execution time: " + str(time) + " minute."
-        else:
-            toprint = "Maximum expected execution time: " + str(time) + " minutes."
-    else:
-        hours = floor(time / 60)
-        if hours == 1:
-            toprint = "Maximum expected execution time: " + str(hours) + " hour."
-        else:
-            toprint = "Maximum expected execution time: " + str(hours) + "hours."
-
-    print(toprint)
 
 
 def mat2dict(mat, cols=True):

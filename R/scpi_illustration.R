@@ -20,8 +20,7 @@ set.seed(8894)
 ###############################################################################
 
 ### Load data
-#data <- scpi_germany
-data <- read.csv("/Users/fpalomba/Princeton Dropbox/Filippo Palomba/projects/scpi/packages/python/scpi_germany.csv")
+data <- scpi_germany
 
 ####################################
 ### Set options for data preparation
@@ -67,7 +66,7 @@ scplot(result = est.si, fig.path = ".",
 est.lasso <- scest(data = df, w.constr = list(name="lasso"))
 summary(est.lasso)
 est.lasso2 <- scest(data = df, w.constr = list(p = "L1", dir = "<=", Q = 1, lb = -Inf),
-                    solver="OSQP")
+                    solver = "OSQP")
 summary(est.lasso2)
 
 
@@ -107,7 +106,7 @@ sims     <- 200                          # Number of simulations
 u.order  <- 1                            # Degree of polynomial in B and C when modelling u
 u.lags   <- 0                            # Lags of B to be used when modelling u
 u.sigma  <- "HC1"                        # Estimator for the variance-covariance of u
-u.missp  <- T                            # If TRUE then the model is treated as misspecified
+u.missp  <- TRUE                         # If TRUE then the model is treated as misspecified
 e.lags   <- 0                            # Degree of polynomial in B and C when modelling e
 e.order  <- 1                            # Lags of B to be used when modelling e
 e.method <- "gaussian"                   # Estimation method for out-of-sample uncertainty
@@ -115,10 +114,10 @@ cores    <- 1                            # Number of cores to be used by scpi
 w.constr <- list(name = "simplex")       # Simplex-type constraint set
 
 set.seed(8894)
-pi.si   <- scpi(data = df,u.order = u.order, u.lags = u.lags, u.sigma = u.sigma, 
+pi.si   <- scpi(data = df,u.order = u.order, u.lags = u.lags, u.sigma = u.sigma,
                 u.missp = u.missp, sims = sims, e.order = e.order, e.lags = e.lags,
                 e.method = e.method, cores = cores, w.constr = w.constr, u.alpha = u.alpha,
-                e.alpha = e.alpha, rho = rho, rho.max = rho.max) 
+                e.alpha = e.alpha, rho = rho, rho.max = rho.max)
 
 # Use print or summary methods to check results
 print(pi.si)
@@ -129,7 +128,7 @@ summary(pi.si)
 scplot(result = pi.si, fig.path = ".",
        fig.name = "germany_unc", fig.format = "png", plot.range = (1960:2003),
        label.xy = list(x.lab = "Year", y.lab = "GDP per capita (thousand US dollars)"),
-       x.ticks = NULL, e.out = T, event.label = list(lab = "Reunification", height = 10))
+       x.ticks = NULL, e.out = TRUE, event.label = list(lab = "Reunification", height = 10))
 
 
 
@@ -139,7 +138,7 @@ scplot(result = pi.si, fig.path = ".",
 set.seed(8894)
 res.si  <- scpi(data = df, sims = sims, e.method = "gaussian", e.order = e.order, e.lags = e.lags,
                 u.order = u.order, u.lags = u.lags, u.sigma = u.sigma, u.missp = u.missp,
-                cores = cores, w.constr = list(name = "simplex"), lgapp = "linear") 
+                cores = cores, w.constr = list(name = "simplex"))
 
 e.alpha <- 0.05  # default level in scpi
 sens <- c(0.25, 0.5, 1, 1.5, 2)
@@ -197,15 +196,15 @@ df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = o
 ## multiple features and feature-specific covariate adjustment
 df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
                 period.pre = period.pre, period.post = period.post,
-                unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "trade"), 
-                cov.adj = list('gdp' = c("constant","trend"), 'trade' = c("constant")),
+                unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "trade"),
+                cov.adj = list("gdp" = c("constant","trend"), "trade" = c("constant")),
                 constant = constant, cointegrated.data = cointegrated.data)
 
 ## multiple features and feature-specific covariate adjustment (just for one of the two features)
 df  <-   scdata(df = data, id.var = id.var, time.var = time.var, outcome.var = outcome.var,
                 period.pre = period.pre, period.post = period.post,
-                unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "trade"), 
-                cov.adj = list('gdp' = c("constant","trend"), 'trade' = c()),
+                unit.tr = unit.tr, unit.co = unit.co, features = c("gdp", "trade"),
+                cov.adj = list("gdp" = c("constant","trend"), "trade" = c()),
                 constant = constant, cointegrated.data = cointegrated.data)
 
 

@@ -1,7 +1,7 @@
 ################################################################################
 ## SCPI R Package
 ## R-file for Empirical Illustration - Multiple Treated Units
-## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, and Rocio Titiunik  
+## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, and Rocio Titiunik
 ################################################################################
 ### Clear R environment
 rm(list=ls(all=TRUE))

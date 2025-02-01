@@ -34,15 +34,15 @@
 {cmd:e_order(}{it:#}{cmd:)}
 {cmd:e_lags(}{it:#}{cmd:)}
 {cmd:e_alpha(}{it:#}{cmd:)}
-{cmd:lgapp(}{it:string}{cmd:)}
 {cmd:rho(}{it:#}{cmd:)}
 {cmd:rho_max(}{it:#}{cmd:)}
 {cmd:opt_est(}{it:string}{cmd:)}
 {cmd:opt_inf(}{it:string}{cmd:)}
 {cmd:pypinocheck}
 {cmd:set_seed(}{it:#}{cmd:)}
-{cmd:force_joint_pi_optim}]{p_end}
+{cmd:force_joint_pi_optim}]
 {p_end}
+
 
 {synoptset 28 tabbed}{...}
 
@@ -143,11 +143,9 @@ If there is risk of over-fitting the option is automatically set to 0 (see u_ord
 
 {dlgtab:Regularization}
 
-{p 4 8}{cmd:lgapp(}{it:string}{cmd:)} selects the way local geometry is approximated in simulation. The options are "generalized"
-        and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid with linear constraints only.{p_end}
 {p 4 8}{cmd:rho(}{it:#}{cmd:)} specifies the regularizing parameter that imposes sparsity on the estimated vector of weights. If unspecified, the tuning parameter is computed 
 based on optimization inequalities.{p_end}
-{p 4 8}{cmd:rho_max(}{it:#}{cmd:)} specifies the maximum value attainable by the tuning parameter {opt rho}. The defaul value is {cmd:rho_max(0.2)}. {p_end}
+{p 4 8}{cmd:rho_max(}{it:#}{cmd:)} specifies the maximum value attainable by the tuning parameter {opt rho}. The default value is {cmd:rho_max(0.2)}. {p_end}
 
 {dlgtab:Others}
 

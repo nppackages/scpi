@@ -8,7 +8,7 @@ program define scpi, eclass
 version 16.0           
 
 	syntax , dfname(string) [p(integer 1) direc(string) q(real -11.92) lb(string) V(string) name(string) u_missp u_sigma(string) u_order(integer 1) u_lags(integer 0) u_alpha(real 0.05) sims(integer 200) ///
-			 e_method(string) e_order(integer 1) e_lags(integer 0) e_alpha(real 0.05) lgapp(string) rho(real -11) rho_max(real 0.2) cores(integer 1) pypinocheck set_seed(integer -1) force_joint_pi_optim]
+			 e_method(string) e_order(integer 1) e_lags(integer 0) e_alpha(real 0.05) rho(real -11) rho_max(real 0.2) cores(integer 1) pypinocheck set_seed(integer -1) force_joint_pi_optim]
 
 	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
 		python: version_checker()
@@ -66,16 +66,6 @@ version 16.0
 			di as error "The option V should be either 'separate' or 'pooled'!"
 			exit 198
 		}
-	}	
-
-	if mi("`lgapp'") {
-		local lgapp = "generalized"
-	} 
-	else {
-		if !inlist("`lgapp'", "generalized", "linear") {
-			di as error "The option lgapp should be either 'generalized' or 'linear'!"
-			exit 198
-		}
 	}		
 	
 	if mi("`u_missp'") {
@@ -115,11 +105,10 @@ version 16.0
 	sleep 500
 
 	python: scpi_wrapper("`p_str'", "`direc'", `q', "`lb'", "`name'", "`V'", "`u_missp'", "`u_sigma'", `u_order', `u_lags', `u_alpha', "`e_method'", `e_order', `e_lags', ///
-						 `e_alpha', `sims', "`lgapp'", `rho', `rho_max', `cores', "`dfname'", "`setTheSeed'", `set_seed', "`force_joint_pi_optim'")
+						 `e_alpha', `sims', `rho', `rho_max', `cores', "`dfname'", "`setTheSeed'", `set_seed', "`force_joint_pi_optim'")
 	
 	ereturn clear
 	
-	ereturn local lgapp             = "`lgapp'"
 	ereturn local e_alpha           = "`e_alpha'"
 	ereturn local e_lags            = "`e_lags'"
 	ereturn local e_order           = "`e_order'"
@@ -191,7 +180,7 @@ from math import ceil, floor
 
 
 def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_alpha, e_method, e_order, e_lags,
-				 e_alpha, sims, lgapp, rho, rho_max, cores, dfname, setTheSeed, set_seed, force_joint_pi_optim):
+				 e_alpha, sims, rho, rho_max, cores, dfname, setTheSeed, set_seed, force_joint_pi_optim):
 
 	filename = dfname + '.obj'
 	filehandler = open(filename, 'rb') 
@@ -243,7 +232,7 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 		numpy.random.seed(set_seed)
 
 	res_pi = scpi(data=df, w_constr=w_constr, V=V, Vmat=None, P=None, u_missp=u_missp_bool, u_sigma=u_sigma, u_order=u_order, u_lags=u_lags, u_design=None, u_alpha=u_alpha,
-				  e_method=str(e_method), e_order=e_order, e_lags=e_lags, e_design=None, e_alpha=e_alpha, sims=sims, rho=rho, rho_max=rho_max, lgapp=lgapp, cores=cores,
+				  e_method=str(e_method), e_order=e_order, e_lags=e_lags, e_design=None, e_alpha=e_alpha, sims=sims, rho=rho, rho_max=rho_max, cores=cores,
 				  plot=False, w_bounds=None, e_bounds=None, verbose=True, pass_stata=True, force_joint_PI_optim=force_joint_pi_optim)
 	
 	class_type = res_pi.__class__.__name__

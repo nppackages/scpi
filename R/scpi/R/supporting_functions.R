@@ -108,7 +108,7 @@ ECOS_get_A <- function(J, Jtot, KMI, I, w.constr, ns) {
   return(methods::as(A, "sparseMatrix"))
 }
 
-ECOS_get_b <- function(Q1, Q2, w.constr) {
+ECOS_get_b <- function(Q1, w.constr) {
 
   if ((w.constr[["p"]] == "L1" && w.constr[["dir"]] == "==") || w.constr[["p"]] == "L1-L2") { # simplex, L1-L2
     b <- Q1
@@ -182,7 +182,7 @@ ECOS_get_h <- function(d, lb, J, Jtot, KMI, I, w.constr, Q1, Q2, red) {
 
   } else if (w.constr[["p"]] == "L1" && w.constr[["dir"]] == "<=") { # lasso
 
-    h <- c(-d,                         # linear part of QF 
+    h <- c(-d,                         # linear part of QF
            rep(0, 2*Jtot),             # abs(w) <= z
            Q1,                         # norm-inequality constraints
            1, 1, rep(0,Jtot+KMI-red))  # SOC definition
@@ -240,13 +240,13 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
                      p    = "L1",
                      dir  = "==",
                      Q    = Q,
-                     name = 'simplex')
+                     name = "simplex")
 
   } else if (w.constr[["name"]] == "ols") {
     w.constr <- list(lb   = -Inf,
                      dir  = "NULL",
                      p    = "no norm",
-                     name = 'ols')
+                     name = "ols")
 
   } else if (w.constr[["name"]] == "lasso") {
 
@@ -258,7 +258,7 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
                      p    = "L1",
                      dir  = "<=",
                      Q    = w.constr[["Q"]],
-                     name = 'lasso')
+                     name = "lasso")
 
   } else if (w.constr[["name"]] == "ridge") {
 
@@ -273,11 +273,14 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
         Vf <- V[feature.id == feat, feature.id == feat, drop = FALSE]
 
         if (nrow(Af) >= 5) {
-          QQ <- tryCatch({
-                            aux <- shrinkage.EST("ridge", Af, as.matrix(Zf), Vf, J, KM)
-                            Q <- aux$Q
-                          }, warning=function(warn) {},
-                             error=function(err) {}, finally={})
+          QQ <- tryCatch(
+                         {
+                           aux <- shrinkage.EST("ridge", Af, as.matrix(Zf), Vf, J, KM)
+                           Q <- aux$Q
+                         },
+                         warning = function(warn) {},
+                         error = function(err) {},
+                         finally = {})
           Qfeat <- c(Qfeat, QQ)
         } else {
           aux <- list("lambda" = NA) # create list to avoid code crashing later on
@@ -438,8 +441,8 @@ b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "ECOS") {
   }
 
   # num_iter required in large lasso/L1-L2/ridge problems is often >10k, which is the default in OSQP/ECOS
-  prob        <- CVXR::Problem(objective, constraints)
-  sol         <- CVXR::solve(prob, solver = CVXR.solver, num_iter = 100000L, verbose = FALSE)
+  prob  <- CVXR::Problem(objective, constraints)
+  sol   <- CVXR::solve(prob, solver = CVXR.solver, num_iter = 100000L, verbose = FALSE)
 
   b <- sol$getValue(x)
   alert <- !(sol$status %in% c("optimal", "optimal_inaccurate"))
@@ -703,7 +706,7 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
       e.des.0  <- Y.donors[, index.w, drop = FALSE]
       e.des.1  <- P[, index, drop = FALSE]
     }
-    
+
   } else if (out.feat == TRUE) {    # outcome variable is among features
     e.res <- res[1:T0[1], , drop = FALSE]
 
@@ -889,7 +892,7 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
   data <- list()
   data[["dims"]] <- ECOS_get_dims(Jtot, J, KMI, w.constr.inf, I, dimred)
   data[["A"]] <- ECOS_get_A(J, Jtot, KMI, I, w.constr.inf, ns)
-  data[["b"]] <- ECOS_get_b(Q.star, Q2.star, w.constr.inf)
+  data[["b"]] <- ECOS_get_b(Q.star, w.constr.inf)
 
   if (cores == 1) {
 
@@ -1068,7 +1071,7 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
   zeta.mat <- apply(zeta.mat, 2, function(col) Sigma.root %*% col) # note that the whole vector is multiplied
   rownames(zeta.mat) <- colnames(Z.na)
   zeta.list <- mat2list(zeta.mat, cols = FALSE)
-  #P.list <- mat2list(P.na)
+
   if (sc.effect == "time") {
     P.list <- mat2list(t(P.na), cols = FALSE)
   } else {
@@ -1122,7 +1125,7 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
     data <- list()
     data[["dims"]] <- ECOS_get_dims(Jtot, J, KMI, w.constr.inf, I, dimred)
     data[["A"]] <- ECOS_get_A(J, Jtot, KMI, I, w.constr.inf, ns)
-    data[["b"]] <- ECOS_get_b(Q.star, Q2.star, w.constr.inf)
+    data[["b"]] <- ECOS_get_b(Q.star, w.constr.inf)
 
     vsig.tr.lb <- matrix(NA, nrow = sims, ncol = jj)
     vsig.tr.ub <- matrix(NA, nrow = sims, ncol = jj)
@@ -1136,7 +1139,6 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
       }
 
       G <- zeta[, sim, drop = FALSE]
-
       a <- -2 * G - 2 * Q %*% beta
       d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
       if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
@@ -1245,8 +1247,8 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose,
       }
       IQ.pred <- q3.pred - q1.pred
       IQ.pred <- abs(IQ.pred)
-      e.sig <- apply(cbind(sqrt(e.sig2), IQ.pred/1.34), 1, min)
-      eps <- sqrt(-log(alpha)*2)*e.sig
+      e.sig <- apply(cbind(sqrt(e.sig2), IQ.pred / 1.34), 1, min)
+      eps <- sqrt(-log(alpha) * 2) * e.sig
 
       lb <- e.mean - eps
       ub <- e.mean + eps
@@ -1257,54 +1259,54 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose,
 
     } else if (e.method == "ls") {
       x.more  <- rbind(eval, x)
-      fit     <- predict(y=res, x=x, eval=x.more, type="lm")
+      fit     <- predict(y = res, x = x, eval = x.more, type = "lm")
       e.mean  <- fit[1:neval]
       res.fit <- fit[-(1:neval)]
 
       if (effect == "time") {
         labels <- unlist(purrr::map(stringr::str_split(rownames(fit)[1:neval], "\\."), 2))
-        e.mean <- aggregateUnits(xx=e.mean, labels=labels)
+        e.mean <- aggregateUnits(xx = e.mean, labels = labels)
       }
 
-      var.pred <- predict(y=log((res-res.fit)^2), x=x, eval=x.more, type="lm")
+      var.pred <- predict(y = log((res - res.fit)^2), x = x, eval = x.more, type = "lm")
       res.var <- var.pred[-(1:neval)]
       if (effect == "time") {
-        var.pred <- aggregateUnits(xx=var.pred[1:neval], labels=labels)
+        var.pred <- aggregateUnits(xx = var.pred[1:neval], labels = labels)
       } else {
         var.pred <- var.pred[1:neval]
       }
       e.sig    <- sqrt(exp(var.pred))
-      res.st   <- (res-res.fit)/sqrt(exp(res.var))
+      res.st   <- (res - res.fit) / sqrt(exp(res.var))
 
-      q.pred <- predict(y=res-res.fit, x=x, eval=x.more, type="qreg", tau = c(0.25,0.75))
+      q.pred <- predict(y = res - res.fit, x = x, eval = x.more, type = "qreg", tau = c(0.25, 0.75))
       if (effect == "time") {
-        q3.pred <- aggregateUnits(xx=q.pred[1:neval,2], labels=labels)
-        q1.pred <- aggregateUnits(xx=q.pred[1:neval,1], labels=labels)
+        q3.pred <- aggregateUnits(xx = q.pred[1:neval, 2], labels = labels)
+        q1.pred <- aggregateUnits(xx = q.pred[1:neval, 1], labels = labels)
       } else {
-        q3.pred <- q.pred[1:neval,2]
-        q1.pred <- q.pred[1:neval,1]
+        q3.pred <- q.pred[1:neval, 2]
+        q1.pred <- q.pred[1:neval, 1]
       }
       IQ.pred <- q3.pred - q1.pred
       IQ.pred <- abs(IQ.pred)
       e.sig <- apply(cbind(e.sig, IQ.pred/1.34), 1, min)
 
       lb <- e.mean + e.sig * quantile(res.st, alpha)
-      ub <- e.mean + e.sig * quantile(res.st, 1-alpha)
+      ub <- e.mean + e.sig * quantile(res.st, 1 - alpha)
 
       # save mean and variance of u, only for sensitivity analysis
       e.1 <- e.mean
       e.2 <- e.sig^2
 
     } else if (e.method == "qreg") {
-      e.pred  <- predict(y=res, x=x, eval=eval, type="qreg", tau=c(alpha, 1-alpha), verbose = verbose)
+      e.pred  <- predict(y = res, x = x, eval = eval, type = "qreg", tau = c(alpha, 1 - alpha), verbose = verbose)
 
       if (effect == "time") {
         labels <- unlist(purrr::map(stringr::str_split(rownames(e.pred)[1:neval], "\\."), 2))
-        e.pred.lb <- aggregateUnits(e.pred[,1], labels)
-        e.pred.ub <- aggregateUnits(e.pred[,2], labels)
+        e.pred.lb <- aggregateUnits(e.pred[, 1], labels)
+        e.pred.ub <- aggregateUnits(e.pred[, 2], labels)
       } else {
-        e.pred.lb <- e.pred[,1]
-        e.pred.ub <- e.pred[,2]
+        e.pred.lb <- e.pred[, 1]
+        e.pred.ub <- e.pred[, 2]
       }
 
       lb <- e.pred.lb
@@ -1318,7 +1320,7 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose,
     if (any(lb > 0)) lb <- rep(min(lb), length(lb))
     if (any(ub < 0)) ub <- rep(max(ub), length(ub))
   }
-  
+
   return(list(lb = lb, ub = ub, e.1 = e.1, e.2 = e.2))
 }
 
@@ -1328,25 +1330,25 @@ simultaneousPredGet <- function(vsig, T1, T1.tot, I, u.alpha, e.alpha, e.res.na,
 
   vsigUB <- vsig[, (T1.tot + 1):(2 * T1.tot), drop = FALSE]
   vsigLB <- vsig[, 1:T1.tot, drop = FALSE]
-  
+
   pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1, 
-                     e.method = "gaussian", alpha = e.alpha/2, e.lb.est = TRUE,
+                     e.method = "gaussian", alpha = e.alpha / 2, e.lb.est = TRUE,
                      e.ub.est =  TRUE, effect = effect, out.feat = out.feat)
 
   w.lb.joint <- w.ub.joint <- c()
-  
+
   j.min <- 1
-  
+
   for (i in seq_len(I)) {
     j.max <- T1[[i]] + j.min - 1
 
-    lb.joint <- quantile(apply(vsigLB[, j.min:j.max, drop = FALSE], 1, min, na.rm = TRUE), probs = u.alpha/2)
-    ub.joint <- quantile(apply(vsigUB[, j.min:j.max, drop = FALSE], 1, max, na.rm = TRUE), probs = (1-u.alpha/2))
+    lb.joint <- quantile(apply(vsigLB[, j.min:j.max, drop = FALSE], 1, min, na.rm = TRUE), probs = u.alpha / 2)
+    ub.joint <- quantile(apply(vsigUB[, j.min:j.max, drop = FALSE], 1, max, na.rm = TRUE), probs = (1 - u.alpha / 2))
 
     w.lb.joint <- c(w.lb.joint, rep(lb.joint, T1[[i]]))
     w.ub.joint <- c(w.ub.joint, rep(ub.joint, T1[[i]]))
     j.min <- j.max + 1
-    
+
   }
 
   eps <- 1
@@ -1359,38 +1361,14 @@ simultaneousPredGet <- function(vsig, T1, T1.tot, I, u.alpha, e.alpha, e.res.na,
 
   e.lb.joint <- pi.e$lb * eps
   e.ub.joint <- pi.e$ub * eps
-  
+
   if (w.lb.est == FALSE) w.lb.joint <- w.bounds[, 1]
   if (w.ub.est == FALSE) w.ub.joint <- w.bounds[, 2]
-  
-  MU <- e.ub.joint + w.ub.joint 
-  ML <- e.lb.joint + w.lb.joint
-  
-  return(list(MU=MU, ML=ML))
-}
 
-epskappaGet <- function(P, rho.vec, beta, I, effect, joint = FALSE) {
-  beta.list <- mat2list(beta)
-  
-  if (effect == "time") {
-    rho.vec <- mean(rho.vec)
-    I <- 1
-    P.list <- list(P)
-    beta.list <- list(beta)
-  } else {
-    P.list <- mat2list(P)
-  }
-  
-  epskappa <- c()
-  for (i in seq_len(I)) {
-    epskappai <- apply(P.list[[i]], 1, 
-                       function(x) rho.vec[[i]]^2*sum(abs(x))/(2*sqrt(sum(beta.list[[i]]^2))))  
-    epskappa <- c(epskappa, epskappai)
-  }
-  
-  if (joint == TRUE) epskappa <- max(epskappa)
-  
-  return(epskappa)
+  MU <- e.ub.joint + w.ub.joint
+  ML <- e.lb.joint + w.lb.joint
+
+  return(list(MU = MU, ML = ML))
 }
 
 # square root matrix
@@ -1478,25 +1456,26 @@ u.sigma.est <- function(u.mean, u.sigma, res, Z, V, index, TT, df) {
     }
   }
 
-  Omega  <- diag(c((res - u.mean)^2)*vc)
+  Omega  <- diag(c((res - u.mean)^2) * vc)
   Sigma  <- t(Z) %*% V %*% Omega %*% V %*% Z / (TT^2)
 
   return(list(Omega = Omega, Sigma = Sigma))
 }
 
 
-local.geom <- function(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, w, verbose) {
+local.geom <- function(w.constr, rho, rho.max, res, B, T0.tot, J, KM, w, verbose) {
 
   Q   <- w.constr[["Q"]]
   Q2.star <- NULL
+  d0 <- sum(abs(w) >= 1e-6) + KM
 
   # if rho is not given by the user we use our own routine to compute it
   if (is.character(rho)) {
-    rho <- regularize.w(rho, rho.max, res, B, C, coig.data, T0.tot)
+    rho <- regularize.w(rho, rho.max, res, B, T0.tot, J, KM, d0)
     # here we check that our rho is not too low to prevent overfitting later on
-    rho <- regularize.check.lb(w, rho, rho.max, res, B, C, coig.data, T0.tot, verbose)
+    rho <- regularize.check.lb(w, rho, rho.max, res, B, T0.tot, J, KM, d0, verbose)
   }
-  
+
   if ((w.constr[["name"]] == "simplex") || ((w.constr[["p"]] == "L1") && (w.constr[["dir"]] == "=="))) {
     index.w <- abs(w) > rho
     index.w <- regularize.check(w, index.w, rho, verbose, res)
@@ -1519,9 +1498,9 @@ local.geom <- function(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, 
     w.star[!index.w] <- 0
 
   } else if ((w.constr[["name"]] == "ridge") || (w.constr[["p"]] == "L2")) {
-
-    if (sqrt((sum(w^2)) >= Q - rho) && (sqrt(sum(w^2)) <= Q)) {
-      Q.star <- sqrt(sum(w^2))
+    l2 <- sqrt(sum(w^2))
+    if ((l2 >= Q - rho) && (l2 <= Q)) {
+      Q.star <- l2
     } else {
       Q.star <- Q
     }
@@ -1537,9 +1516,10 @@ local.geom <- function(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, 
     w.star[!index.w] <- 0
 
     Q.star  <- sum(w.star)
+    l2 <- sqrt(sum(w^2))
 
-    if (sqrt((sum(w^2)) >= Q - rho) && (sqrt(sum(w^2)) <= Q)) {
-      Q2.star <- sqrt(sum(w^2))
+    if ((l2 >= Q - rho) && (l2 <= Q)) {
+      Q2.star <- l2
     } else {
       Q2.star <- w.constr[["Q2"]]
     }
@@ -1553,11 +1533,11 @@ local.geom <- function(w.constr, rho, rho.max, res, B, C, coig.data, T0.tot, J, 
 
   w.constr[["Q"]] <- Q.star
 
-  return(list(w.constr = w.constr, w.star = w.star, index.w = index.w, rho = rho, Q.star = Q.star, Q2.star = Q2.star)) 
+  return(list(w.constr = w.constr, w.star = w.star, index.w = index.w, rho = rho, Q.star = Q.star, Q2.star = Q2.star))
 }
 
 
-regularize.w <- function(rho, rho.max, res, B, C, coig.data, T0.tot) {
+regularize.w <- function(rho, rho.max, res, B, T0.tot, J, KM, d0) {
 
   if (rho == "type-1") {
     sigma.u  <- sqrt(mean((res - mean(res))^2))
@@ -1572,20 +1552,9 @@ regularize.w <- function(rho, rho.max, res, B, C, coig.data, T0.tot) {
     sigma.bj  <- max(apply(B, 2, sd))
     CC        <- sigma.bj * sigma.u / sigma.bj2
 
-  } else if (rho == "type-3") {
-    sigma.bj2 <- min(apply(B, 2, var))
-    denomCheck(sigma.bj2)
-    sigma.bju <- max(apply(B, 2, function(bj) cov(bj, res)))
-    CC        <- abs(sigma.bju) / sigma.bj2
   }
-
-  if (coig.data == TRUE) { # cointegration
-    c <- 1
-  } else {        # iid or ar
-    c <- 0.5
-  }
-
-  rho <- (CC * (log(T0.tot))^c) / (sqrt(T0.tot))
+  d <- J + KM
+  rho <- CC * sqrt(log(d) * d0 * log(T0.tot)) / (sqrt(T0.tot))
 
   if (is.null(rho.max) == FALSE)  rho <- min(rho, rho.max)
 
@@ -1611,13 +1580,12 @@ regularize.check <- function(w, index.w, rho, verbose, res) {
   return(index.w)
 }
 
-regularize.check.lb <- function(w, rho, rho.max, res, B, C, coig.data, T0.tot, verbose) {
+regularize.check.lb <- function(w, rho, rho.max, res, B, T0.tot, J, KM, d0, verbose) {
   rho.old <- rho
 
   if (rho < 0.001) {
-    rho <- max(regularize.w("type-1", 0.2, res, B, C, coig.data, T0.tot),
-               regularize.w("type-2", 0.2, res, B, C, coig.data, T0.tot),
-               regularize.w("type-3", 0.2, res, B, C, coig.data, T0.tot))
+    rho <- max(regularize.w("type-1", 0.2, res, B, T0.tot, J, KM, d0),
+               regularize.w("type-2", 0.2, res, B, T0.tot, J, KM, d0))
 
     if (rho < 0.05) rho <- rho.max # strong evidence in favor of collinearity, thus heavy shrinkage
 
@@ -1647,23 +1615,23 @@ local.geom.2step <- function(w, r, rho.vec, rho.max, w.constr, Q, I) {
 
   } else if (w.constr[[1]]$p %in% c("L2", "L1-L2")) {
     rhoj.vec <- c()
-    for (i in seq_len(I)) {
-      rhoj.vec[i] <- min(2 * sum(abs(w.list[[i]])) * rho.vec[i], rho.max)
-    }
     w.norm <- unlist(lapply(w.list, function(x) sum(x^2)))
+    for (i in seq_len(I)) {
+      rhoj.vec[i] <- min(2 * sqrt(w.norm) * rho.vec[i], rho.max)
+    }
   }
 
   # Check if constraint is equality or inequality
   if (w.constr[[1]]$dir %in% c("<=", "==/<=")) {
     active <- 1 * ((w.norm - Q) > -rhoj.vec)
-    Q <- active * (w.norm - Q) + Q
+    Q <- active * (w.norm + rho.vec - Q) + Q
   }
 
   ## Constraint on lower bound of the weights
   lb <- c()
   for (i in seq_len(I)) {
     if (w.constr[[i]]$lb == 0) {
-      active <- 1 * (w.list[[i]] < rhoj.vec[[i]])
+      active <- 1 * (w.list[[i]] < rho.vec[[i]])
       lb <- c(lb, rep(0, length(w.list[[i]])) + active * w.list[[i]])
     } else {
       lb <- c(lb, rep(-Inf, length(w.list[[i]])))
@@ -1672,48 +1640,6 @@ local.geom.2step <- function(w, r, rho.vec, rho.max, w.constr, Q, I) {
 
   return(list(Q = Q, lb = lb))
 }
-
-executionTime <- function(T0, J, I, T1, sims, cores, name) {
-  Ttot <- sum(T0)
-  tincr <- Ttot / 1000
-  coefsJ <- c(-0.54755616, 0.09985644)
-
-  time <- sum(c(1, J) * coefsJ)      # Time for J donors, T0 = 1000, sims = 10
-  time <- ceiling(time) * sims / 10  # rescale for simulations
-  time <- time / cores               # rescale by number of cores
-  time <- time * tincr               # rescale for number of obs
-  time <- time * T1                  # rescale by post intervention periods
-  time <- time * I                   # rescale by number of treated units
-
-  time <- time / 60                  # Convert in minutes
-  time <- ceiling(time)              # Take smallest larger integer
-  time <- time * 2
-
-  if (name == "lasso") {
-    time <- time * 8
-  }
-
-  if (time < 60) {
-    if (time < 1) {
-      toprint <- "Maximum expected execution time: less than a minute.\n"
-    } else if (time == 1) {
-      toprint <- paste0("Maximum expected execution time: ", time, " minute.\n")
-    } else {
-      toprint <- paste0("Maximum expected execution time: ", time, " minutes.\n")
-    }
-  } else {
-    hours <- floor(time/60)
-    if (hours == 1) {
-      toprint <- paste0("Maximum expected execution time: more than ", hours, " hour.\n")
-    } else {
-      toprint <- paste0("Maximum expected execution time: more than ", hours, " hours.\n")
-    }
-  }
-
-  cat(toprint)
-  cat("\n")
-}
-
 
 mat2list <- function(mat, cols = TRUE) {
   # select rows

@@ -43,13 +43,9 @@
 #' on your machine by running \code{CVXR::installed_solvers()}. More information on what different solvers do can be found
 #' at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/. "OSQP" is the default solver when 'lasso'
 #' is the constraint type, whilst "ECOS" is the default in all other cases.
-#' @param rho a string specifying the regularizing parameter that imposes sparsity on the estimated vector of weights. If
-#' \code{rho = 'type-1'} (the default), then the tuning parameter is computed based on optimization inequalities. Users can provide a scalar 
-#' with their own value for \code{rho}. Other options are described in the \strong{Details} section.
+#' @param rho a string specifying the formula used for the regularizing parameter that imposes sparsity on the estimated vector of
+#' weights. Users can provide a scalar with their own value for \code{rho}. Other options are described in the \strong{Details} section.
 #' @param rho.max a scalar indicating the maximum value attainable by the tuning parameter \code{rho}.
-#' @param lgapp selects the way local geometry is approximated in simulation. The options are "generalized"
-#' and "linear". The first one accommodates for possibly non-linear constraints, whilst the second one is valid
-#' with linear constraints only.
 #' @param u.missp a logical indicating if misspecification should be taken into account when dealing with \eqn{\mathbf{u}}.
 #' @param u.order a scalar that sets the order of the polynomial in \eqn{\mathbf{B}} when predicting moments of \eqn{\mathbf{u}}.
 #' The default is \code{u.order = 1}, however if there is risk of over-fitting, the command automatically sets it
@@ -168,9 +164,8 @@
 #' \item{e.D}{the design matrix used to predict moments of \eqn{\mathbf{u}},}
 #' \item{rho}{an integer specifying the estimated regularizing parameter that imposes sparsity on the estimated vector of weights.}
 #' \item{Q.star}{a list containing the regularized constraint on the norm.}
-#' \item{epskappa}{a vector containing the estimates for \eqn{\epsilon_{\kappa}}.}
 #' \item{sims}{an integer indicating the number of simulations used in quantifying in-sample uncertainty.}
-#' \item{failed.sims}{a matrix containing the number of failed simulations per post-treatment period to estimate lower and upper bounds.}
+#' \item{failed.sims}{a matrix containing the percentage of failed simulations per post-treatment period to estimate lower and upper bounds.}
 #'
 #'
 #' @details
@@ -234,12 +229,11 @@
 #'
 #'
 #' \item{\strong{Regularization.} \code{rho} is estimated through the formula
-#' \deqn{\varrho = \mathcal{C}\frac{\log (T_0)^c}{T_0^{1/2}}}
-#' where \eqn{\mathcal{C} = \widehat{\sigma}_u / \min_j \widehat{\sigma}_{b_j}} if \code{rho = 'type-1'},
-#' \eqn{\mathcal{C} = \max_{j}\widehat{\sigma}_{b_j}\widehat{\sigma}_{u} / \min_j \widehat{\sigma}_{b_j}^2} if \code{rho = 'type-2'}, and
-#' \eqn{\mathcal{C} = \max_{j}\widehat{\sigma}_{b_ju} / \min_j \widehat{\sigma}_{b_j}^2} if \code{rho = 'type-3'},
-#'
-#' \code{rho} defines a new sparse weight vector as
+#' \deqn{\varrho = \sqrt{d_0\log(d)\log(T_0)}\mathcal{C}T_0^{-1/2}}
+#' where \eqn{d} is the dimension of \eqn{\widehat{\boldsymbol{\beta}}} and \eqn{d_0} denote the number of nonzeros in \eqn{\widehat{\boldsymbol{\beta}}}
+#' \eqn{\mathcal{C} = \widehat{\sigma}_u / \min_j \widehat{\sigma}_{b_j}} if \code{rho = 'type-1'} and
+#' \eqn{\mathcal{C} = \max_{j}\widehat{\sigma}_{b_j}\widehat{\sigma}_{u} / \min_j \widehat{\sigma}_{b_j}^2} if \code{rho = 'type-2'},
+#' \code{rho = 'type-2'} is the default option from version 3.0.0 onwards, while previously 'type-1' was the default option. \code{rho} defines a new sparse weight vector as
 #'  \deqn{\widehat{w}^\star_j = \mathbf{1}(\widehat{w}_j\geq \varrho)}
 #' }
 #'
@@ -330,7 +324,6 @@ scpi  <- function(data,
                   sims         = 200,
                   rho          = NULL,
                   rho.max      = 0.2,
-                  lgapp        = "generalized",
                   cores        = 1,
                   plot         = FALSE,
                   plot.name    = NULL,
@@ -449,10 +442,6 @@ scpi  <- function(data,
     stop("The object e.method should be one of 'gaussian', 'ls', 'qreg', or 'all'.")
   }
 
-  if (!(lgapp %in% c("linear", "generalized"))) {
-    stop("The object lgapp should be one of 'linear' or 'generalized'.")
-  }
-
   # Check on u_sigma and user-provided bounds
   if (is.character(u.sigma) == FALSE) {
     stop("The object u.sigma should be of type character!!")
@@ -504,12 +493,12 @@ scpi  <- function(data,
   # Check rho
   if (is.null(rho) == FALSE) {
     if (is.character(rho) == TRUE) {
-      if (!(rho %in% c("type-1", "type-2", "type-3"))) {
-        stop("When not a scalar, 'rho' must be 'type-1', 'type-2', or 'type-3'.")
+      if (!(rho %in% c("type-1", "type-2"))) {
+        stop("When not a scalar, 'rho' must be 'type-1' or 'type-2'.")
       }
     }
   } else {
-    rho <- "type-1"
+    rho <- "type-2"
   }
 
   # Check on number of cores
@@ -522,7 +511,7 @@ scpi  <- function(data,
     cores <- parallel::detectCores(logical = TRUE) - 1
     warning(paste("scpi is using", cores,
                   "cores for estimation! You can adjust the number of cores with the 'cores' option."),
-                  immediate. = TRUE, call. = FALSE)
+            immediate. = TRUE, call. = FALSE)
   }
 
   if (verbose) {
@@ -533,7 +522,6 @@ scpi  <- function(data,
     }
 
     cat("Quantifying Uncertainty\n")
-    # executionTime(T0.tot, Jtot, I, T1.tot, sims, cores, constr.type)
   }
 
   # create lists of matrices
@@ -600,8 +588,7 @@ scpi  <- function(data,
   for (i in seq_len(I)) {
     ## Regularize W and local geometry (treated unit by treated unit)
     loc.geom <- local.geom(w.constr.list[[i]], rho, rho.max, res.list[[i]], B.list[[i]],
-                           C.list[[i]], coig.data[[i]], T0.M[[i]], J[[i]], w.list[[i]],
-                           verbose)
+                           T0.M[[i]], J[[i]], KM[[i]], w.list[[i]], verbose)
 
     w.star       <- c(w.star, loc.geom$w.star)
     index.w      <- c(index.w, loc.geom$index.w)
@@ -659,24 +646,29 @@ scpi  <- function(data,
   # Create an index that selects all non-zero weights and additional covariates
   index <- c(index.w, rep(TRUE, KMI))
 
-  if (lgapp == "generalized") {
-    beta <- b # we use rho only to impose sparsity on B when predicting moments
-    Q <- c()
-    for (i in seq_len(I)) {
+  beta <- b # we use rho only to impose sparsity on B when predicting moments
+  Q <- c()
+  for (i in seq_len(I)) {
+    if (w.constr.list[[i]]$p == "L1-L2") {
+      Q <- c(Q, w.constr.list[[i]]$Q2)
+    } else {
       Q <- c(Q, w.constr.list[[i]]$Q)
     }
-
-    reg.geom <- local.geom.2step(w, r, rho.vec, rho.max, w.constr.list, Q, I)
-    Q.star <- reg.geom$Q
-    lb <- reg.geom$lb
-
-  } else if (lgapp == "linear") { # we use rho to regularize w too
-    beta  <- c(w.star, r)
-    lb <- c()
-    for (i in seq_len(I)) {
-      lb <- c(lb, rep(w.constr.inf[[i]]$lb, J[i]))
-    }
   }
+
+  reg.geom <- local.geom.2step(w, r, rho.vec, rho.max, w.constr.list, Q, I)
+
+  if (w.constr.list[[i]]$p == "L1-L2") {
+    Q.star <- c()
+    for (i in seq_len(I)) {
+      Q.star <- c(Q.star, w.constr.list[[i]]$Q)
+    }
+    Q2.star <- reg.geom$Q
+  } else {
+    Q.star <- reg.geom$Q
+    Q2.star <- Q2.star
+  }
+  lb <- reg.geom$lb
 
   names(beta) <- names(sc.pred$est.results$b)
 
@@ -824,6 +816,7 @@ scpi  <- function(data,
     # each treated unit, otherwise we solve it jointly
 
     if (isTRUE(V.diag) && (isFALSE(force.joint.PI.optim))) {
+
       vsigg <- insampleUncertaintyGetDiag(Z.na, V.na, P.na, beta, Sigma.root, J, KM, I,
                                           w.constr.inf[[1]], Q.star, Q2.star, lb, TT, sims, cores, verbose,
                                           w.lb.est, w.ub.est, sc.effect)
@@ -832,7 +825,7 @@ scpi  <- function(data,
                                       w.constr.inf[[1]], Q.star, Q2.star, lb, TT, sims, cores, verbose,
                                       w.lb.est, w.ub.est)
     }
-    vsig <- vsigg[rowSums(is.na(vsigg)) < ncol(vsigg), ] # remove simulations were SOCP was not solved at any horizon
+    vsig <- vsigg[rowSums(is.na(vsigg)) < ncol(vsigg), , drop=FALSE] # remove simulations were SOCP was not solved at any horizon
   }
 
   if (w.lb.est == TRUE) {
@@ -890,17 +883,10 @@ scpi  <- function(data,
   ## Estimate out-of-sample uncertainty
   #############################################################################
   #############################################################################
-  if (w.constr.inf[[1]][["p"]] %in% c("L2","L1-L2")) {
-    beta.mat <- as.matrix(beta)
-    epsk <- epskappaGet(P, rho.vec, beta.mat, I, sc.pred$data$specs$effect)
-    epsk.j <- epskappaGet(P, rho.vec, beta.mat, I, sc.pred$data$specs$effect, joint = TRUE)
-  } else {
-    epsk <- epsk.j <- 0
-  }
 
   # PIs for u
-  sc.l.1 <- sc.r.1 <- sc.l.2 <- sc.r.2 <- sc.l.3 <- sc.r.3 <- sc.l.4 <- sc.r.4 <- rep(NA, T1.tot)
-  len.1  <- len.2  <- len.3  <- len.4  <- rep(NA, T1.tot)
+  sc.l.1 <- sc.r.1 <- sc.l.2 <- sc.r.2 <- sc.l.3 <- sc.r.3 <- rep(NA, T1.tot)
+  len.1  <- len.2  <- len.3  <- rep(NA, T1.tot)
 
   # Save mean and variance of e, only for sensitivity analysis
   e.mean <- e.var <- NA
@@ -955,7 +941,7 @@ scpi  <- function(data,
                      T.e, ") used to estimate conditional moments of the out-of-sample error",
                      " is not larger than the number of parameters used in estimation (", params.e, ") plus 10.",
                      " To avoid over-fitting issues e.order and e.lags were set to 0."),
-                     immediate. = TRUE, call. = FALSE)
+              immediate. = TRUE, call. = FALSE)
     }
     e.order <- 0
     e.lags <- 0
@@ -992,7 +978,6 @@ scpi  <- function(data,
   rownames(e.des.1) <- e1.rnames
 
   if (e.method == "gaussian" || e.method == "all") {
-
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1,
                        e.method = "gaussian", alpha = e.alpha / 2,
                        e.lb.est = e.lb.est, e.ub.est =  e.lb.est,
@@ -1007,8 +992,8 @@ scpi  <- function(data,
     if (e.lb.est == FALSE) e.lb.gau <- e.bounds[, 1]
     if (e.ub.est == FALSE) e.ub.gau <- e.bounds[, 2]
 
-    sc.l.1 <- sc.l.0 + e.lb.gau - epsk
-    sc.r.1 <- sc.r.0 + e.ub.gau + epsk
+    sc.l.1 <- sc.l.0 + e.lb.gau
+    sc.r.1 <- sc.r.0 + e.ub.gau
     len.1  <- sc.r.1 - sc.l.1
   }
 
@@ -1025,8 +1010,8 @@ scpi  <- function(data,
     if (e.lb.est == FALSE) e.lb.ls <- e.bounds[, 1]
     if (e.ub.est == FALSE) e.ub.ls <- e.bounds[, 2]
 
-    sc.l.2 <- sc.l.0 + e.lb.ls - epsk
-    sc.r.2 <- sc.r.0 + e.ub.ls + epsk
+    sc.l.2 <- sc.l.0 + e.lb.ls
+    sc.r.2 <- sc.r.0 + e.ub.ls
     len.2  <- sc.r.2 - sc.l.2
 
   }
@@ -1055,8 +1040,8 @@ scpi  <- function(data,
     if (e.lb.est == FALSE) e.lb.qreg <- e.bounds[, 1]
     if (e.ub.est == FALSE) e.ub.qreg <- e.bounds[, 2]
 
-    sc.l.3 <- sc.l.0 + e.lb.qreg - epsk
-    sc.r.3 <- sc.r.0 + e.ub.qreg + epsk
+    sc.l.3 <- sc.l.0 + e.lb.qreg
+    sc.r.3 <- sc.r.0 + e.ub.qreg
     len.3  <- sc.r.3 - sc.l.3
   }
 
@@ -1098,10 +1083,10 @@ scpi  <- function(data,
 
   ## Store all bounds
   bounds <- list("insample" = cbind(Wlb, Wub),
-                 "subgaussian" = cbind(Wlb + e.lb.gau - epsk, Wub + e.ub.gau + epsk),
-                 "ls" = cbind(Wlb + e.lb.ls - epsk, Wub + e.ub.ls + epsk),
-                 "qreg" = cbind(Wlb + e.lb.qreg - epsk, Wub + e.ub.qreg + epsk),
-                 "joint" = cbind(ML - epsk.j, MU + epsk.j))
+                 "subgaussian" = cbind(Wlb + e.lb.gau, Wub + e.ub.gau),
+                 "ls" = cbind(Wlb + e.lb.ls, Wub + e.ub.ls),
+                 "qreg" = cbind(Wlb + e.lb.qreg, Wub + e.ub.qreg),
+                 "joint" = cbind(ML, MU))
 
   #############################################################################
   #############################################################################
@@ -1141,43 +1126,42 @@ scpi  <- function(data,
   u.user <- is.null(u.design) == FALSE # True if user provided the design matrix for in-sample inference
   e.user <- is.null(e.design) == FALSE # True if user provided the design matrix for out-of-sample inference
 
-  inference.results <- list(  CI.in.sample    = CI.0,
-                              CI.all.gaussian = CI.1,
-                              CI.all.ls       = CI.2,
-                              CI.all.qreg     = CI.3,
-                              bounds          = bounds,
-                              Sigma           = Sigma,
-                              u.mean          = u.mean,
-                              u.var           = Omega,
-                              e.mean          = e.mean,
-                              e.var           = e.var,
-                              u.missp         = u.missp,
-                              u.lags          = u.lags,
-                              u.order         = u.order,
-                              u.sigma         = u.sigma,
-                              u.user          = u.user,
-                              u.T             = T.u,
-                              u.params        = params.u,
-                              u.D             = u.des.0.na,
-                              e.method        = e.method,
-                              e.lags          = e.lags,
-                              e.order         = e.order,
-                              e.user          = e.user,
-                              e.T             = T.e,
-                              e.params        = params.e,
-                              e.D             = e.des.0.na,
-                              rho             = rho.vec,
-                              Q.star          = Q.star,
-                              u.alpha         = u.alpha,
-                              e.alpha         = e.alpha,
-                              epskappa        = epsk,
-                              sims            = sims,
-                              failed.sims     = failed.sims)
+  inference.results <- list(CI.in.sample    = CI.0,
+                            CI.all.gaussian = CI.1,
+                            CI.all.ls       = CI.2,
+                            CI.all.qreg     = CI.3,
+                            bounds          = bounds,
+                            Sigma           = Sigma,
+                            u.mean          = u.mean,
+                            u.var           = Omega,
+                            e.mean          = e.mean,
+                            e.var           = e.var,
+                            u.missp         = u.missp,
+                            u.lags          = u.lags,
+                            u.order         = u.order,
+                            u.sigma         = u.sigma,
+                            u.user          = u.user,
+                            u.T             = T.u,
+                            u.params        = params.u,
+                            u.D             = u.des.0.na,
+                            e.method        = e.method,
+                            e.lags          = e.lags,
+                            e.order         = e.order,
+                            e.user          = e.user,
+                            e.T             = T.e,
+                            e.params        = params.e,
+                            e.D             = e.des.0.na,
+                            rho             = rho.vec,
+                            Q.star          = Q.star,
+                            u.alpha         = u.alpha,
+                            e.alpha         = e.alpha,
+                            sims            = sims,
+                            failed.sims     = failed.sims)
 
 
-  result <- list( data               = sc.pred$data,
-                  est.results        = sc.pred$est.results,
-                  inference.results  = inference.results)
+  result <- list(data               = sc.pred$data,
+                 est.results        = sc.pred$est.results,
+                 inference.results  = inference.results)
 
   class(result) <- "scpi"
   if (class.type == "scpi_data") {
