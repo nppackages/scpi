@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 2.2.8 2024-08-24}{...}
+{* *!version 3.0.1 2025-07-03}{...}
 {viewerjumpto "Syntax" "scdata##syntax"}{...}
 {viewerjumpto "Description" "scdata##description"}{...}
 {viewerjumpto "Options" "scdata##options"}{...}
@@ -40,7 +40,7 @@ The command is a wrapper of the companion Python package. As such, the user need
 can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
-{browse "https://arxiv.org/abs/2202.05984":Cattaneo, Feng, Palomba and Titiunik (2022)}.{p_end}
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf":Cattaneo, Feng, Palomba and Titiunik (2025)}.{p_end}
 
 {p 8 8} Companion commands are: {help scest:scest} for point estimation, {help scpi:scpi} for inference procedures, and {help scplot:scplot} for SC plots.{p_end}
 
@@ -136,11 +136,13 @@ references therein.{p_end}
 {browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction intervals for synthetic control methods}. 
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
-{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}, {it:arXiv}:2202.05984.{p_end}
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2025. 
+{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}. 
+{it:Journal of Statistical Software}, 113(2), 1-38.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2023. 
-{browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}, {it:arXiv}:2210.05026. {p_end}
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2025. 
+{browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}.
+{it: Review of Economic Studies}, {it:doi}:{browse "https://doi.org/10.1080/01621459.2021.1979561":10.1080/01621459.2021.1979561}. {p_end}
 
 {marker authors}{...}
 {title:Authors}

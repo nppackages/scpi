@@ -1,6 +1,6 @@
 Package: scpi
 Title: Prediction Intervals for Synthetic Control Methods with Multiple Treated Units and Staggered Adoption
-Version: 3.0.0
+Version: 3.0.1
 Authors@R: 
   c(person(given = "Matias",
            family = "Cattaneo",
@@ -14,12 +14,11 @@ Authors@R:
            email = "fpalomba@princeton.edu"),
     person(given = "Rocio",
            family = "Titiunik",
-           role = "aut"))
+           role = "aut")
+           )
 URL: https://nppackages.github.io/scpi/
-Description: Implementation of prediction and inference procedures for Synthetic Control methods using least square, lasso, ridge, or simplex-type constraints. Uncertainty is quantified with prediction intervals as developed in Cattaneo, Feng, and Titiunik (2021) <https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf> for a single treated unit and in Cattaneo, Feng, Palomba, and Titiunik (2023) <doi:10.48550/arXiv.2210.05026> for multiple treated units and staggered adoption. More details about the software implementation can be found in Cattaneo, Feng, Palomba, and Titiunik (2024) <doi:10.48550/arXiv.2202.05984>.
+Description: Implementation of prediction and inference procedures for Synthetic Control methods using least square, lasso, ridge, or simplex-type constraints. Uncertainty is quantified with prediction intervals as developed in Cattaneo, Feng, and Titiunik (2021) <doi:10.1080/01621459.2021.1979561> for a single treated unit and in Cattaneo, Feng, Palomba, and Titiunik (2025) <doi:10.1162/rest_a_01588> for multiple treated units and staggered adoption. More details about the software implementation can be found in Cattaneo, Feng, Palomba, and Titiunik (2025) <doi:10.18637/jss.v113.i01>.
 Depends: R (>= 4.1.0)
-License: GPL-2
-Encoding: UTF-8
 Imports: abind       (>= 1.4.5),
          CVXR        (>= 1.0-10),
          doSNOW      (>= 1.0.19),
@@ -36,15 +35,22 @@ Imports: abind       (>= 1.4.5),
          purrr       (>= 0.3.4),
          Qtools      (>= 1.5.6),
          reshape2    (>= 1.4.4),
+         Rdpack      (>= 2.4),
          rlang       (>= 0.4.11),
          stats       (>= 4.1.0),
          stringr     (>= 1.4.0),
          tibble      (>= 3.1.2),
          tidyr       (>= 1.1.3),
          utils       (>= 4.1.1)
-LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
 Suggests: 
     testthat (>= 3.0.0)
+LazyData: true
+NeedsCompilation: no
+RdMacros: Rdpack
+License: GPL-2
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
 Config/testthat/edition: 3
+Author: Filippo Palomba [aut, cre], Matias Cattaneo [aut], Yingjie Feng [aut], Rocio Titiunik [aut]
+Maintainer: Filippo Palomba <fpalomba@princeton.edu>

@@ -1,0 +1,28 @@
+bibentry(bibtype = "Article",
+  title        = "{scpi}: Uncertainty Quantification for Synthetic Control Methods",
+  author       = c(person(given = c("Matias", "D."),
+                          family = "Cattaneo",
+                          email = "cattaneo@princeton.edu"),
+                   person(given = "Yingjie",
+                          family = "Feng",
+                          email = "fengyj@sem.tsinghua.edu.cn"),
+                   person(given = "Filippo",
+                          family = "Palomba",
+                          email = "fpalomba@princeton.edu"),
+                   person(given = "Roc{\\'i}o",
+                          family = "Titiunik")),
+  journal      = "Journal of Statistical Software",
+  year         = "2025",
+  volume       = "113",
+  number       = "1",
+  pages        = "1--38",
+  doi          = "10.18637/jss.v113.i01",
+
+  header       = "To cite scpi in publications use:",
+  textVersion  =
+  paste("Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, Roc{\'i}o Titiunik (2025).",
+        "scpi: Uncertainty Quantification for Synthetic Control Methods.",
+        "Journal of Statistical Software, 113(1), 1-38.",
+        "doi:10.18637/jss.v113.i01")
+)
+

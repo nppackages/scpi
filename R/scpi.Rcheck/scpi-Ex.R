@@ -1,0 +1,224 @@
+pkgname <- "scpi"
+source(file.path(R.home("share"), "R", "examples-header.R"))
+options(warn = 1)
+base::assign(".ExTimings", "scpi-Ex.timings", pos = 'CheckExEnv')
+base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
+base::assign(".format_ptime",
+function(x) {
+  if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
+  if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
+  options(OutDec = '.')
+  format(x[1L:3L], digits = 7L)
+},
+pos = 'CheckExEnv')
+
+### * </HEADER>
+library('scpi')
+
+base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+cleanEx()
+nameEx("scdata")
+### * scdata
+
+flush(stderr()); flush(stdout())
+
+base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+### Name: scdata
+### Title: Data Preparation for 'scest' or 'scpi' for Point Estimation and
+###   Inference Procedures Using Synthetic Control Methods.
+### Aliases: scdata
+
+### ** Examples
+
+
+data <- scpi_germany
+
+df <- scdata(df = data, id.var = "country", time.var = "year",
+             outcome.var = "gdp", period.pre = (1960:1990),
+             period.post = (1991:2003), unit.tr = "West Germany",
+             unit.co = setdiff(unique(data$country), "West Germany"),
+             constant = TRUE, cointegrated.data = TRUE)
+
+
+
+
+base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+base::cat("scdata", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("scdataMulti")
+### * scdataMulti
+
+flush(stderr()); flush(stdout())
+
+base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+### Name: scdataMulti
+### Title: Data Preparation for 'scest' or 'scpi' for Point Estimation and
+###   Inference Procedures Using Synthetic Control Methods.
+### Aliases: scdataMulti
+
+### ** Examples
+
+
+datager <- scpi_germany
+
+datager$tr_id <- 0
+datager$tr_id[(datager$country == "West Germany" & datager$year > 1990)] <- 1
+datager$tr_id[(datager$country == "Italy" & datager$year > 1992)] <- 0
+
+outcome.var <- "gdp"
+id.var <- "country"
+treatment.var <- "tr_id"
+time.var <- "year"
+df.unit <- scdataMulti(datager, id.var = id.var, outcome.var = outcome.var,
+                       treatment.var = treatment.var,
+                       time.var = time.var, features = list(c("gdp", "trade")),
+               		    cointegrated.data = TRUE, constant = TRUE)
+
+
+
+
+base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+base::cat("scdataMulti", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("scest")
+### * scest
+
+flush(stderr()); flush(stdout())
+
+base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+### Name: scest
+### Title: Prediction of Synthetic Control
+### Aliases: scest
+
+### ** Examples
+
+
+data <- scpi_germany
+
+df <- scdata(df = data, id.var = "country", time.var = "year",
+             outcome.var = "gdp", period.pre = (1960:1990),
+             period.post = (1991:2003), unit.tr = "West Germany",
+             unit.co = setdiff(unique(data$country), "West Germany"),
+             constant = TRUE, cointegrated.data = TRUE)
+
+result <- scest(df, w.constr = list(name = "simplex", Q = 1))
+result <- scest(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1))
+
+
+
+
+base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+base::cat("scest", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("scpi")
+### * scpi
+
+flush(stderr()); flush(stdout())
+
+base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+### Name: scpi
+### Title: Prediction Intervals for Synthetic Control Methods
+### Aliases: scpi
+
+### ** Examples
+
+
+data <- scpi_germany
+
+df <- scdata(df = data, id.var = "country", time.var = "year",
+             outcome.var = "gdp", period.pre = (1960:1990),
+             period.post = (1991:2003), unit.tr = "West Germany",
+             unit.co = setdiff(unique(data$country), "West Germany"),
+             constant = TRUE, cointegrated.data = TRUE)
+
+result <- scpi(df, w.constr = list(name = "simplex", Q = 1), cores = 1, sims = 10)
+result <- scpi(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1),
+               cores = 1, sims = 10)
+
+
+
+
+base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+base::cat("scpi", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("scplot")
+### * scplot
+
+flush(stderr()); flush(stdout())
+
+base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+### Name: scplot
+### Title: Plot Synthetic Control Point Estimates and Prediction Interval
+### Aliases: scplot
+
+### ** Examples
+
+
+data <- scpi_germany
+
+df <- scdata(df = data, id.var = "country", time.var = "year",
+             outcome.var = "gdp", period.pre = (1960:1990),
+             period.post = (1991:2003), unit.tr = "West Germany",
+             unit.co = setdiff(unique(data$country), "West Germany"),
+             constant = TRUE, cointegrated.data = TRUE)
+
+result <- scest(df, w.constr = list(name = "simplex", Q = 1))
+
+scplot(result)
+
+
+
+
+base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+base::cat("scplot", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+cleanEx()
+nameEx("scplotMulti")
+### * scplotMulti
+
+flush(stderr()); flush(stdout())
+
+base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+### Name: scplotMulti
+### Title: Plot Synthetic Control Point Estimates and Prediction Interval
+###   With Multiple Treated units and Staggered Adoption
+### Aliases: scplotMulti
+
+### ** Examples
+
+
+datager <- scpi_germany
+
+datager$tr_id <- 0
+datager$tr_id[(datager$country == "West Germany" & datager$year > 1990)] <- 1
+datager$tr_id[(datager$country == "Italy" & datager$year > 1992)] <- 0
+
+outcome.var <- "gdp"
+id.var <- "country"
+treatment.var <- "tr_id"
+time.var <- "year"
+df.unit <- scdataMulti(datager, id.var = id.var, outcome.var = outcome.var,
+                       treatment.var = treatment.var,
+                       time.var = time.var, features = list(c("gdp", "trade")),
+               		    cointegrated.data = TRUE, constant = TRUE)
+
+res.unit <- scpi(df.unit, sims = 10, cores = 1)
+scplotMulti(res.unit, joint = TRUE)
+
+
+
+
+base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+base::cat("scplotMulti", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+### * <FOOTER>
+###
+cleanEx()
+options(digits = 7L)
+base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+grDevices::dev.off()
+###
+### Local variables: ***
+### mode: outline-minor ***
+### outline-regexp: "\\(> \\)?### [*]+" ***
+### End: ***
+quit('no')

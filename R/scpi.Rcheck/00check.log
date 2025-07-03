@@ -1,0 +1,264 @@
+* using log directory ‘/Users/fpalomba/Princeton Dropbox/Filippo Palomba/projects/0000_software/working/scpi/R/scpi.Rcheck’
+* using R version 4.4.3 (2025-02-28)
+* using platform: aarch64-apple-darwin20
+* R was compiled by
+    Apple clang version 14.0.0 (clang-1400.0.29.202)
+    GNU Fortran (GCC) 12.2.0
+* running under: macOS Sequoia 15.5
+* using session charset: UTF-8
+* using option ‘--as-cran’
+* checking for file ‘scpi/DESCRIPTION’ ... OK
+* this is package ‘scpi’ version ‘3.0.1’
+* package encoding: UTF-8
+* checking CRAN incoming feasibility ... [4s/20s] NOTE
+Maintainer: ‘Filippo Palomba <fpalomba@princeton.edu>’
+
+Uses the superseded package: ‘doSNOW (>= 1.0.19)’
+
+Found the following (possibly) invalid URLs:
+  URL: http://www.ncbi.nlm.nih.gov/pubmed/35756161 (moved to https://pubmed.ncbi.nlm.nih.gov/35756161/)
+    From: man/scdata.Rd
+          man/scdataMulti.Rd
+          man/scest.Rd
+          man/scpi-package.Rd
+          man/scpi.Rd
+          man/scplot.Rd
+          man/scplotMulti.Rd
+    Status: 200
+    Message: OK
+  URL: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/24714
+    From: man/scpi_germany.Rd
+    Status: 202
+    Message: Accepted
+
+Found the following (possibly) invalid DOIs:
+  DOI: 10.18637/jss.v113.i01
+    From: DESCRIPTION
+          inst/CITATION
+          man/scdata.Rd
+          man/scdataMulti.Rd
+          man/scest.Rd
+          man/scpi-package.Rd
+          man/scpi.Rd
+          man/scplot.Rd
+          man/scplotMulti.Rd
+    Status: 404
+    Message: Not Found
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking whether package ‘scpi’ can be installed ... OK
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking for future file timestamps ... NOTE
+unable to verify current time
+* checking DESCRIPTION meta-information ... NOTE
+Author field differs from that derived from Authors@R
+  Author:    ‘Filippo Palomba [aut, cre], Matias Cattaneo [aut], Yingjie Feng [aut], Rocio Titiunik [aut]’
+  Authors@R: ‘Matias Cattaneo [aut], Yingjie Feng [aut], Filippo Palomba [aut, cre], Rocio Titiunik [aut]’
+
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking use of S3 registration ... OK
+* checking dependencies in R code ... OK
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... OK
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd line widths ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking contents of ‘data’ directory ... OK
+* checking data for non-ASCII characters ... OK
+* checking LazyData ... OK
+* checking data for ASCII and uncompressed saves ... OK
+* checking examples ... OK
+* checking PDF version of manual ... OK
+* checking HTML version of manual ... NOTE
+Found the following HTML validation problems:
+coef.scest.html:15:44 (coef.scest.Rd:5): Error: <main> is not recognized!
+coef.scest.html:15:44 (coef.scest.Rd:5): Warning: discarding unexpected <main>
+coef.scest.html:73:1 (coef.scest.Rd:23): Warning: discarding unexpected </main>
+coef.scest.html:4:1 (coef.scest.Rd:5): Warning: <link> inserting "type" attribute
+coef.scest.html:12:1 (coef.scest.Rd:5): Warning: <script> proprietary attribute "onload"
+coef.scest.html:12:1 (coef.scest.Rd:5): Warning: <script> inserting "type" attribute
+coef.scest.html:17:1 (coef.scest.Rd:5): Warning: <table> lacks "summary" attribute
+coef.scest.html:36:1 (coef.scest.Rd:10): Warning: <table> lacks "summary" attribute
+coef.scest.html:41:14 (coef.scest.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+coef.scpi.html:15:44 (coef.scpi.Rd:5): Error: <main> is not recognized!
+coef.scpi.html:15:44 (coef.scpi.Rd:5): Warning: discarding unexpected <main>
+coef.scpi.html:73:1 (coef.scpi.Rd:23): Warning: discarding unexpected </main>
+coef.scpi.html:4:1 (coef.scpi.Rd:5): Warning: <link> inserting "type" attribute
+coef.scpi.html:12:1 (coef.scpi.Rd:5): Warning: <script> proprietary attribute "onload"
+coef.scpi.html:12:1 (coef.scpi.Rd:5): Warning: <script> inserting "type" attribute
+coef.scpi.html:17:1 (coef.scpi.Rd:5): Warning: <table> lacks "summary" attribute
+coef.scpi.html:36:1 (coef.scpi.Rd:10): Warning: <table> lacks "summary" attribute
+coef.scpi.html:41:14 (coef.scpi.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+print.scdata.html:15:44 (print.scdata.Rd:5): Error: <main> is not recognized!
+print.scdata.html:15:44 (print.scdata.Rd:5): Warning: discarding unexpected <main>
+print.scdata.html:73:1 (print.scdata.Rd:23): Warning: discarding unexpected </main>
+print.scdata.html:4:1 (print.scdata.Rd:5): Warning: <link> inserting "type" attribute
+print.scdata.html:12:1 (print.scdata.Rd:5): Warning: <script> proprietary attribute "onload"
+print.scdata.html:12:1 (print.scdata.Rd:5): Warning: <script> inserting "type" attribute
+print.scdata.html:17:1 (print.scdata.Rd:5): Warning: <table> lacks "summary" attribute
+print.scdata.html:36:1 (print.scdata.Rd:10): Warning: <table> lacks "summary" attribute
+print.scdata.html:41:14 (print.scdata.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+print.scdataMulti.html:15:44 (print.scdataMulti.Rd:5): Error: <main> is not recognized!
+print.scdataMulti.html:15:44 (print.scdataMulti.Rd:5): Warning: discarding unexpected <main>
+print.scdataMulti.html:73:1 (print.scdataMulti.Rd:23): Warning: discarding unexpected </main>
+print.scdataMulti.html:4:1 (print.scdataMulti.Rd:5): Warning: <link> inserting "type" attribute
+print.scdataMulti.html:12:1 (print.scdataMulti.Rd:5): Warning: <script> proprietary attribute "onload"
+print.scdataMulti.html:12:1 (print.scdataMulti.Rd:5): Warning: <script> inserting "type" attribute
+print.scdataMulti.html:17:1 (print.scdataMulti.Rd:5): Warning: <table> lacks "summary" attribute
+print.scdataMulti.html:36:1 (print.scdataMulti.Rd:10): Warning: <table> lacks "summary" attribute
+print.scdataMulti.html:41:14 (print.scdataMulti.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+print.scest.html:15:44 (print.scest.Rd:5): Error: <main> is not recognized!
+print.scest.html:15:44 (print.scest.Rd:5): Warning: discarding unexpected <main>
+print.scest.html:73:1 (print.scest.Rd:23): Warning: discarding unexpected </main>
+print.scest.html:4:1 (print.scest.Rd:5): Warning: <link> inserting "type" attribute
+print.scest.html:12:1 (print.scest.Rd:5): Warning: <script> proprietary attribute "onload"
+print.scest.html:12:1 (print.scest.Rd:5): Warning: <script> inserting "type" attribute
+print.scest.html:17:1 (print.scest.Rd:5): Warning: <table> lacks "summary" attribute
+print.scest.html:36:1 (print.scest.Rd:10): Warning: <table> lacks "summary" attribute
+print.scest.html:41:14 (print.scest.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+print.scpi.html:15:44 (print.scpi.Rd:5): Error: <main> is not recognized!
+print.scpi.html:15:44 (print.scpi.Rd:5): Warning: discarding unexpected <main>
+print.scpi.html:73:1 (print.scpi.Rd:23): Warning: discarding unexpected </main>
+print.scpi.html:4:1 (print.scpi.Rd:5): Warning: <link> inserting "type" attribute
+print.scpi.html:12:1 (print.scpi.Rd:5): Warning: <script> proprietary attribute "onload"
+print.scpi.html:12:1 (print.scpi.Rd:5): Warning: <script> inserting "type" attribute
+print.scpi.html:17:1 (print.scpi.Rd:5): Warning: <table> lacks "summary" attribute
+print.scpi.html:36:1 (print.scpi.Rd:10): Warning: <table> lacks "summary" attribute
+print.scpi.html:41:14 (print.scpi.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+scdata.html:15:44 (scdata.Rd:5): Error: <main> is not recognized!
+scdata.html:15:44 (scdata.Rd:5): Warning: discarding unexpected <main>
+scdata.html:312:1 (scdata.Rd:147): Warning: discarding unexpected </main>
+scdata.html:4:1 (scdata.Rd:5): Warning: <link> inserting "type" attribute
+scdata.html:12:1 (scdata.Rd:5): Warning: <script> proprietary attribute "onload"
+scdata.html:12:1 (scdata.Rd:5): Warning: <script> inserting "type" attribute
+scdata.html:17:1 (scdata.Rd:5): Warning: <table> lacks "summary" attribute
+scdata.html:68:1 (scdata.Rd:25): Warning: <table> lacks "summary" attribute
+scdata.html:180:1 (scdata.Rd:61): Warning: <table> lacks "summary" attribute
+scdataMulti.html:15:44 (scdataMulti.Rd:5): Error: <main> is not recognized!
+scdataMulti.html:15:44 (scdataMulti.Rd:5): Warning: discarding unexpected <main>
+scdataMulti.html:352:1 (scdataMulti.Rd:167): Warning: discarding unexpected </main>
+scdataMulti.html:4:1 (scdataMulti.Rd:5): Warning: <link> inserting "type" attribute
+scdataMulti.html:12:1 (scdataMulti.Rd:5): Warning: <script> proprietary attribute "onload"
+scdataMulti.html:12:1 (scdataMulti.Rd:5): Warning: <script> inserting "type" attribute
+scdataMulti.html:17:1 (scdataMulti.Rd:5): Warning: <table> lacks "summary" attribute
+scdataMulti.html:75:1 (scdataMulti.Rd:27): Warning: <table> lacks "summary" attribute
+scdataMulti.html:193:1 (scdataMulti.Rd:77): Warning: <table> lacks "summary" attribute
+scest.html:15:44 (scest.Rd:5): Error: <main> is not recognized!
+scest.html:15:44 (scest.Rd:5): Warning: discarding unexpected <main>
+scest.html:444:1 (scest.Rd:194): Warning: discarding unexpected </main>
+scest.html:4:1 (scest.Rd:5): Warning: <link> inserting "type" attribute
+scest.html:12:1 (scest.Rd:5): Warning: <script> proprietary attribute "onload"
+scest.html:12:1 (scest.Rd:5): Warning: <script> inserting "type" attribute
+scest.html:17:1 (scest.Rd:5): Warning: <table> lacks "summary" attribute
+scest.html:60:1 (scest.Rd:20): Warning: <table> lacks "summary" attribute
+scest.html:249:1 (scest.Rd:61): Warning: <table> lacks "summary" attribute
+scest.html:352:1 (scest.Rd:94): Warning: <table> lacks "summary" attribute
+scpi-package.html:15:44 (scpi-package.Rd:6): Error: <main> is not recognized!
+scpi-package.html:15:44 (scpi-package.Rd:6): Warning: discarding unexpected <main>
+scpi-package.html:85:1 (scpi-package.Rd:35): Warning: discarding unexpected </main>
+scpi-package.html:4:1 (scpi-package.Rd:6): Warning: <link> inserting "type" attribute
+scpi-package.html:12:1 (scpi-package.Rd:6): Warning: <script> proprietary attribute "onload"
+scpi-package.html:12:1 (scpi-package.Rd:6): Warning: <script> inserting "type" attribute
+scpi-package.html:17:1 (scpi-package.Rd:6): Warning: <table> lacks "summary" attribute
+scpi.html:15:44 (scpi.Rd:5): Error: <main> is not recognized!
+scpi.html:15:44 (scpi.Rd:5): Warning: discarding unexpected <main>
+scpi.html:733:1 (scpi.Rd:347): Warning: discarding unexpected </main>
+scpi.html:4:1 (scpi.Rd:5): Warning: <link> inserting "type" attribute
+scpi.html:12:1 (scpi.Rd:5): Warning: <script> proprietary attribute "onload"
+scpi.html:12:1 (scpi.Rd:5): Warning: <script> inserting "type" attribute
+scpi.html:17:1 (scpi.Rd:5): Warning: <table> lacks "summary" attribute
+scpi.html:82:1 (scpi.Rd:39): Warning: <table> lacks "summary" attribute
+scpi.html:416:1 (scpi.Rd:143): Warning: <table> lacks "summary" attribute
+scpi.html:512:1 (scpi.Rd:174): Warning: <table> lacks "summary" attribute
+scpi.html:552:1 (scpi.Rd:185): Warning: <table> lacks "summary" attribute
+scpi_germany.html:15:44 (scpi_germany.Rd:6): Error: <main> is not recognized!
+scpi_germany.html:15:44 (scpi_germany.Rd:6): Warning: discarding unexpected <main>
+scpi_germany.html:65:1 (scpi_germany.Rd:21): Warning: discarding unexpected </main>
+scpi_germany.html:4:1 (scpi_germany.Rd:6): Warning: <link> inserting "type" attribute
+scpi_germany.html:12:1 (scpi_germany.Rd:6): Warning: <script> proprietary attribute "onload"
+scpi_germany.html:12:1 (scpi_germany.Rd:6): Warning: <script> inserting "type" attribute
+scpi_germany.html:17:1 (scpi_germany.Rd:6): Warning: <table> lacks "summary" attribute
+scplot.html:15:44 (scplot.Rd:5): Error: <main> is not recognized!
+scplot.html:15:44 (scplot.Rd:5): Warning: discarding unexpected <main>
+scplot.html:195:1 (scplot.Rd:94): Warning: discarding unexpected </main>
+scplot.html:4:1 (scplot.Rd:5): Warning: <link> inserting "type" attribute
+scplot.html:12:1 (scplot.Rd:5): Warning: <script> proprietary attribute "onload"
+scplot.html:12:1 (scplot.Rd:5): Warning: <script> inserting "type" attribute
+scplot.html:17:1 (scplot.Rd:5): Warning: <table> lacks "summary" attribute
+scplot.html:67:1 (scplot.Rd:25): Warning: <table> lacks "summary" attribute
+scplot.html:134:1 (scplot.Rd:59): Warning: <table> lacks "summary" attribute
+scplotMulti.html:15:44 (scplotMulti.Rd:5): Error: <main> is not recognized!
+scplotMulti.html:15:44 (scplotMulti.Rd:5): Warning: discarding unexpected <main>
+scplotMulti.html:184:1 (scplotMulti.Rd:89): Warning: discarding unexpected </main>
+scplotMulti.html:4:1 (scplotMulti.Rd:5): Warning: <link> inserting "type" attribute
+scplotMulti.html:12:1 (scplotMulti.Rd:5): Warning: <script> proprietary attribute "onload"
+scplotMulti.html:12:1 (scplotMulti.Rd:5): Warning: <script> inserting "type" attribute
+scplotMulti.html:17:1 (scplotMulti.Rd:5): Warning: <table> lacks "summary" attribute
+scplotMulti.html:64:1 (scplotMulti.Rd:22): Warning: <table> lacks "summary" attribute
+scplotMulti.html:117:1 (scplotMulti.Rd:48): Warning: <table> lacks "summary" attribute
+summary.scdata.html:15:44 (summary.scdata.Rd:5): Error: <main> is not recognized!
+summary.scdata.html:15:44 (summary.scdata.Rd:5): Warning: discarding unexpected <main>
+summary.scdata.html:73:1 (summary.scdata.Rd:23): Warning: discarding unexpected </main>
+summary.scdata.html:4:1 (summary.scdata.Rd:5): Warning: <link> inserting "type" attribute
+summary.scdata.html:12:1 (summary.scdata.Rd:5): Warning: <script> proprietary attribute "onload"
+summary.scdata.html:12:1 (summary.scdata.Rd:5): Warning: <script> inserting "type" attribute
+summary.scdata.html:17:1 (summary.scdata.Rd:5): Warning: <table> lacks "summary" attribute
+summary.scdata.html:36:1 (summary.scdata.Rd:10): Warning: <table> lacks "summary" attribute
+summary.scdata.html:41:14 (summary.scdata.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+summary.scdataMulti.html:15:44 (summary.scdataMulti.Rd:5): Error: <main> is not recognized!
+summary.scdataMulti.html:15:44 (summary.scdataMulti.Rd:5): Warning: discarding unexpected <main>
+summary.scdataMulti.html:73:1 (summary.scdataMulti.Rd:23): Warning: discarding unexpected </main>
+summary.scdataMulti.html:4:1 (summary.scdataMulti.Rd:5): Warning: <link> inserting "type" attribute
+summary.scdataMulti.html:12:1 (summary.scdataMulti.Rd:5): Warning: <script> proprietary attribute "onload"
+summary.scdataMulti.html:12:1 (summary.scdataMulti.Rd:5): Warning: <script> inserting "type" attribute
+summary.scdataMulti.html:17:1 (summary.scdataMulti.Rd:5): Warning: <table> lacks "summary" attribute
+summary.scdataMulti.html:36:1 (summary.scdataMulti.Rd:10): Warning: <table> lacks "summary" attribute
+summary.scdataMulti.html:41:14 (summary.scdataMulti.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+summary.scest.html:15:44 (summary.scest.Rd:5): Error: <main> is not recognized!
+summary.scest.html:15:44 (summary.scest.Rd:5): Warning: discarding unexpected <main>
+summary.scest.html:73:1 (summary.scest.Rd:23): Warning: discarding unexpected </main>
+summary.scest.html:4:1 (summary.scest.Rd:5): Warning: <link> inserting "type" attribute
+summary.scest.html:12:1 (summary.scest.Rd:5): Warning: <script> proprietary attribute "onload"
+summary.scest.html:12:1 (summary.scest.Rd:5): Warning: <script> inserting "type" attribute
+summary.scest.html:17:1 (summary.scest.Rd:5): Warning: <table> lacks "summary" attribute
+summary.scest.html:36:1 (summary.scest.Rd:10): Warning: <table> lacks "summary" attribute
+summary.scest.html:41:14 (summary.scest.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+summary.scpi.html:15:44 (summary.scpi.Rd:5): Error: <main> is not recognized!
+summary.scpi.html:15:44 (summary.scpi.Rd:5): Warning: discarding unexpected <main>
+summary.scpi.html:73:1 (summary.scpi.Rd:23): Warning: discarding unexpected </main>
+summary.scpi.html:4:1 (summary.scpi.Rd:5): Warning: <link> inserting "type" attribute
+summary.scpi.html:12:1 (summary.scpi.Rd:5): Warning: <script> proprietary attribute "onload"
+summary.scpi.html:12:1 (summary.scpi.Rd:5): Warning: <script> inserting "type" attribute
+summary.scpi.html:17:1 (summary.scpi.Rd:5): Warning: <table> lacks "summary" attribute
+summary.scpi.html:36:1 (summary.scpi.Rd:10): Warning: <table> lacks "summary" attribute
+summary.scpi.html:41:14 (summary.scpi.Rd:12): Warning: <code> attribute "id" has invalid value "..."
+Skipping checking math rendering: package 'V8' unavailable
+* checking for non-standard things in the check directory ... OK
+* checking for detritus in the temp directory ... OK
+* DONE
+Status: 4 NOTEs

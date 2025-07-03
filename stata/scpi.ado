@@ -1,4 +1,5 @@
-*! Date        : 24 Aug 2024
+*! Date        : 3 Jul 2025
+*! Version     : 3.0.1
 *! Authors     : Filippo Palomba
 *! Email       : fpalomba@princeton.edu
 *! Description : Synthetic control inference

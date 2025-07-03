@@ -354,11 +354,11 @@ def scpi(data,
     Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control
     Methods,” Journal of the American Statistical Association, 116, 1865-1880.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2022), “scpi: Uncertainty Quantification for
-    Synthetic Control Estimators”.
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2025), “scpi: Uncertainty Quantification for
+    Synthetic Control Estimators”, Journal of Statistical Software, 113(2), 1-38.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2023), “Uncertainty Quantification in Synthetic
-    Controls with Staggered Treatment Adoption”.
+    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2025), “Uncertainty Quantification in Synthetic
+    Controls with Staggered Treatment Adoption”, Review of Economic Studies, doi:10.1080/01621459.2021.1979561.
 
     See Also
     --------

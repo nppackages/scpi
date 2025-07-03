@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 2.2.8 2024-08-24}{...}
+{* *!version 3.0.1 2025-07-03}{...}
 {viewerjumpto "Syntax" "scest##syntax"}{...}
 {viewerjumpto "Description" "scest##description"}{...}
 {viewerjumpto "Options" "scest##options"}{...}
@@ -35,13 +35,13 @@
 {title:Description}
 
 {p 4 8}{cmd:scest} implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints according to
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)} for a single treated unit and 
-{browse "https://arxiv.org/abs/2210.05026":Cattaneo, Feng, Palomba, and Titiunik (2023)} for multiple treated units and staggered adoption. The command is a wrapper of the companion Python package. 
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)} and for a single treated unit and 
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_RESTAT.pdf":Cattaneo, Feng, Palomba, and Titiunik (2025)} for multiple treated units and staggered adoption. The command is a wrapper of the companion Python package. 
 As such, the user needs to have a running version of Python with the package installed. A tutorial on how to install Python and link it to Stata
 can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
-{browse "https://arxiv.org/abs/2202.05984":Cattaneo, Feng, Palomba and Titiunik (2022)}.{p_end}
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf":Cattaneo, Feng, Palomba and Titiunik (2025)}.{p_end}
 
 {p 8 8} Companion commands are: {help scdata:scdata} for data preparation, {help scpi:scpi} for inference procedures, and {help scplot:scplot} for SC plots.{p_end}
 
@@ -163,14 +163,16 @@ some popular constraints can be selected through the option {opt name}. A detail
 {it:Journal of Economic Literature}, 59(2), 391-425.{p_end}
 
 {p 4 8}Cattaneo, M. D., Feng, Y., and Titiunik, R. 2021. 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction Intervals for Synthetic Sontrol Methods.}
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction intervals for synthetic control methods}. 
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2022. 
-{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}, {it:arXiv}:2202.05984.{p_end}
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2025. 
+{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}. 
+{it:Journal of Statistical Software}, 113(2), 1-38.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2023. 
-{browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}, {it:arXiv}:2210.05026. {p_end}
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2025. 
+{browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}.
+{it: Review of Economic Studies}, {it:doi}:{browse "https://doi.org/10.1080/01621459.2021.1979561":10.1080/01621459.2021.1979561}. {p_end}
 
 {marker authors}{...}
 {title:Authors}

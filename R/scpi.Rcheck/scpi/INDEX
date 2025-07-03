@@ -1,0 +1,29 @@
+coef.scest              Coef Method for Synthetic Control Methods
+coef.scpi               Coef Method for Synthetic Control Methods
+print.scdata            Summary Method for Synthetic Control
+print.scdataMulti       Summary Method for Synthetic Control
+print.scest             Print Method for Synthetic Control Methods
+print.scpi              Print Method for Synthetic Control Inference
+scdata                  Data Preparation for 'scest' or 'scpi' for
+                        Point Estimation and Inference Procedures Using
+                        Synthetic Control Methods.
+scdataMulti             Data Preparation for 'scest' or 'scpi' for
+                        Point Estimation and Inference Procedures Using
+                        Synthetic Control Methods.
+scest                   Prediction of Synthetic Control
+scpi                    Prediction Intervals for Synthetic Control
+                        Methods
+scpi-package            'scpi': A Package to Compute Synthetic Control
+                        Prediction Intervals With Multiple Treated
+                        Units and Staggered Adoption
+scpi_germany            Replication Dataset for Estimating the Economic
+                        Impact of German Reunification
+scplot                  Plot Synthetic Control Point Estimates and
+                        Prediction Interval
+scplotMulti             Plot Synthetic Control Point Estimates and
+                        Prediction Interval With Multiple Treated units
+                        and Staggered Adoption
+summary.scdata          Summary Method for Synthetic Control Prediction
+summary.scdataMulti     Summary Method for Synthetic Control Prediction
+summary.scest           Summary Method for Synthetic Control Prediction
+summary.scpi            Summary Method for Synthetic Control Inference

@@ -1,0 +1,7 @@
+name	user	system	elapsed
+scdata	0.015	0.001	0.021	
+scdataMulti	0.011	0.001	0.012	
+scest	0.232	0.005	0.242	
+scpi	0.550	0.018	0.607	
+scplot	0.193	0.009	0.257	
+scplotMulti	0.522	0.013	0.538	

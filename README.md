@@ -71,12 +71,12 @@ net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/
 ### Software and Implementation
 
 - Cattaneo, Feng, Palomba and Titiunik (2025): [scpi: Uncertainty Quantification for Synthetic Control Methods](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf).<br>
-_Journal of Statistical Software_, forthcoming.
+_Journal of Statistical Software_ 113(1): 1-38.
 
 ### Technical and Methodological
 
 - Cattaneo, Feng, Palomba and Titiunik (2025): [Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_RESTAT.pdf).<br>
-_Review of Economics and Statistics_, revise and resubmit.<br>
+_Review of Economics and Statistics_, forthcoming.<br>
 [Supplemental](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_RESTAT--Supplement.pdf)<br>
 
 - Cattaneo, Feng and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf).<br>
