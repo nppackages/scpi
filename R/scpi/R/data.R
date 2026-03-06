@@ -14,5 +14,5 @@
 #'   \item{schooling}{percentage of secondary school attained in the total population aged 25 and older.}
 #'   \item{industry}{industry share of value added.}
 #' }
-#' @source \url{https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/24714}
+#' @source Harvard Dataverse (\doi{doi:10.7910/DVN/24714})
 "scpi_germany"

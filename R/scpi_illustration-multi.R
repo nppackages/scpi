@@ -38,13 +38,14 @@ df <- scdataMulti(data, id.var = "country", outcome.var = "gdp",
 
 
 res <- scest(df, w.constr = list("name" = "simplex"))
+print(res)
 scplotMulti(res)
 ggsave("germany_est_multi_1.png", height=6, width=9, dpi="retina")
 
-
+set.seed(8894)
 respi <- scpi(df, w.constr = list("name" = "simplex"), cores = 1, sims = 50,
               e.method = "gaussian")
-
+print(respi)
 # plot series
 scplotMulti(respi, type = "series")
 ggsave("germany_est_multi_2.png", height=6, width=9, dpi="retina")

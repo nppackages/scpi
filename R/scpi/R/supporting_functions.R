@@ -316,7 +316,7 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
             aux <- shrinkage.EST("ridge", Af, as.matrix(Zf), Vf, J, KM)
             Q2 <- aux$Q
           }, warning=function(warn) {},
-          error=function(err) {}, finally={})
+          error=function(err) {}, finally = {})
           Qfeat <- c(Qfeat, QQ)
         } else {
           aux <- list("lambda" = 0) # create list to avoid code crashing later on
@@ -340,7 +340,7 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
   } else {
 
     # if constraint is entirely user specified just check everything is fine
-    if (!(all(c('p', 'dir', 'Q', 'lb') %in% names(w.constr)))) {
+    if (!(all(c("p", "dir", "Q", "lb") %in% names(w.constr)))) {
       stop("If 'name' is not specified, w.constr should be a list whose elements 
             must be named 'p','dir','Q','lb'.")
     }
@@ -423,7 +423,6 @@ b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "ECOS") {
     if (dire == "==") { # simplex
       constraints <- list(CVXR::sum_entries(x[1:J]) == QQ, x[1:J] >= lb)
     } else if (dire == "<=") { # lasso
-      #constraints <- list(CVXR::norm1(x[1:J]) <= QQ, x[1:J] >= lb)
       constraints <- list(CVXR::norm1(x[1:J]) <= QQ)
     }
 
@@ -443,7 +442,7 @@ b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "ECOS") {
   # num_iter required in large lasso/L1-L2/ridge problems is often >10k, which is the default in OSQP/ECOS
   prob  <- CVXR::Problem(objective, constraints)
   sol   <- CVXR::solve(prob, solver = CVXR.solver, num_iter = 100000L, verbose = FALSE)
-
+  
   b <- sol$getValue(x)
   alert <- !(sol$status %in% c("optimal", "optimal_inaccurate"))
 
@@ -466,7 +465,7 @@ b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "ECOS") {
 
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method - Multiple treated units case
-b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver="ECOS") {
+b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver = "ECOS") {
 
   # The constraint is symmetric in the shape across treated units (J, KM, Q might change)
   dire  <- w.constr[[1]]$dir
@@ -502,22 +501,22 @@ b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver="ECOS") {
       }
 
     } else if (p == "L2") { # ridge
-        constraints <- append(constraints, list(CVXR::sum_squares(x[j.lb:j.ub]) <= QQ[i]^2))
+      constraints <- append(constraints, list(CVXR::sum_squares(x[j.lb:j.ub]) <= QQ[i]^2))
 
     } else if (p == "L1-L2") {
       constraints <- append(constraints, list(CVXR::sum_entries(x[j.lb:j.ub]) == QQ[i],
-                          CVXR::power(CVXR::cvxr_norm(x[j.lb:j.ub], 2), 2) <= CVXR::power(Q2[i], 2)))
+                                              CVXR::power(CVXR::cvxr_norm(x[j.lb:j.ub], 2), 2) <= CVXR::power(Q2[i], 2)))
     }
 
     j.lb <- j.ub + 1
   }
 
   prob        <- CVXR::Problem(objective, constraints)
-  sol         <- CVXR::solve(prob, solver=CVXR.solver, num_iter=100000L, verbose=FALSE)
+  sol         <- CVXR::solve(prob, solver = CVXR.solver, num_iter = 100000L, verbose = FALSE)
 
   b <- sol$getValue(x)
   alert <- !(sol$status %in% c("optimal", "optimal_inaccurate"))
-  
+
   if (alert == TRUE) {
     stop(paste0("Estimation algorithm not converged! The algorithm returned the value:",
                 sol$status, ". To check to what errors it corresponds go to 

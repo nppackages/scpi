@@ -18,7 +18,7 @@ A data frame with 748 rows and 11 variables:
 }
 }
 \source{
-\url{https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/24714}
+Harvard Dataverse (\doi{doi:10.7910/DVN/24714})
 }
 \usage{
 scpi_germany
