@@ -381,7 +381,7 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
 
     # reduce dimensionality of the problem if more params than obs
     if (is.nan(Q) || (nrow(Z) <= ncol(Z) + 10)) {
-      lasso.cols <- b.est(A = A, Z = Z, J = J, KM = KM, V = V, CVXR.solver = "OSQP",
+      lasso.cols <- b.est(A = A, Z = Z, J = J, KM = KM, V = V, CVXR.solver = "CLARABEL",
                           w.constr = list(name = "lasso", dir = "<=", lb = 0, p = "L1", Q = 1))
       active.cols <- abs(lasso.cols) > 1e-8
       if (sum(active.cols) >= (max(nrow(A) - 10, 2)) ) {
@@ -400,7 +400,7 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
 
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method
-b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "ECOS") {
+b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "CLARABEL") {
 
   dire <- w.constr[["dir"]]
   lb   <- w.constr[["lb"]]
@@ -441,14 +441,14 @@ b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "ECOS") {
 
   # num_iter required in large lasso/L1-L2/ridge problems is often >10k, which is the default in OSQP/ECOS
   prob  <- CVXR::Problem(objective, constraints)
-  sol   <- CVXR::solve(prob, solver = CVXR.solver, num_iter = 100000L, verbose = FALSE)
-  
-  b <- sol$getValue(x)
-  alert <- !(sol$status %in% c("optimal", "optimal_inaccurate"))
+  sol   <- CVXR::psolve(prob, solver = CVXR.solver, num_iter = 100000L, verbose = FALSE)
+
+  b <- CVXR::value(x)
+  alert <- !(CVXR::status(prob) %in% c("optimal", "optimal_inaccurate"))
 
   if (alert == TRUE) {
     stop(paste0("Estimation algorithm not converged! The algorithm returned the value:",
-                sol$status, ". To check to what errors it corresponds go to 
+                CVXR::status(prob), ". To check to what errors it corresponds go to 
                'https://cvxr.rbind.io/cvxr_examples/cvxr_gentle-intro/'. Typically, this occurs
                 because the problem is badly-scaled. If so, scaling the data fixes the issue. Another
                 fix could be changing the algorithm via the option 'solver'. Check your available options
@@ -465,7 +465,7 @@ b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "ECOS") {
 
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method - Multiple treated units case
-b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver = "ECOS") {
+b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver = "CLARABEL") {
 
   # The constraint is symmetric in the shape across treated units (J, KM, Q might change)
   dire  <- w.constr[[1]]$dir
@@ -511,15 +511,15 @@ b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver = "ECOS") {
     j.lb <- j.ub + 1
   }
 
-  prob        <- CVXR::Problem(objective, constraints)
-  sol         <- CVXR::solve(prob, solver = CVXR.solver, num_iter = 100000L, verbose = FALSE)
+  prob  <- CVXR::Problem(objective, constraints)
+  sol   <- CVXR::psolve(prob, solver = CVXR.solver, num_iter = 100000L, verbose = FALSE)
 
-  b <- sol$getValue(x)
-  alert <- !(sol$status %in% c("optimal", "optimal_inaccurate"))
+  b <- CVXR::value(x)
+  alert <- !(CVXR::status(prob) %in% c("optimal", "optimal_inaccurate"))
 
   if (alert == TRUE) {
     stop(paste0("Estimation algorithm not converged! The algorithm returned the value:",
-                sol$status, ". To check to what errors it corresponds go to 
+                CVXR::status(prob), ". To check to what errors it corresponds go to 
                'https://cvxr.rbind.io/cvxr_examples/cvxr_gentle-intro/'. Typically, this occurs
                 because the problem is badly-scaled. If so, scaling the data fixes the issue. Another
                 fix could be changing the algorithm via the option 'solver'. Check your available options
@@ -1541,7 +1541,7 @@ regularize.w <- function(rho, rho.max, res, B, T0.tot, J, KM, d0) {
 
   if (rho == "type-1") {
     sigma.u  <- sqrt(mean((res - mean(res))^2))
-    sigma.bj <- min(apply(B, 2, sd))
+    sigma.bj <- min(apply(B, 2, stats::sd))
     denomCheck(sigma.bj)
     CC       <- sigma.u / sigma.bj
 
@@ -1549,7 +1549,7 @@ regularize.w <- function(rho, rho.max, res, B, T0.tot, J, KM, d0) {
     sigma.u   <- sqrt(mean((res - mean(res))^2))
     sigma.bj2 <- min(apply(B, 2, var))
     denomCheck(sigma.bj2)
-    sigma.bj  <- max(apply(B, 2, sd))
+    sigma.bj  <- max(apply(B, 2, stats::sd))
     CC        <- sigma.bj * sigma.u / sigma.bj2
 
   }

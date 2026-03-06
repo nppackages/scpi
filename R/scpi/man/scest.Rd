@@ -9,7 +9,7 @@ scest(
   w.constr = NULL,
   V = "separate",
   V.mat = NULL,
-  solver = "ECOS",
+  solver = "CLARABEL",
   plot = FALSE,
   plot.name = NULL,
   plot.path = NULL,
@@ -43,8 +43,7 @@ See the \strong{Details} section for more information on how to prepare this mat
 
 \item{solver}{a string containing the name of the solver used by \code{CVXR} when computing the weights. You can check which solvers are available
 on your machine by running \code{CVXR::installed_solvers()}. More information on what different solvers do can be found
-at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/. "OSQP" is the default solver when 'lasso'
-is the constraint type, whilst "ECOS" is the default in all other cases.}
+at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/. "CLARABEL" is the default in all cases.}
 
 \item{plot}{a logical specifying whether \code{\link{scplot}} should be called and a plot saved in the current working
 directory. For more options see \code{\link{scplot}}.}

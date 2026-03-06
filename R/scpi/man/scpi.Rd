@@ -9,7 +9,7 @@ scpi(
   w.constr = NULL,
   V = "separate",
   V.mat = NULL,
-  solver = "ECOS",
+  solver = "CLARABEL",
   P = NULL,
   u.missp = TRUE,
   u.sigma = "HC1",
@@ -62,8 +62,7 @@ See the \strong{Details} section for more information on how to prepare this mat
 
 \item{solver}{a string containing the name of the solver used by \code{CVXR} when computing the weights. You can check which solvers are available
 on your machine by running \code{CVXR::installed_solvers()}. More information on what different solvers do can be found
-at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/. "OSQP" is the default solver when 'lasso'
-is the constraint type, whilst "ECOS" is the default in all other cases.}
+at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/. "CLARABEL" is the default in all cases.}
 
 \item{P}{a \eqn{I\cdot T_1\times I\cdot (J+KM)} matrix containing the design matrix to be used to obtain the predicted.
 post-intervention outcome of the synthetic control unit. \eqn{T_1} is the number of post-treatment periods,

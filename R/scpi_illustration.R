@@ -3,6 +3,23 @@
 ## R-file for Empirical Illustration - Single Treated Unit
 ## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, and Rocio Titiunik
 ################################################################################
+
+################################################################################
+#                         !!DISCLAIMER!!
+#
+# To reproduce the figures exactly as in Cattaneo, Feng, Palomba, and Titiunik
+# (2025, JSS), you need scpi <= 3.0.1. Earlier versions of scpi depend on
+# CVXR <= 1.0.15, whereas scpi >= 3.0.2 uses CVXR >= 1.8.1. The newer CVXR
+# releases introduced major syntax changes (which are not backward compatible) 
+# and new default solvers, including CLARABEL. 
+# See https://cvxr.rbind.io/whatsnew#migration-guide for more information.
+#
+# Here below the code to restore back the previous versions
+# require(remotes)
+# remotes::install_version("CVXR", version = "1.0-15", upgrade = "never")
+# remotes::install_version("scpi", version = "3.0.1", upgrade = "never")
+################################################################################
+
 ### Clear R environment
 rm(list = ls(all = TRUE))
 

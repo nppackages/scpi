@@ -3,6 +3,14 @@
 ## R-file for Empirical Illustration - Multiple Treated Units
 ## Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, and Rocio Titiunik
 ################################################################################
+
+################################################################################
+#                         !!DISCLAIMER!!
+#
+# To reproduce the figures exactly as in Cattaneo, Feng, Palomba, and Titiunik
+# (2025, JSS), see disclaimer in scpi_illustration.R.
+################################################################################
+
 ### Clear R environment
 rm(list = ls(all = TRUE))
 

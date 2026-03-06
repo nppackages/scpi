@@ -45,8 +45,7 @@
 #' See the \strong{Details} section for more information on how to prepare this matrix.
 #' @param solver a string containing the name of the solver used by \code{CVXR} when computing the weights. You can check which solvers are available
 #' on your machine by running \code{CVXR::installed_solvers()}. More information on what different solvers do can be found
-#' at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/. "OSQP" is the default solver when 'lasso'
-#' is the constraint type, whilst "ECOS" is the default in all other cases.
+#' at the following link https://cvxr.rbind.io/cvxr_examples/cvxr_using-other-solvers/. "CLARABEL" is the default in all cases.
 #' @param rho a string specifying the formula used for the regularizing parameter that imposes sparsity on the estimated vector of
 #' weights. Users can provide a scalar with their own value for \code{rho}. Other options are described in the \strong{Details} section.
 #' @param rho.max a scalar indicating the maximum value attainable by the tuning parameter \code{rho}.
@@ -303,7 +302,7 @@ scpi  <- function(data,
                   w.constr     = NULL,
                   V            = "separate",
                   V.mat        = NULL,
-                  solver       = "ECOS",
+                  solver       = "CLARABEL",
                   P            = NULL,
                   u.missp      = TRUE,
                   u.sigma      = "HC1",
@@ -329,7 +328,7 @@ scpi  <- function(data,
                   verbose      = TRUE) {
 
 
-  if ( (methods::is(data, "scdata") || methods::is(data, "scdataMulti")) == FALSE ) {
+  if ((methods::is(data, "scdata") || methods::is(data, "scdataMulti")) == FALSE) {
     stop("data should be the object returned by running scdata or scdata_multi!")
   }
 
