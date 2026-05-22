@@ -1,0 +1,64 @@
+# R session files
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# R package build/check outputs
+*.Rcheck/
+check_as_cran/
+*.tar.gz
+*.tgz
+
+# Generated manuals and local artifacts
+Rplots.pdf
+R/*.pdf
+R/scpi/*.pdf
+
+# Local package manager/library state
+renv/library/
+renv/staging/
+.r-lib*/
+.incoming_pkg/
+.r-doc-lib/
+.r-test-lib/
+.Rbuildignore.bak
+
+# Python development outputs
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.python-deps/
+.python-deps-local/
+.tmp-codex/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Python packaging credentials/cache
+.pypirc
+.tox/
+.nox/
+
+# Stata local outputs
+*.gph
+*.log
+*.smcl
+*.ster
+*.tmp
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local-only planning and optional external research checkouts
+.codex/
+.benchmark-public/
+PLAN.md
+papers/
+replication/
