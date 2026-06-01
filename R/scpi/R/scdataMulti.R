@@ -6,7 +6,7 @@
 #' the data in the particular case of a single treated unit.
 #'
 #' The names of the output matrices follow the terminology proposed in \insertCite{cattaneo2021methodological-JASA;textual}{scpi} and
-#' \insertCite{cattaneo2025methodological-RESTAT;textual}{scpi}.
+#' \insertCite{cattaneo2027methodological-RESTAT;textual}{scpi}.
 #'
 #' Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in
 #' \insertCite{cattaneo2025software-JSS;textual}{scpi}.
@@ -110,13 +110,13 @@
 #' }
 #'
 #' @author
-#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#' Matias D. Cattaneo, Princeton University. \email{matias.d.cattaneo@gmail.com}.
 #'
-#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' Yingjie Feng, Tsinghua University. \email{fengyingjiepku@gmail.com}.
 #'
-#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' Filippo Palomba, Princeton University. \email{filippo.palomba19@gmail.com}.
 #'
-#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+#' Rocio Titiunik, Princeton University. \email{rocio.titiunik@gmail.com}.
 #'
 #' @references
 #'  \insertAllCited{}

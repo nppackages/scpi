@@ -1,7 +1,7 @@
-*! Date        : 3 Jul 2025
-*! Version     : 3.0.1
-*! Authors     : Filippo Palomba
-*! Email       : fpalomba@princeton.edu
+*! Date        : 1 Jun 2026
+*! Version     : 4.0.0
+*! Authors     : Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik
+*! Email       : matias.d.cattaneo@gmail.com
 *! Description : Synthetic control estimation
 
 capture program drop scest

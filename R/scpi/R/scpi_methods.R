@@ -9,13 +9,13 @@
 #' @return No return value, called to print \code{\link{scpi}} results.
 #'
 #' @author
-#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#' Matias D. Cattaneo, Princeton University. \email{matias.d.cattaneo@gmail.com}.
 #'
-#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' Yingjie Feng, Tsinghua University. \email{fengyingjiepku@gmail.com}.
 #'
-#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' Filippo Palomba, Princeton University. \email{filippo.palomba19@gmail.com}.
 #'
-#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}. 
+#' Rocio Titiunik, Princeton University. \email{rocio.titiunik@gmail.com}.
 #'
 #' @seealso \code{\link{scpi}} for synthetic control inference
 #'
@@ -100,13 +100,13 @@ print.scpi <- function(x, ...) {
 #' @return No return value, called to summarize \code{\link{scpi}} results.
 #'
 #' @author
-#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#' Matias D. Cattaneo, Princeton University. \email{matias.d.cattaneo@gmail.com}.
 #'
-#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' Yingjie Feng, Tsinghua University. \email{fengyingjiepku@gmail.com}.
 #'
-#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' Filippo Palomba, Princeton University. \email{filippo.palomba19@gmail.com}.
 #'
-#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+#' Rocio Titiunik, Princeton University. \email{rocio.titiunik@gmail.com}.
 #'
 #' @seealso \code{\link{scpi}}
 #'
@@ -170,13 +170,13 @@ summary.scpi <- function(object, ...) {
 #' @return No return value, called to show \code{\link{scpi}} constructed weights.
 #'
 #' @author
-#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#' Matias D. Cattaneo, Princeton University. \email{matias.d.cattaneo@gmail.com}.
 #'
-#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' Yingjie Feng, Tsinghua University. \email{fengyingjiepku@gmail.com}.
 #'
-#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' Filippo Palomba, Princeton University. \email{filippo.palomba19@gmail.com}.
 #'
-#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+#' Rocio Titiunik, Princeton University. \email{rocio.titiunik@gmail.com}.
 #'
 #' @seealso \code{\link{scpi}} for synthetic control prediction.
 #'

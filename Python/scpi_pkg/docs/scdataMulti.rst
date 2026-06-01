@@ -8,7 +8,7 @@ produces an object of class ``scdataMulti_output`` to be passed to ``scest`` or 
 The command prepares the data to be used by scest or scpi for point estimation and inference procedures using
 Synthetic Control. It allows the user to specify the outcome variable and, for each treated unit, the features 
 to be matched, and covariate-adjustment feature by feature. The names of the output matrices
-follow the notation proposed in `Cattaneo, Feng, Palomba, and Titiunik (2022) <https://arxiv.org/abs/2210.05026>`_.
+follow the notation proposed in `Cattaneo, Feng, Palomba, and Titiunik (2027) <https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2027_RESTAT.pdf>`_.
 
 Syntax
 ---------

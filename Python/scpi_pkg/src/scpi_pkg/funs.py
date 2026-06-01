@@ -2,7 +2,7 @@
 """
 Created on Mon Aug 16 09:58:31 2021
 
-@author: Filippo Palomba
+@author: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik
 """
 # Temporary code to suppress pandas FutureWarning
 import warnings

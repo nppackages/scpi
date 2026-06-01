@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 3.0.1 2025-07-03}{...}
+{* *!version 4.0.0 2026-06-01}{...}
 {viewerjumpto "Syntax" "scdata##syntax"}{...}
 {viewerjumpto "Description" "scdata##description"}{...}
 {viewerjumpto "Options" "scdata##options"}{...}
@@ -15,12 +15,12 @@
 {marker syntax}{...}
 {title:Syntax}
 
-{p 4 8}{cmd:scdata } {it:features} {ifin} 
-{cmd:,} 
-{cmd:id(}{it:idvar}{cmd:)} 
+{p 4 8}{cmd:scdata } {it:features} {ifin}
+{cmd:,}
+{cmd:id(}{it:idvar}{cmd:)}
 {cmd:time(}{it:timevar}{cmd:)}
 {cmd:outcome(}{it:outcomevar}{cmd:)}
-{cmd:treatment(}{it:treatmentvar}{cmd:)}  
+{cmd:treatment(}{it:treatmentvar}{cmd:)}
 {cmd:dfname(}{it:string}{cmd:)}
 [{cmd:covadj(}{it:string}{cmd:)}
 {cmd:anticipation(}{it:#}{cmd:)}
@@ -33,13 +33,13 @@
 {marker description}{...}
 {title:Description}
 
-{p 4 8}{cmd:scdata} prepares the data to be used by {help scest:scest} or {help scpi:scpi} to implement estimation and inference procedures for Synthetic Control (SC) methods. 
-It allows the user to specify the outcome variable, the features of the treated unit to be matched, and covariate-adjustment feature by feature. 
-The command follows the terminology proposed in {browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}. 
+{p 4 8}{cmd:scdata} prepares the data to be used by {help scest:scest} or {help scpi:scpi} to implement estimation and inference procedures for Synthetic Control (SC) methods.
+It allows the user to specify the outcome variable, the features of the treated unit to be matched, and covariate-adjustment feature by feature.
+The command follows the terminology proposed in {browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)}.
 The command is a wrapper of the companion Python package. As such, the user needs to have a running version of Python with the package installed. A tutorial on how to install Python and link it to Stata
 can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
-{p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
+{p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in
 {browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf":Cattaneo, Feng, Palomba and Titiunik (2025)}.{p_end}
 
 {p 8 8} Companion commands are: {help scest:scest} for point estimation, {help scpi:scpi} for inference procedures, and {help scplot:scplot} for SC plots.{p_end}
@@ -48,7 +48,7 @@ can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
 {p 8 8}{browse "https://nppackages.github.io/scpi/":https://nppackages.github.io/scpi/}{p_end}
 
-{p 4 8}For an introduction to synthetic control methods, see {browse "https://economics.mit.edu/files/17847":Abadie (2021)} and 
+{p 4 8}For an introduction to synthetic control methods, see {browse "https://economics.mit.edu/files/17847":Abadie (2021)} and
 references therein.{p_end}
 
 {p 4 8}In case of unbalanced panel datasets, the preferred data structure should be a balanced panel with missing values. See
@@ -70,11 +70,11 @@ references therein.{p_end}
 {dlgtab:Estimator}
 
 {p 4 8}{cmd:covadj(}{it:string}{cmd:)} specifies the variables to be used for adjustment for each feature. If the user wants
-     to specify the same set of covariates for all features, a string should be provided according to the following format: {opt covadj("cov1, cov2")}. 
-     If instead a different set of covariates per feature has to be specified, then the following format should be used {opt covadj("cov1, cov2; cov1, cov3")}. 
-     Note that in this latter case the number of sub-lists delimited by ";" must be equal to the number of {it:features}. Moreover, the order of the 
-     sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates used for adjustment for the first 
-     feature, and so on. Finally, the user can specify 'constant' and 'trend' as covariates even if they are not 
+     to specify the same set of covariates for all features, a string should be provided according to the following format: {opt covadj("cov1, cov2")}.
+     If instead a different set of covariates per feature has to be specified, then the following format should be used {opt covadj("cov1, cov2; cov1, cov3")}.
+     Note that in this latter case the number of sub-lists delimited by ";" must be equal to the number of {it:features}. Moreover, the order of the
+     sub-lists matters, in the sense that the first sub-list is interpreted as the set of covariates used for adjustment for the first
+     feature, and so on. Finally, the user can specify 'constant' and 'trend' as covariates even if they are not
      present in the loaded dataset, the former includes a constant, whilst the latter a linear deterministic trend.
 
 {p 4 8}{cmd:anticipation(}{it:#}{cmd:)} specifies the number of periods of potential anticipation effects. Default is {cmd:anticipation(0)}.{p_end}
@@ -128,33 +128,33 @@ references therein.{p_end}
 {marker references}{...}
 {title:References}
 
-{p 4 8}Abadie, A. 2021. 
-{browse "https://economics.mit.edu/files/17847":Using synthetic controls: Feasibility, data requirements, and methodological aspects.} 
+{p 4 8}Abadie, A. 2021.
+{browse "https://economics.mit.edu/files/17847":Using synthetic controls: Feasibility, data requirements, and methodological aspects.}
 {it:Journal of Economic Literature}, 59(2), 391-425.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., and Titiunik, R. 2021. 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction intervals for synthetic control methods}. 
+{p 4 8}Cattaneo, M. D., Feng, Y., and Titiunik, R. 2021.
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction intervals for synthetic control methods}.
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2025. 
-{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}. 
-{it:Journal of Statistical Software}, 113(2), 1-38.{p_end}
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba, F., and Titiunik, R. 2025.
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf":scpi: Uncertainty Quantification for Synthetic Control Methods}.
+{it:Journal of Statistical Software}, 113(1), 1-38.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2025. 
-{browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}.
-{it: Review of Economic Studies}, {it:doi}:{browse "https://doi.org/10.1080/01621459.2021.1979561":10.1080/01621459.2021.1979561}. {p_end}
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba, F., and Titiunik, R. 2027.
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2027_RESTAT.pdf":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}.
+{it:Review of Economics and Statistics}, forthcoming.{p_end}
 
 {marker authors}{...}
 {title:Authors}
 
-{p 4 8}Matias D. Cattaneo, Princeton University, Princeton, NJ.
-{browse "mailto:cattaneo@princeton.edu":cattaneo@princeton.edu}.{p_end}
+{p 4 8}Matias D. Cattaneo, Princeton University.
+{browse "mailto:matias.d.cattaneo@gmail.com":matias.d.cattaneo@gmail.com}.{p_end}
 
-{p 4 8}Yingjie Feng, Tsinghua University, Beijing, China.
-{browse "mailto:fengyj@sem.tsinghua.edu.cn":fengyj@sem.tsinghua.edu.cn}.
+{p 4 8}Yingjie Feng, Tsinghua University.
+{browse "mailto:fengyingjiepku@gmail.com":fengyingjiepku@gmail.com}.
 
-{p 4 8}Filippo Palomba, Princeton University, Princeton, NJ.
-{browse "mailto:fpalomba@princeton.edu":fpalomba@princeton.edu}.
+{p 4 8}Filippo Palomba, Princeton University.
+{browse "mailto:filippo.palomba19@gmail.com":filippo.palomba19@gmail.com}.
 
-{p 4 8}Rocio Titiunik, Princeton University, Princeton, NJ.
-{browse "mailto:titiunik@princeton.edu":titiunik@princeton.edu}.{p_end}
+{p 4 8}Rocio Titiunik, Princeton University.
+{browse "mailto:rocio.titiunik@gmail.com":rocio.titiunik@gmail.com}.{p_end}

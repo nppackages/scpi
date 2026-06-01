@@ -4,13 +4,13 @@ The `scpi_pkg` package provides Python implementations of estimation and inferen
 
 ## Authors
 
-Matias D. Cattaneo (<cattaneo@princeton.edu>)
+Matias D. Cattaneo, Princeton University (<matias.d.cattaneo@gmail.com>)
 
-Yingjie Feng (<fengyj@sem.tsinghua.edu.cn>)
+Yingjie Feng, Tsinghua University (<fengyingjiepku@gmail.com>)
 
-Filippo Palomba (<fpalomba@princeton.edu>)
+Filippo Palomba, Princeton University (<filippo.palomba19@gmail.com>)
 
-Rocio Titiunik (<titiunik@princeton.edu>)
+Rocio Titiunik, Princeton University (<rocio.titiunik@gmail.com>)
 
 ## Website
 
@@ -27,8 +27,8 @@ pip install scpi_pkg
 # Usage
 
 ```
-from from scpi_pkg.scdata import scdata
-from from scpi_pkg.scdataMulti import scdataMulti
+from scpi_pkg.scdata import scdata
+from scpi_pkg.scdataMulti import scdataMulti
 from scpi_pkg.scest import scest
 from scpi_pkg.scpi import scpi
 from scpi_pkg.scplot import scplot
@@ -56,10 +56,12 @@ For overviews and introductions, see [nppackages website](https://nppackages.git
 
 ### Software and Implementation
 
-- Cattaneo, Feng, Palomba, and Titiunik (2024+) [scpi: Uncertainty Quantification for Synthetic Control Estimators](https://arxiv.org/abs/2202.05984). forthcoming at *Journal of Statistical Software.*
+- Cattaneo, Feng, Palomba, and Titiunik (2025): [scpi: Uncertainty Quantification for Synthetic Control Methods](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf).
+  _Journal of Statistical Software_ 113(1): 1-38.
 
 ### Technical and Methodological
 
-- Cattaneo, Feng, and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://cattaneo.princeton.edu/papers/Cattaneo-Feng-Titiunik_2021_JASA.pdf).
-  _Journal of the American Statistical Association_.
-- Cattaneo, Feng, Palomba, and Titiunik (2023): [Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption](https://arxiv.org/abs/2210.05026), working paper.
+- Cattaneo, Feng, Palomba, and Titiunik (2027): [Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption](https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2027_RESTAT.pdf).
+  _Review of Economics and Statistics_, forthcoming.
+- Cattaneo, Feng, and Titiunik (2021): [Prediction Intervals for Synthetic Control Methods](https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf).
+  _Journal of the American Statistical Association_ 116(536): 1865-1880.

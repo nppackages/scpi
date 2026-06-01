@@ -5,7 +5,7 @@
 ******************************************************************************************
   
 ******************************************************************************************
-** net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/stata) replace
+** net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/main/stata) replace
 ******************************************************************************************
 clear all
 set more off

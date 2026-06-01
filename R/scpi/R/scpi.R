@@ -5,7 +5,7 @@
 #' @description The command implements estimation and inference procedures for Synthetic Control (SC) methods using least squares,
 #' lasso, ridge, or simplex-type constraints. Uncertainty is quantified using prediction
 #' intervals according to \insertCite{cattaneo2021methodological-JASA;textual}{scpi} and
-#' \insertCite{cattaneo2025methodological-RESTAT;textual}{scpi}. \code{\link{scpi}} returns the estimated
+#' \insertCite{cattaneo2027methodological-RESTAT;textual}{scpi}. \code{\link{scpi}} returns the estimated
 #' post-treatment series for the synthetic unit through the command \code{\link{scest}} and quantifies in-sample and
 #' out-of-sample uncertainty to provide confidence intervals
 #' for each point estimate.
@@ -89,7 +89,7 @@
 #' @param force.joint.PI.optim this option is here mostly for backward-compatibility. If FALSE (the default) it solves a separate optimization problem for each
 #' treated unit when it comes to quantify in-sample uncertainty as long as the weighting matrix \eqn{\mathbf{V}} is diagonal.
 #' If TRUE it solves a joint optimization problem for all treated units to quantify in-sample uncertainty. Both are valid approaches as
-#' we detail in the main paper (Cattaneo, Feng, Palomba, and Titiunik (2024)). The former is faster and less conservative.
+#' we detail in the main paper (Cattaneo, Feng, Palomba, and Titiunik (2027)). The former is faster and less conservative.
 #' @param save.data a character specifying the name and the path of the saved dataframe containing the processed data used to produce the plot. 
 #' @param verbose if \code{TRUE} prints additional information in the console.
 #'
@@ -269,13 +269,13 @@
 #' }
 #'
 #' @author
-#' Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+#' Matias D. Cattaneo, Princeton University. \email{matias.d.cattaneo@gmail.com}.
 #'
-#' Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+#' Yingjie Feng, Tsinghua University. \email{fengyingjiepku@gmail.com}.
 #'
-#' Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+#' Filippo Palomba, Princeton University. \email{filippo.palomba19@gmail.com}.
 #'
-#' Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+#' Rocio Titiunik, Princeton University. \email{rocio.titiunik@gmail.com}.
 #'
 #' @references
 #'  \insertAllCited{}

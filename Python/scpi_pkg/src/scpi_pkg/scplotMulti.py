@@ -100,17 +100,17 @@ def scplotMulti(result,
 
     References
     ----------
-    Abadie, A. (2021), “Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
-    Aspects,” Journal of Economic Literature, 59, 391-425.
+    Abadie, A. (2021), "Using Synthetic Controls: Feasibility, Data Requirements, and Methodological
+    Aspects," Journal of Economic Literature, 59(2), 391-425.
 
-    Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), “Prediction Intervals for Synthetic Control
-    Methods,” Journal of the American Statistical Association, 116, 1865-1880.
+    Cattaneo, M. D., Feng, Y., and Titiunik, R. (2021), "Prediction Intervals for Synthetic Control
+    Methods," Journal of the American Statistical Association, 116(536), 1865-1880.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2025), “scpi: Uncertainty Quantification for
-    Synthetic Control Estimators”, Journal of Statistical Software, 113(2), 1-38.
+    Cattaneo, M. D., Feng, Y., Palomba, F., and Titiunik, R. (2025), "scpi: Uncertainty Quantification for
+    Synthetic Control Methods," Journal of Statistical Software, 113(1), 1-38.
 
-    Cattaneo, M. D., Palomba, F., Feng, Y., and Titiunik, R. (2025), “Uncertainty Quantification in Synthetic
-    Controls with Staggered Treatment Adoption”, Review of Economic Studies, doi:10.1080/01621459.2021.1979561.
+    Cattaneo, M. D., Feng, Y., Palomba, F., and Titiunik, R. (2027), "Uncertainty Quantification in Synthetic
+    Controls with Staggered Treatment Adoption," Review of Economics and Statistics, forthcoming.
 
     See Also
     --------

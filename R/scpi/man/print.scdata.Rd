@@ -23,11 +23,11 @@ The print method for synthetic control data objects.
 Supported methods: \code{\link{print.scdata}}, \code{\link{summary.scdata}}.
 }
 \author{
-Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+Matias D. Cattaneo, Princeton University. \email{matias.d.cattaneo@gmail.com}.
 
-Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+Yingjie Feng, Tsinghua University. \email{fengyingjiepku@gmail.com}.
 
-Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+Filippo Palomba, Princeton University. \email{filippo.palomba19@gmail.com}.
 
-Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+Rocio Titiunik, Princeton University. \email{rocio.titiunik@gmail.com}.
 }

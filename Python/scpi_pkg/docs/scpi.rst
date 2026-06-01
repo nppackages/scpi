@@ -4,7 +4,7 @@ Prediction Intervals for Synthetic Control (:py:mod:`scpi.scpi`)
 This page describes the function ``scpi`` to implement point estimation and inference procedures for synthetic control methods
 using least squares, lasso, ridge, or simplex-type constraints. Uncertainty is quantified using prediction intervals according to
 `Cattaneo, Feng, and Titiunik (2021) <https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf>`_.
-The names of the output matrices follow the notation proposed in `Cattaneo, Feng, Palomba, and Titiunik (2022) <https://arxiv.org/abs/2210.05026>`_
+The names of the output matrices follow the notation proposed in `Cattaneo, Feng, Palomba, and Titiunik (2027) <https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2027_RESTAT.pdf>`_
 
 Functions
 ---------

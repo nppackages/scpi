@@ -8,7 +8,7 @@
 The package implements estimation, inference procedures, and produces plots for Synthetic Control (SC) methods
 using least squares, lasso, ridge, or simplex-type
 constraints. Uncertainty is quantified using prediction intervals according to
-\insertCite{cattaneo2021methodological-JASA;textual}{scpi} and \insertCite{cattaneo2025methodological-RESTAT;textual}{scpi}.
+\insertCite{cattaneo2021methodological-JASA;textual}{scpi} and \insertCite{cattaneo2027methodological-RESTAT;textual}{scpi}.
 
 Included functions are: \link{scdata} and \link{scdataMulti} for data preparation, \link{scest} for point estimation,
 \link{scpi} for inference procedures, and \link{scplot} and \link{scplotMulti} for plots.
@@ -35,11 +35,11 @@ Useful links:
 
 }
 \author{
-Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+Matias D. Cattaneo, Princeton University. \email{matias.d.cattaneo@gmail.com}.
 
-Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+Yingjie Feng, Tsinghua University. \email{fengyingjiepku@gmail.com}.
 
-Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+Filippo Palomba, Princeton University. \email{filippo.palomba19@gmail.com}.
 
-Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+Rocio Titiunik, Princeton University. \email{rocio.titiunik@gmail.com}.
 }

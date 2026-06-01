@@ -1,5 +1,5 @@
 {smcl}
-{* *!version 3.0.1 2025-07-03}{...}
+{* *!version 4.0.0 2026-06-01}{...}
 {viewerjumpto "Syntax" "scpi##syntax"}{...}
 {viewerjumpto "Description" "scpi##description"}{...}
 {viewerjumpto "Options" "scpi##options"}{...}
@@ -15,13 +15,13 @@
 {marker syntax}{...}
 {title:Syntax}
 
-{p 4 8}{cmd:scpi } 
-{cmd:,} 
-{cmd:dfname(}{it:string}{cmd:)} 
+{p 4 8}{cmd:scpi }
+{cmd:,}
+{cmd:dfname(}{it:string}{cmd:)}
 [{cmd:p(}{it:#}{cmd:)}
 {cmd:direc(}{it:string}{cmd:)}
-{cmd:Q(}{it:#}{cmd:)}  
-{cmd:lb(}{it:#}{cmd:)}  
+{cmd:Q(}{it:#}{cmd:)}
+{cmd:lb(}{it:#}{cmd:)}
 {cmd:V(}{it:string}{cmd:)}
 {cmd:name(}{it:string}{cmd:)}
 {cmd:u_missp)}
@@ -50,15 +50,15 @@
 {title:Description}
 
 {p 4 8}{cmd:scpi} implements estimation and inference procedures for Synthetic Control (SC) methods using least squares, lasso, ridge, or simplex-type constraints according to
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)} and for a single treated unit and 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_RESTAT.pdf":Cattaneo, Feng, Palomba, and Titiunik (2025)} for multiple treated units and staggered adoption. The command is a wrapper of the companion Python package. 
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Cattaneo, Feng, and Titiunik (2021)} and for a single treated unit and
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2027_RESTAT.pdf":Cattaneo, Feng, Palomba, and Titiunik (2027)} for multiple treated units and staggered adoption. The command is a wrapper of the companion Python package.
 As such, the user needs to have a running version of Python with the package installed. A tutorial on how to install Python and link it to Stata
 can be found {browse "https://nppackages.github.io/scpi/":here}.{p_end}
 
-{p 4 8} Note that it is not possible to control the random number generation in Python through Stata. To do so we 
+{p 4 8} Note that it is not possible to control the random number generation in Python through Stata. To do so we
 offer the dedicated option {opt set_seed}. {p_end}
 
-{p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in 
+{p 8 8} Companion {browse "www.r-project.org":R} and {browse "https://www.python.org/":Python} packages are described in
 {browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf":Cattaneo, Feng, Palomba and Titiunik (2025)}.{p_end}
 
 {p 8 8} Companion commands are: {help scdata:scdata} for data preparation, {help scest:scest} for estimation procedures, and {help scplot:scplot} for SC plots.{p_end}
@@ -67,7 +67,7 @@ offer the dedicated option {opt set_seed}. {p_end}
 
 {p 8 8}{browse "https://nppackages.github.io/scpi/":https://nppackages.github.io/scpi/}{p_end}
 
-{p 4 8}For an introduction to synthetic control methods, see {browse "https://economics.mit.edu/files/17847":Abadie (2021)} and 
+{p 4 8}For an introduction to synthetic control methods, see {browse "https://economics.mit.edu/files/17847":Abadie (2021)} and
 references therein.{p_end}
 
 {marker options}{...}
@@ -80,8 +80,8 @@ references therein.{p_end}
 {p 2 4} These options let the user specify the type of constraint to be imposed to estimate the SC weights and the loss function. The user controls the lower bound on the weights (option {opt lb}),
 the norm of the weights to be constrained (option {opt p}), the direction of the constraint on the norm (option {opt dir}), the size of the constraint on the norm (option {opt q}), and
 the shape of the wieghting matrix in the loss function (option {opt V}). Alternatively,
-some popular constraints can be selected through the option {opt name}. A detailed description of the popular constraints implemented can be found in 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2022_scpi.pdf":Cattaneo, Feng, Palomba and Titiunik (2022)}. {p_end}
+some popular constraints can be selected through the option {opt name}. A detailed description of the popular constraints implemented can be found in
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf":Cattaneo, Feng, Palomba and Titiunik (2025)}. {p_end}
 
 {p 4 8}{cmd:lb(}{it:#}{cmd:)} specifies the lower bound on the weights. The default is {cmd:lb(0)}. {p_end}
 
@@ -103,7 +103,7 @@ some popular constraints can be selected through the option {opt name}. A detail
 {p 8 12}{opt L1-L2} weights are estimated using a Simplex-type constraint and a Ridge-type penalization.{p_end}
 {p 8 12}{opt ols} weights are estimated without constraints using least squares{p_end}
 
-{p 4 8}{cmd:V(}{it:string}{cmd:)} specifies the weighting matrix to be used in the loss function. The default is the identity matrix (option {cmd:V("separate")}), so equal weight is given to all observations. The other possibility is to 
+{p 4 8}{cmd:V(}{it:string}{cmd:)} specifies the weighting matrix to be used in the loss function. The default is the identity matrix (option {cmd:V("separate")}), so equal weight is given to all observations. The other possibility is to
 	specify {cmd:V("pooled")} for the pooled fit.{p_end}
 
 {dlgtab:In-sample Uncertainty}
@@ -111,9 +111,9 @@ some popular constraints can be selected through the option {opt name}. A detail
 {p 2 4} This set of options allows the user to specify her preferred approch to model in-sample uncertainty, that is uncertainty that stems from the estimation the weights.{p_end}
 
 {p 4 8}{cmd:u_missp} if specified indicates that model misspecification should be taken into account.{p_end}
-{p 4 8}{cmd:u_sigma(}{it:string}{cmd:)} specifies the type of variance-covariance estimator to be used when estimating the conditional variance of the pseudo-residuals. 
+{p 4 8}{cmd:u_sigma(}{it:string}{cmd:)} specifies the type of variance-covariance estimator to be used when estimating the conditional variance of the pseudo-residuals.
 Options are: {opt HC0}, {opt HC1} (default), {opt HC2}, and {opt HC3}.{p_end}
-{p 4 8}{cmd:u_order(}{it:#}{cmd:)} specifies the order of the polynomial in the predictors used to estimate conditional moments of the pseudo-residuals. Default is {cmd:u_order(1)}. 
+{p 4 8}{cmd:u_order(}{it:#}{cmd:)} specifies the order of the polynomial in the predictors used to estimate conditional moments of the pseudo-residuals. Default is {cmd:u_order(1)}.
 If there is risk of over-fitting the option is automatically set to 0. Our rule of thumb to predict over-fitting checks that the
 difference between the effective number of observations and the number of parameters used to predict the conditional moments of the
 pseudo-residuals is at least 20.{p_end}
@@ -143,20 +143,20 @@ If there is risk of over-fitting the option is automatically set to 0 (see u_ord
 
 {dlgtab:Regularization}
 
-{p 4 8}{cmd:rho(}{it:#}{cmd:)} specifies the regularizing parameter that imposes sparsity on the estimated vector of weights. If unspecified, the tuning parameter is computed 
+{p 4 8}{cmd:rho(}{it:#}{cmd:)} specifies the regularizing parameter that imposes sparsity on the estimated vector of weights. If unspecified, the tuning parameter is computed
 based on optimization inequalities.{p_end}
 {p 4 8}{cmd:rho_max(}{it:#}{cmd:)} specifies the maximum value attainable by the tuning parameter {opt rho}. The default value is {cmd:rho_max(0.2)}. {p_end}
 
 {dlgtab:Others}
 
-{p 4 8}{cmd:opt_est(}{it:string}{cmd:)} a string specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation. 
-    The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization ('SLSQP'). 
-    In case a lasso-type constraint is implemented, the method of moving asymptotes (MMA) is used. The default value is 
+{p 4 8}{cmd:opt_est(}{it:string}{cmd:)} a string specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
+    The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization ('SLSQP').
+    In case a lasso-type constraint is implemented, the method of moving asymptotes (MMA) is used. The default value is
     {cmd:opt("'maxeval' = 5000, 'xtol_rel' = 1e-8, 'xtol_abs' = 1e-8, 'ftol_rel' = 1e-12, 'ftol_abs' = 1e-12, 'tol_eq' = 1e-8, 'tol_ineq' = 1e-8")}.{p_end}
 
-{p 4 8}{cmd:opt_inf(}{it:string}{cmd:)} a string specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation. 
-    The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization ('SLSQP'). 
-    In case a lasso-type constraint is implemented, the method of moving asymptotes (MMA) is used. The default value is 
+{p 4 8}{cmd:opt_inf(}{it:string}{cmd:)} a string specifying the stopping criteria used by the underling optimizer (nlopt) for point estimation.
+    The default is a sequential quadratic programming (SQP) algorithm for nonlinearly constrained gradient-based optimization ('SLSQP').
+    In case a lasso-type constraint is implemented, the method of moving asymptotes (MMA) is used. The default value is
     {cmd:opt("'maxeval' = 5000, 'xtol_rel' = 1e-8, 'xtol_abs' = 1e-8, 'ftol_rel' = 1e-4, 'ftol_abs' = 1e-4, 'tol_eq' = 1e-8, 'tol_ineq' = 1e-8")}.{p_end}
 
 {p 4 8}{cmd:pypinocheck} if specified avoids to check that the version of scpi_pkg in Python is the one required by {cmd:scpi} in Stata. When not specified performs the check and stores a macro called to avoid checking it multiple times.{p_end}
@@ -241,33 +241,33 @@ marker stored_results}{...}
 {marker references}{...}
 {title:References}
 
-{p 4 8}Abadie, A. 2021. 
-{browse "https://economics.mit.edu/files/17847":Using synthetic controls: Feasibility, data requirements, and methodological aspects.} 
+{p 4 8}Abadie, A. 2021.
+{browse "https://economics.mit.edu/files/17847":Using synthetic controls: Feasibility, data requirements, and methodological aspects.}
 {it:Journal of Economic Literature}, 59(2), 391-425.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., and Titiunik, R. 2021. 
-{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction intervals for synthetic control methods}. 
+{p 4 8}Cattaneo, M. D., Feng, Y., and Titiunik, R. 2021.
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Titiunik_2021_JASA.pdf":Prediction intervals for synthetic control methods}.
 {it:Journal of the American Statistical Association}, 116(536), 1865-1880.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2025. 
-{browse "https://arxiv.org/abs/2202.05984":scpi: Uncertainty Quantification for Synthetic Control Estimators}. 
-{it:Journal of Statistical Software}, 113(2), 1-38.{p_end}
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba, F., and Titiunik, R. 2025.
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2025_JSS.pdf":scpi: Uncertainty Quantification for Synthetic Control Methods}.
+{it:Journal of Statistical Software}, 113(1), 1-38.{p_end}
 
-{p 4 8}Cattaneo, M. D., Feng, Y., Palomba F., and Titiunik, R. 2025. 
-{browse "https://arxiv.org/abs/2210.05026":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}.
-{it: Review of Economic Studies}, {it:doi}:{browse "https://doi.org/10.1080/01621459.2021.1979561":10.1080/01621459.2021.1979561}. {p_end}
+{p 4 8}Cattaneo, M. D., Feng, Y., Palomba, F., and Titiunik, R. 2027.
+{browse "https://nppackages.github.io/references/Cattaneo-Feng-Palomba-Titiunik_2027_RESTAT.pdf":Uncertainty Quantification in Synthetic Controls with Staggered Treatment Adoption}.
+{it:Review of Economics and Statistics}, forthcoming.{p_end}
 
 {marker authors}{...}
 {title:Authors}
 
-{p 4 8}Matias D. Cattaneo, Princeton University, Princeton, NJ.
-{browse "mailto:cattaneo@princeton.edu":cattaneo@princeton.edu}.{p_end}
+{p 4 8}Matias D. Cattaneo, Princeton University.
+{browse "mailto:matias.d.cattaneo@gmail.com":matias.d.cattaneo@gmail.com}.{p_end}
 
-{p 4 8}Yingjie Feng, Tsinghua University, Beijing, China.
-{browse "mailto:fengyj@sem.tsinghua.edu.cn":fengyj@sem.tsinghua.edu.cn}.
+{p 4 8}Yingjie Feng, Tsinghua University.
+{browse "mailto:fengyingjiepku@gmail.com":fengyingjiepku@gmail.com}.
 
-{p 4 8}Filippo Palomba, Princeton University, Princeton, NJ.
-{browse "mailto:fpalomba@princeton.edu":fpalomba@princeton.edu}.
+{p 4 8}Filippo Palomba, Princeton University.
+{browse "mailto:filippo.palomba19@gmail.com":filippo.palomba19@gmail.com}.
 
-{p 4 8}Rocio Titiunik, Princeton University, Princeton, NJ.
-{browse "mailto:titiunik@princeton.edu":titiunik@princeton.edu}.{p_end}
+{p 4 8}Rocio Titiunik, Princeton University.
+{browse "mailto:rocio.titiunik@gmail.com":rocio.titiunik@gmail.com}.{p_end}

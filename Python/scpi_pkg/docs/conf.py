@@ -24,8 +24,8 @@ from scpi_pkg.scplotMulti import scplotMulti
 # -- Project information -----------------------------------------------------
 
 project = 'scpi-pkg'
-copyright = '2022, Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik'
-author = 'Matias Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik'
+copyright = '2026, Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik'
+author = 'Matias D. Cattaneo, Yingjie Feng, Filippo Palomba, Rocio Titiunik'
 
 # The full version, including alpha/beta/rc tags
 release = '2.2.2'

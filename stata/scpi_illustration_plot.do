@@ -3,7 +3,7 @@
 ** Do-file for Visualization - Single Treated Unit
 ** Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik 
 ********************************************************************************
-** net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/stata) replace
+** net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/main/stata) replace
 ********************************************************************************
 
 ********************************************************************************

@@ -104,7 +104,7 @@ The second list is labeled 'est.results' and contains estimation results.
 The command implements estimation procedures for Synthetic Control (SC) methods using least squares, lasso,
 ridge, or simplex-type constraints. For more information see
 \insertCite{cattaneo2021methodological-JASA;textual}{scpi} and
-\insertCite{cattaneo2025methodological-RESTAT;textual}{scpi}.
+\insertCite{cattaneo2027methodological-RESTAT;textual}{scpi}.
 
 Companion \href{https://www.stata.com/}{Stata} and \href{https://www.python.org/}{Python} packages are described in
 \insertCite{cattaneo2025software-JSS;textual}{scpi}.
@@ -199,11 +199,11 @@ result <- scest(df, w.constr = list(lb = 0, dir = "==", p = "L1", Q = 1))
 \code{\link{scdataMulti}}, \code{\link{scdata}}, \code{\link{scpi}}, \code{\link{scplot}}, \code{\link{scplotMulti}}
 }
 \author{
-Matias Cattaneo, Princeton University. \email{cattaneo@princeton.edu}.
+Matias D. Cattaneo, Princeton University. \email{matias.d.cattaneo@gmail.com}.
 
-Yingjie Feng, Tsinghua University. \email{fengyj@sem.tsinghua.edu.cn}.
+Yingjie Feng, Tsinghua University. \email{fengyingjiepku@gmail.com}.
 
-Filippo Palomba, Princeton University (maintainer). \email{fpalomba@princeton.edu}.
+Filippo Palomba, Princeton University. \email{filippo.palomba19@gmail.com}.
 
-Rocio Titiunik, Princeton University. \email{titiunik@princeton.edu}.
+Rocio Titiunik, Princeton University. \email{rocio.titiunik@gmail.com}.
 }

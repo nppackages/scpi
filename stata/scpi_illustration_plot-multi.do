@@ -3,7 +3,7 @@
 ** Do-file for Visualization - Multiple Treated Units 
 ** Authors: Matias D. Cattaneo, Yingjie Feng, Filippo Palomba and Rocio Titiunik 
 ********************************************************************************
-** net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/master/stata) replace
+** net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/main/stata) replace
 ********************************************************************************
 
 * ssc install grc1leg

@@ -5,7 +5,7 @@
 Please do not report security vulnerabilities through public GitHub issues.
 
 If you believe you have found a security issue in `scpi`, email
-fpalomba@princeton.edu with:
+matias.d.cattaneo@gmail.com with:
 
 - the affected component or package interface
 - the version, platform, and installation channel affected

@@ -1,13 +1,14 @@
 v 3
 d STATA Package: SCPI
+d Version: 4.0.0
 d 
-d Authors: Matias D. Cattaneo, Princeton University, cattaneo@princeton.edu
+d Authors: Matias D. Cattaneo, Princeton University, matias.d.cattaneo@gmail.com
 d          Yingjie Feng, Tsinghua University, fengyingjiepku@gmail.com 
-d          Filippo Palomba, Princeton University, fpalomba@princeton.edu
-d          Rocio Titiunik, Princeton University, titiunik@princeton.edu
+d          Filippo Palomba, Princeton University, filippo.palomba19@gmail.com
+d          Rocio Titiunik, Princeton University, rocio.titiunik@gmail.com
 d
-d Date: 3-JUL-2025
-d Distribution-Date: 20250703
+d Date: 1-JUN-2026
+d Distribution-Date: 20260601
 d 
 f scdata.ado
 f scdata.sthlp
@@ -18,6 +19,7 @@ f scest.sthlp
 f scpi.ado
 f scpi.sthlp
 f scpi_germany.dta
+f lscpi.mlib
 f scplot.ado
 f scplot.sthlp
 f scplotmulti.ado
