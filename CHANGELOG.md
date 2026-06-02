@@ -101,12 +101,24 @@ package history predates this changelog.
 - Verified that `origin/main` source and current local Python source produce
   identical RESTAT WaveAll snapshots under the same public Python dependency
   stack (`1e-8` tolerance over common numeric leaves).
+- Verified that `origin/main` source and current local Python source produce
+  identical multi-illustration snapshots under the same public Python dependency
+  stack (`1e-8` tolerance over common numeric leaves).
+- Verified that `origin/main` source and current local R source produce
+  identical multi-illustration snapshots (`1e-8` tolerance over common numeric
+  leaves).
+- Confirmed that the RESTAT WaveAll R source-baseline run hits the aggregate
+  time-effect interval dimname issue fixed locally.
 - Isolated the larger RESTAT WaveAll Python inference drift to the installed
   PyPI package snapshot versus the GitHub source baseline, not to the
   modernization commits.
 - Bounded RESTAT WaveAll Python/Stata dependency-stack drift at about `2e-6` in
   interval outputs when comparing public-compatible dependencies with the
   current local dependency stack.
+- Recorded preliminary single-rep speed checks: Python RESTAT WaveAll improved
+  from about `14.50s` to `9.93s` against the GitHub source baseline under the
+  same public dependency stack, and Python multi-illustration improved from
+  about `2.35s` to `2.17s`.
 
 ### Known Follow-Ups
 
