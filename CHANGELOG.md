@@ -115,10 +115,24 @@ package history predates this changelog.
 - Bounded RESTAT WaveAll Python/Stata dependency-stack drift at about `2e-6` in
   interval outputs when comparing public-compatible dependencies with the
   current local dependency stack.
+- Verified that `origin/main` source and current local Stata source produce
+  RESTAT WaveAll snapshots within `2e-6` tolerance under the same public
+  Python dependency stack.
+- Verified that Stata multi-illustration deterministic objects are stable
+  against the `origin/main` source baseline, while interval matrices drift in
+  that scenario; RESTAT remains the cleaner cross-platform numerical check.
+- Verified the Stata 16 `scplotmulti` precision option with local Python
+  dependencies: `precision(double)` stores generated plot variables as double,
+  `precision(single)` preserves earlier single-precision generated storage, and
+  invalid precision values return the expected error.
 - Recorded preliminary single-rep speed checks: Python RESTAT WaveAll improved
   from about `14.50s` to `9.93s` against the GitHub source baseline under the
   same public dependency stack, and Python multi-illustration improved from
   about `2.35s` to `2.17s`.
+- Recorded preliminary single-rep Stata speed checks: RESTAT WaveAll improved
+  from about `22.99s` to `16.03s` against the GitHub source baseline under the
+  same public Python dependency stack, and to about `14.40s` with the current
+  local dependency stack.
 
 ### Known Follow-Ups
 
