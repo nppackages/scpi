@@ -471,7 +471,7 @@ def scdataMulti(df,
             anticipation_tr = anticipation[treated_unit]
 
         # parse data
-        treated_unit_T0 = treated_periods.loc[treated_unit, ][0]  # treatment date
+        treated_unit_T0 = treated_periods.loc[treated_unit, '__time']  # treatment date
 
         # get all other units before treatment of treated unit
         donors = data[numpy.invert(data['__ID'].isin(treated_post)) &

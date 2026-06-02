@@ -398,6 +398,21 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
   return(list(Q = Q, lambda = lambd))
 }
 
+# Fast path for unconstrained diagonal-weight least squares.
+b.est.lm <- function(A, Z, V) {
+  if (!is.matrix(V) || nrow(V) != ncol(V)) return(NULL)
+
+  V.offdiag <- V
+  diag(V.offdiag) <- 0
+  if (any(V.offdiag != 0)) return(NULL)
+
+  fit <- stats::lm.wfit(Z, A, w = diag(V))
+  b <- fit$coefficients
+  if (anyNA(b)) return(NULL)
+
+  b
+}
+
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method
 b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "CLARABEL") {
@@ -415,6 +430,15 @@ b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "CLARABEL") {
     Q2 <- w.constr[["Q2"]]
   } else {
     Q2 <- NULL
+  }
+
+  if (p == "no norm") {
+    b <- b.est.lm(A, Z, V)
+    if (!is.null(b)) {
+      b <- as.numeric(b)
+      names(b) <- colnames(Z)
+      return(b)
+    }
   }
 
   x <- CVXR::Variable(J + KM)
@@ -495,6 +519,15 @@ b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver = "CLARABEL") 
     constraints <- list(x[1:Jtot] >= lb)
   } else {
     constraints <- list()
+  }
+
+  if (p == "no norm") {
+    b <- b.est.lm(A, Z, V)
+    if (!is.null(b)) {
+      b <- as.matrix(b)
+      rownames(b) <- colnames(Z)
+      return(b)
+    }
   }
 
   j.lb <- 1
@@ -1801,7 +1834,11 @@ outcomeGet <- function(Y.pre.fit, Y.post.fit, Y.df, units.est, treated.units,
 
   # avoids problems when units have numeric ID
   if (plot.type == "time") {
-    rownames(Y.post.fit) <- paste0("agg.", rownames(Y.post.fit))
+    post.names <- rownames(Y.post.fit)
+    if (is.null(post.names) || length(post.names) != nrow(Y.post.fit)) {
+      post.names <- seq_len(nrow(Y.post.fit))
+    }
+    rownames(Y.post.fit) <- paste0("agg.", post.names)
   }
 
   synth.mat <- rbind(Y.pre.fit, Y.post.fit)

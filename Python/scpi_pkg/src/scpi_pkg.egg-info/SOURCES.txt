@@ -16,3 +16,4 @@ src/scpi_pkg.egg-info/SOURCES.txt
 src/scpi_pkg.egg-info/dependency_links.txt
 src/scpi_pkg.egg-info/requires.txt
 src/scpi_pkg.egg-info/top_level.txt
+tests/test_scdataMulti.py
