@@ -1167,7 +1167,7 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
     data[["A"]] <- ECOS_get_A(J, Jtot, KMI, I, w.constr.inf, ns)
     data[["b"]] <- ECOS_get_b(Q.star, w.constr.inf)
 
-    use.parallel <- cores > 1 && sims >= 100
+    use.parallel <- cores > 1 && sims >= 1000
 
     if (!use.parallel) {
 

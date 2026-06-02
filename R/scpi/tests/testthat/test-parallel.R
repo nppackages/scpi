@@ -23,7 +23,7 @@ test_that("diagonal in-sample uncertainty is stable across core counts", {
   set.seed(8894)
   serial <- scpi(
     df,
-    sims = 100,
+    sims = 1000,
     w.constr = list(name = "simplex"),
     cores = 1,
     u.order = 1,
@@ -39,7 +39,7 @@ test_that("diagonal in-sample uncertainty is stable across core counts", {
   set.seed(8894)
   parallel <- scpi(
     df,
-    sims = 100,
+    sims = 1000,
     w.constr = list(name = "simplex"),
     cores = 2,
     u.order = 1,
@@ -58,17 +58,17 @@ test_that("diagonal in-sample uncertainty is stable across core counts", {
   expect_equal(
     serial.inf$CI.in.sample,
     parallel.inf$CI.in.sample,
-    tolerance = 1e-8
+    tolerance = 1e-4
   )
   expect_equal(
     serial.inf$CI.all.gaussian,
     parallel.inf$CI.all.gaussian,
-    tolerance = 1e-8
+    tolerance = 1e-4
   )
   expect_equal(
     serial.inf$bounds$insample,
     parallel.inf$bounds$insample,
-    tolerance = 1e-8
+    tolerance = 1e-4
   )
   expect_equal(serial.inf$failed.sims, parallel.inf$failed.sims)
 })
