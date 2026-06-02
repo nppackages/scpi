@@ -15,9 +15,22 @@ version 16.0
 										line_tr_col(string) line_tr_patt(string) line_tr_width(string)    ///
 										line_sc_col(string) line_sc_patt(string) line_sc_width(string)    ///
 										spike_sc_col(string) spike_sc_patt(string) spike_sc_width(string) ///
-										gphoptions(string) gphcombineoptions(string) gphsave(string) savedata(string) keepsingleplots pypinocheck]
+										gphoptions(string) gphcombineoptions(string) gphsave(string) savedata(string) ///
+										precision(string) keepsingleplots pypinocheck]
 
 	tempvar outvar CIlb CIub idcode
+
+	if mi("`precision'") {
+		local precision "double"
+	}
+	if !inlist("`precision'", "single", "double") {
+		di as error "{err}The option 'precision' should be one of 'single' or 'double'!"
+		exit 198
+	}
+	local gen_type
+	if "`precision'" == "double" {
+		local gen_type "double"
+	}
 										
 	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
 		python: version_checker()
@@ -146,36 +159,36 @@ version 16.0
 	qui levelsof ID, local(tr_units)
 	
 	if "`ptype'" == "series" {
-		qui gen double `outvar' = Outcome
+		qui gen `gen_type' `outvar' = Outcome
 		local ytitle = "Outcome Variable"
 	}
 	else {
-		qui gen double `outvar' = Effect
+		qui gen `gen_type' `outvar' = Effect
 		local ytitle = "Effect"
 	}
 
 	if mi("`scest'") {
 		if "`uncertainty'" == "insample" {
-			qui gen double `CIlb' = Lower_insample
-			qui gen double `CIub' = Upper_insample
+			qui gen `gen_type' `CIlb' = Lower_insample
+			qui gen `gen_type' `CIub' = Upper_insample
 			local graph_note "In-sample uncertainty"
 		}
 
 		if "`uncertainty'" == "gaussian" {
-			qui gen double `CIlb' = Lower_gaussian
-			qui gen double `CIub' = Upper_gaussian
+			qui gen `gen_type' `CIlb' = Lower_gaussian
+			qui gen `gen_type' `CIub' = Upper_gaussian
 			local graph_note "Out-of-sample uncertainty: subgaussian bounds"
 		}
 
 		if "`uncertainty'" == "ls" {
-			qui gen double `CIlb' = Lower_ls
-			qui gen double `CIub' = Upper_ls
+			qui gen `gen_type' `CIlb' = Lower_ls
+			qui gen `gen_type' `CIub' = Upper_ls
 			local graph_note "Out-of-sample uncertainty: location-scale model"
 		}
 
 		if "`uncertainty'" == "qreg" {
-			qui gen double `CIlb' = Lower_qreg
-			qui gen double `CIub' = Upper_qreg
+			qui gen `gen_type' `CIlb' = Lower_qreg
+			qui gen `gen_type' `CIub' = Upper_qreg
 			local graph_note "Out-of-sample uncertainty: quantile regression"
 		}	
 	}
