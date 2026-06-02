@@ -76,6 +76,13 @@ package history predates this changelog.
 - Removed a duplicate `Qtools::rrq()` fit from the internal R quantile
   regression prediction helper used by `e.method = "qreg"` and `e.method =
   "all"`.
+- Extended `scdataMulti()` to accept unit-specific `features`, `cov.adj`,
+  `constant`, and `cointegrated.data` specifications, matching the flexibility
+  already available in the Stata and Python interfaces.
+- Fixed R multi-unit `P.diff` handling for mixed cointegration settings so
+  units that do not require precomputed differenced predictors are represented
+  as `NULL` during inference instead of causing a column-name mismatch.
+- Added regression coverage for unit-specific `scdataMulti()` options.
 
 ### Python
 
@@ -95,6 +102,9 @@ package history predates this changelog.
   output for single- and multi-unit objects and skip repeated point estimation.
 - Pre-generated serial Python in-sample uncertainty simulation draws in
   `scpi_in()` while preserving the existing random stream.
+- Aligned the Python multi-unit illustration script with the Stata example:
+  shared options for the unit-time effect and unit-specific options for the
+  unit and time aggregated effects.
 
 ### Numerical Checks and Testing
 
@@ -282,6 +292,12 @@ package history predates this changelog.
   replacing pure-Python sums after ECOS solves with vector dot products.
   Snapshots matched at `1e-8`, but timing was not consistently better across
   multi-illustration and RESTAT WaveAll, so the experiment was not retained.
+- Aligned the R and Python multi-unit illustration/benchmark setups with the
+  Stata illustration pattern. The updated R/Python multi-illustration
+  comparison has no length mismatches; deterministic fitted objects are mostly
+  within `5e-5`, with remaining drift concentrated in `b`/`r` and Gaussian
+  interval objects. The existing RESTAT WaveAll checks remain the cleaner
+  cross-platform validation target.
 
 ### Known Follow-Ups
 

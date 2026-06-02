@@ -34,6 +34,17 @@ data$treatment <- 0
 data[(data$country == "West Germany" & data$year >= 1991), "treatment"] <- 1
 data[(data$country == "Italy" & data$year >= 1992), "treatment"] <- 1
 
+features.shared <- list(c("gdp", "trade"))
+cov.adj.shared <- list(c("constant", "trend"))
+
+features.by.unit <- list("Italy" = c("gdp", "trade"),
+                         "West Germany" = c("gdp", "infrate"))
+constant.by.unit <- list("Italy" = TRUE, "West Germany" = FALSE)
+cointegrated.by.unit <- list("Italy" = TRUE, "West Germany" = FALSE)
+cov.adj.by.unit <- list("Italy" = list(c("constant", "trend")),
+                        "West Germany" = list(c("constant", "trend"),
+                                              c("constant", "trend")))
+
 
 ######################################################
 # unit-time treatment effect (\tau_{ik})
@@ -41,8 +52,8 @@ data[(data$country == "Italy" & data$year >= 1992), "treatment"] <- 1
 
 df <- scdataMulti(data, id.var = "country", outcome.var = "gdp",
                   treatment.var = "treatment", time.var = "year", constant = TRUE,
-                  cointegrated.data = TRUE, features = list(c("gdp", "trade")),
-                  cov.adj = list(c("constant", "trend")))
+                  cointegrated.data = TRUE, features = features.shared,
+                  cov.adj = cov.adj.shared)
 
 
 res <- scest(df, w.constr = list("name" = "simplex"))
@@ -68,9 +79,11 @@ ggsave("germany_est_multi_3.png", height=6, width=9, dpi="retina")
 ######################################################
 
 df <- scdataMulti(data, id.var = "country", outcome.var = "gdp",
-                  treatment.var = "treatment", time.var = "year", constant = TRUE,
-                  cointegrated.data = TRUE, features = list(c("gdp", "trade")),
-                  cov.adj = list(c("constant", "trend")), effect = "unit")
+                  treatment.var = "treatment", time.var = "year",
+                  constant = constant.by.unit,
+                  cointegrated.data = cointegrated.by.unit,
+                  features = features.by.unit,
+                  cov.adj = cov.adj.by.unit, effect = "unit")
 
 res <- scest(df, w.constr = list("name" = "simplex"))
 scplotMulti(res)
@@ -92,9 +105,11 @@ ggsave("germany_est_multi_6.png", height=6, width=9, dpi="retina")
 ######################################################
 
 df <- scdataMulti(data, id.var = "country", outcome.var = "gdp",
-                  treatment.var = "treatment", time.var = "year", constant = TRUE,
-                  cointegrated.data = TRUE, features = list(c("gdp", "trade")),
-                  cov.adj = list(c("constant", "trend")), effect = "time")
+                  treatment.var = "treatment", time.var = "year",
+                  constant = constant.by.unit,
+                  cointegrated.data = cointegrated.by.unit,
+                  features = features.by.unit,
+                  cov.adj = cov.adj.by.unit, effect = "time")
 
 res <- scest(df, w.constr = list("name" = "simplex"))
 scplotMulti(res)

@@ -52,6 +52,27 @@ test_that("no error is returned", {
                             cov.adj = list(c("constant", "trend"))))
 })
 
+test_that("unit-specific data options are accepted", {
+  features <- list("Italy" = c("gdp", "trade"),
+                   "West Germany" = c("gdp", "infrate"))
+  cov.adj <- list("Italy" = list(c("constant", "trend")),
+                  "West Germany" = list(c("constant", "trend"),
+                                        c("constant", "trend")))
+  constant <- list("Italy" = TRUE, "West Germany" = FALSE)
+  cointegrated.data <- list("Italy" = TRUE, "West Germany" = FALSE)
+
+  df <- test.data(features = features, cov.adj = cov.adj,
+                  constant = constant,
+                  cointegrated.data = cointegrated.data,
+                  effect = "unit")
+
+  expect_equal(df$specs$features[["Italy"]], c("gdp", "trade"))
+  expect_equal(df$specs$features[["West Germany"]], c("gdp", "infrate"))
+  expect_true(df$specs$constant[["Italy"]])
+  expect_false(df$specs$constant[["West Germany"]])
+  expect_true(df$specs$cointegrated.data[["Italy"]])
+  expect_false(df$specs$cointegrated.data[["West Germany"]])
+})
 
 
 

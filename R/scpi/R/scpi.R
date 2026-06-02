@@ -582,8 +582,15 @@ scpi  <- function(data,
 
   if (!is.null(sc.pred$data$P.diff)) {
     Pd.list <- mat2list(sc.pred$data$P.diff)
+    Pd.list.full <- rep(list(NULL), I)
+    names(Pd.list.full) <- sc.pred$data$specs$treated.units
+    for (tr in names(Pd.list)) {
+      Pd.list.full[[tr]] <- Pd.list[[tr]]
+    }
+    Pd.list <- Pd.list.full
   } else {
     Pd.list <- rep(list(NULL), I)
+    names(Pd.list) <- sc.pred$data$specs$treated.units
   }
 
   V.list   <- mat2list(V)

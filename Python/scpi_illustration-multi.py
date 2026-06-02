@@ -38,6 +38,12 @@ id_var = 'country'
 time_var = 'year'
 treatment_var = 'status'
 outcome_var = 'gdp'
+features_shared = {'features': ['gdp', 'trade']}
+covs_adj_shared = {'cov_adj': ['constant', 'trend']}
+features_by_unit = {'Italy': ['gdp', 'trade'],
+                    'West Germany': ['gdp', 'infrate']}
+constant_by_unit = {'Italy': True, 'West Germany': False}
+cointegrated_by_unit = {'Italy': True, 'West Germany': False}
 covs_adj = {'Italy': ['constant', 'trend'],
             'West Germany': [['constant', 'trend'], ['constant', 'trend']]}
 
@@ -51,10 +57,10 @@ aux = scdataMulti(df=data,
                   treatment_var=treatment_var,
                   outcome_var=outcome_var,
                   time_var=time_var,
-                  features={"Italy": ["gdp", "trade"],
-                            "West Germany": ["gdp", "infrate"]},
-                  constant={'Italy': True, 'West Germany': False},
-                  cointegrated_data=True, cov_adj=covs_adj)
+                  features=features_shared,
+                  constant=True,
+                  cointegrated_data=True,
+                  cov_adj=covs_adj_shared)
 
 res = scest(aux, w_constr={'name': 'simplex'})
 scplotMulti(res)
@@ -76,10 +82,9 @@ aux = scdataMulti(df=data,
                   treatment_var=treatment_var,
                   outcome_var=outcome_var,
                   time_var=time_var,
-                  features={"Italy": ["gdp", "trade"],
-                            "West Germany": ["gdp", "infrate"]},
-                  constant={'Italy': True, 'West Germany': False},
-                  cointegrated_data=True,
+                  features=features_by_unit,
+                  constant=constant_by_unit,
+                  cointegrated_data=cointegrated_by_unit,
                   cov_adj=covs_adj, effect="unit")
 
 res = scest(aux, w_constr={'name': 'simplex'})
@@ -102,10 +107,9 @@ aux = scdataMulti(df=data,
                   treatment_var=treatment_var,
                   outcome_var=outcome_var,
                   time_var=time_var,
-                  features={"Italy": ["gdp", "trade"],
-                            "West Germany": ["gdp", "infrate"]},
-                  constant={'Italy': True, 'West Germany': False},
-                  cointegrated_data=True,
+                  features=features_by_unit,
+                  constant=constant_by_unit,
+                  cointegrated_data=cointegrated_by_unit,
                   cov_adj=covs_adj, effect="time")
 
 res = scest(aux, w_constr={'name': 'simplex'})
