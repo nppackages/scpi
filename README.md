@@ -11,13 +11,6 @@ multiple treated units and staggered treatment adoption.
 - `scplot`: plots for single-treated-unit synthetic control results.
 - `scplotMulti`: plots for multiple-treated-unit and staggered-adoption results.
 
-## Authors
-
-- Matias D. Cattaneo, Princeton University, <matias.d.cattaneo@gmail.com>.
-- Yingjie Feng, Tsinghua University, <fengyingjiepku@gmail.com>.
-- Filippo Palomba, Princeton University, <filippo.palomba19@gmail.com>.
-- Rocio Titiunik, Princeton University, <rocio.titiunik@gmail.com>.
-
 ## Python Implementation
 
 To install/update in Python type:
