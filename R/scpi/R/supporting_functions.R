@@ -1566,19 +1566,21 @@ predict <- function(y, x, eval, type = "lm", tau = NULL, verbose = FALSE) {
 
   } else if (type == "qreg") {
 
-    tryCatch(
-      {
-        betahat <- Qtools::rrq(y ~ x - 1, tau = tau)$coefficients
-      },
-
+    rrq.warning <- NULL
+    fit <- withCallingHandlers(
+      Qtools::rrq(y ~ x - 1, tau = tau),
       warning = function(war) {
-        message("Warning produced when estimating moments of the out-of-sample residuals with quantile regressions.")
-        war$call <- NULL
-        if (verbose) warning(war)
+        rrq.warning <<- war
+        invokeRestart("muffleWarning")
       }
     )
+    if (!is.null(rrq.warning)) {
+      message("Warning produced when estimating moments of the out-of-sample residuals with quantile regressions.")
+      rrq.warning$call <- NULL
+      if (verbose) warning(rrq.warning)
+    }
 
-    betahat <- suppressWarnings(Qtools::rrq(y ~ x - 1, tau = tau)$coefficients)
+    betahat <- fit$coefficients
     pred <- eval %*% betahat
   }
 

@@ -73,6 +73,9 @@ package history predates this changelog.
   object and skip repeated point estimation. `scest` return objects now retain
   `Y.donors` in their data block, matching the documented return shape and
   making the object self-contained for inference reuse.
+- Removed a duplicate `Qtools::rrq()` fit from the internal R quantile
+  regression prediction helper used by `e.method = "qreg"` and `e.method =
+  "all"`.
 
 ### Python
 
@@ -207,6 +210,18 @@ package history predates this changelog.
   failures or warnings. Verified `R CMD check R\scpi --no-manual
   --no-build-vignettes` with the expected source-prep NOTE and restricted
   network repository warnings.
+- Tested preallocating cross-unit simulation matrices in R
+  `insampleUncertaintyGetDiag()` instead of growing them with repeated
+  `cbind()` calls. Multi-illustration and RESTAT WaveAll snapshots matched at
+  `1e-8`, but single-run timing showed no improvement, so the experiment was
+  not retained.
+- Replaced the double-fit R `Qtools::rrq()` helper path with a single fit while
+  preserving warning handling. A focused old-vs-new helper check matched
+  exactly (`max_abs = 0`); helper timing over 100 repetitions moved from about
+  `0.95s` to `0.43s` (`2.21x`), and a package-level `e.method = "qreg"` smoke
+  path completed successfully.
+- Re-verified R tests with `devtools::test('R/scpi')`: 141 passing tests, no
+  failures or warnings.
 - Verified the Python `scest` reuse path with deterministic-bounds single- and
   multi-unit tests; direct and reused paths matched at `1e-8`. In a small
   5-rep Germany timing check with `w_bounds` and `sims=10`, mean single-unit
