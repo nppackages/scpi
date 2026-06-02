@@ -649,6 +649,7 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
 
     elif out_feat is True:
         e_res = res.loc[(outcome_var,), ]
+        nolag = False
 
         # Construct the polynomial terms in B (e.des.0) and P (e.des.1)
         if e_order == 0:       # Simple mean
@@ -682,6 +683,10 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
                 e_des_0 = Z.loc[:, index]
                 e_des_1 = P.loc[:, index]
 
+            if P_diff_pre is not None:
+                e_des_1 = P_diff_pre.loc[:, index]
+                nolag = True
+
             if constant is False:
                 e_des_0.insert(loc=len(e_des_0.columns), column='0_constant',
                                value=numpy.ones(len(e_des_0)))
@@ -691,12 +696,6 @@ def e_des_prep(B, C, P, e_order, e_lags, res, sc_pred, Y_donors, out_feat, J, in
                 else:
                     e_des_1.insert(loc=len(e_des_1.columns), column='0_constant',
                                    value=numpy.ones(len(e_des_1)))
-
-        nolag = False
-
-        if P_diff_pre is not None:
-            e_des_1 = P_diff_pre.loc[:, index]
-            nolag = True
 
         # Construct lags of B
         if e_lags > 0 and nolag is False:
