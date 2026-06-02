@@ -210,6 +210,13 @@ package history predates this changelog.
   5-rep Germany timing check with `w_bounds` and `sims=10`, mean single-unit
   `scpi()` time moved from about `0.044s` to `0.037s` after reusing an
   existing `scest` object (`1.19x`).
+- Added Python regression coverage for unbounded simulated inference through
+  the `scpi(scest_output, ...)` reuse path. With the same RNG stream as the
+  direct `scpi(scdata_output, ...)` workflow, the multi-unit check matched at
+  `1e-8`; local timing checks moved total runtime from about `2.20s` to
+  `2.13s` on multi-illustration (`1.03x`) and from about `8.34s` to `8.23s`
+  on RESTAT WaveAll (`1.01x`), with the RESTAT `scpi()` segment itself moving
+  from about `6.79s` to `6.17s` (`1.10x`) after separately timing `scest()`.
 - Profiled current local Python on multi-illustration (`sims=20`) and RESTAT
   WaveAll (`sims=10`) scenarios. In multi-illustration, `scpi()` took about
   `2.36s`, with ECOS simulation solves accounting for about `1.50s` of self

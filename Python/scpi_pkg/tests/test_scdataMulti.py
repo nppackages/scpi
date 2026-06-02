@@ -154,3 +154,48 @@ def test_scpi_reuses_scest_output_multi_unit():
     np.testing.assert_allclose(reused.b.to_numpy(), direct.b.to_numpy(), atol=1e-8, rtol=1e-8)
     np.testing.assert_allclose(reused.CI_in_sample.to_numpy(), direct.CI_in_sample.to_numpy(), atol=1e-8, rtol=1e-8)
     np.testing.assert_allclose(reused.CI_all_gaussian.to_numpy(), direct.CI_all_gaussian.to_numpy(), atol=1e-8, rtol=1e-8)
+
+
+def test_scpi_reuse_matches_direct_simulated_inference_with_aligned_rng():
+    data = pd.read_csv(Path(__file__).resolve().parents[2] / "scpi_germany.csv")
+    data["status"] = 0
+    data.loc[(data["country"] == "West Germany") & (data["year"] >= 1991), "status"] = 1
+    data.loc[(data["country"] == "Italy") & (data["year"] >= 1992), "status"] = 1
+
+    result = scdataMulti(
+        df=data,
+        id_var="country",
+        treatment_var="status",
+        outcome_var="gdp",
+        time_var="year",
+        features={"features": ["gdp", "trade"]},
+        cov_adj={"cov_adj": [["constant"], ["trend"]]},
+        constant=False,
+        cointegrated_data=True,
+        effect="unit",
+        verbose=False,
+    )
+
+    np.random.seed(8894)
+    direct = scpi(
+        result,
+        w_constr={"name": "simplex"},
+        sims=10,
+        cores=1,
+        e_method="gaussian",
+        verbose=False,
+    )
+
+    np.random.seed(8894)
+    estimate = scest(result, w_constr={"name": "simplex"})
+    reused = scpi(
+        estimate,
+        sims=10,
+        cores=1,
+        e_method="gaussian",
+        verbose=False,
+    )
+
+    np.testing.assert_allclose(reused.b.to_numpy(), direct.b.to_numpy(), atol=1e-8, rtol=1e-8)
+    np.testing.assert_allclose(reused.CI_in_sample.to_numpy(), direct.CI_in_sample.to_numpy(), atol=1e-8, rtol=1e-8)
+    np.testing.assert_allclose(reused.CI_all_gaussian.to_numpy(), direct.CI_all_gaussian.to_numpy(), atol=1e-8, rtol=1e-8)
