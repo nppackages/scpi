@@ -361,7 +361,7 @@ scest <- function(data,
   } else if(class.type == 'scpi_data_multi') {
     
     i.lb <- 1
-    fit.pre <- c()
+    fit.pre.blocks <- vector("list", I)
     Yd.list <- mat2list(data$Y.donors)
     w.list <- mat2list(as.matrix(w), cols=FALSE)
     
@@ -375,8 +375,9 @@ scest <- function(data,
         fit.pre.i <- Yd.list[[i]] %*% w.list[[i]]
       }
       i.lb <- i.lb + sum(unlist(T0.features[[i]]), na.rm = TRUE)
-      fit.pre <- rbind(fit.pre, fit.pre.i)
+      fit.pre.blocks[[i]] <- fit.pre.i
     }
+    fit.pre <- do.call(rbind, fit.pre.blocks)
   }
   
   
