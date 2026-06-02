@@ -822,6 +822,7 @@ def df_EST(w_constr, w, B, J, KM):
 
 def u_sigma_est(u_mean, u_sigma, res, Z, V, index, TT, df):
     ZZ = numpy.array(Z)
+    VV = numpy.array(V)
 
     if u_sigma == 'HC0':
         vc = 1
@@ -830,17 +831,19 @@ def u_sigma_est(u_mean, u_sigma, res, Z, V, index, TT, df):
         vc = TT / (TT - df)
 
     elif u_sigma == 'HC2':
-        ZVZinv = numpy.linalg.pinv(ZZ.T.dot(V).dot(ZZ))
-        PP = ZZ.dot(ZVZinv).dot(ZZ.T).dot(V)
+        ZVZinv = numpy.linalg.pinv(ZZ.T.dot(VV).dot(ZZ))
+        PP = ZZ.dot(ZVZinv).dot(ZZ.T).dot(VV)
         vc = 1 / (1 - numpy.diag(PP))
 
     elif u_sigma == 'HC3':
-        ZVZinv = numpy.linalg.pinv(ZZ.T.dot(V).dot(ZZ))
-        PP = ZZ.dot(ZVZinv).dot(ZZ.T).dot(V)
+        ZVZinv = numpy.linalg.pinv(ZZ.T.dot(VV).dot(ZZ))
+        PP = ZZ.dot(ZVZinv).dot(ZZ.T).dot(VV)
         vc = 1 / (1 - numpy.diag(PP))**2
 
-    Omega = numpy.diag(numpy.array((res - u_mean)**2).flatten() * vc)
-    Sigma = ZZ.T.dot(V).dot(Omega).dot(V).dot(ZZ) / (TT**2)
+    omega_diag = numpy.array((res - u_mean)**2).flatten() * vc
+    VZ = VV.dot(ZZ)
+    Sigma = (VZ.T * omega_diag).dot(VZ) / (TT**2)
+    Omega = numpy.diag(omega_diag)
 
     return Sigma, Omega
 

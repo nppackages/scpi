@@ -205,6 +205,12 @@ package history predates this changelog.
   about `3.27s` and `scpi()` about `8.97s`; remaining hotspots include ECOS
   simulation solves, out-of-sample quantile regression, and pseudo-inverse/SVD
   work.
+- Rewrote Python `u_sigma_est()` to compute `Sigma` through `VZ` and diagonal
+  residual weights instead of multiplying through a dense `Omega` matrix, while
+  preserving the existing dense `u_var` output. Multi-illustration and RESTAT
+  WaveAll snapshots matched at `1e-8`; the `scpi()` segment improved modestly
+  from `1.935s` to `1.921s` on multi-illustration and from `6.823s` to
+  `6.790s` on RESTAT in single-run checks.
 - Tested storing Python quantile-regression predictions as numeric `float`
   arrays instead of object arrays. Multi-illustration and RESTAT WaveAll
   snapshots matched at `1e-8`, but single-run timing did not improve, so the
@@ -221,6 +227,10 @@ package history predates this changelog.
   Python `scdata()` with a pandas `.copy()`. Multi-illustration and RESTAT
   WaveAll snapshots matched at `1e-8`, but single-run timing was slower, so the
   experiment was not retained.
+- Tested precomputing horizon-level `P @ beta` terms in Python `scpi()` and
+  replacing pure-Python sums after ECOS solves with vector dot products.
+  Snapshots matched at `1e-8`, but timing was not consistently better across
+  multi-illustration and RESTAT WaveAll, so the experiment was not retained.
 
 ### Known Follow-Ups
 
