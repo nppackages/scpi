@@ -934,6 +934,16 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
   data[["A"]] <- ECOS_get_A(J, Jtot, KMI, I, w.constr.inf, ns)
   data[["b"]] <- ECOS_get_b(Q.star, w.constr.inf)
 
+  Qbeta <- Q %*% beta
+  betaQbeta <- sum(beta * Qbeta)
+  Q.is.dge <- methods::is(Q, "dgeMatrix")
+  P.rows <- c.lb <- c.ub <- vector("list", jj)
+  for (hor in seq_len(jj)) {
+    P.rows[[hor]] <- P.na[hor, ]
+    if (w.lb.est == TRUE) c.lb[[hor]] <- ECOS_get_c(-P.rows[[hor]], ns)
+    if (w.ub.est == TRUE) c.ub[[hor]] <- ECOS_get_c(P.rows[[hor]], ns)
+  }
+
   if (cores == 1) {
 
     vsig <- matrix(NA, nrow = sims, ncol = 2 * jj)
@@ -949,19 +959,19 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
       zeta <- rnorm(length(beta))
       G <- Sigma.root %*% zeta
 
-      a <- -2 * G - 2 * Q %*% beta
-      d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-      if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
+      a <- -2 * G - 2 * Qbeta
+      d <- 2 * sum(G * beta) + betaQbeta
+      if (Q.is.dge == TRUE) a <- as.matrix(a)
 
       data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
       data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
 
       for (hor in seq_len(jj)) {
-        xt <- P.na[hor, ]
+        xt <- P.rows[[hor]]
 
         # minimization
         if (w.lb.est == TRUE) {
-          data[["c"]] <- ECOS_get_c(-xt, ns)
+          data[["c"]] <- c.lb[[hor]]
 
           solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
                                                   G = data[["G"]],
@@ -982,7 +992,7 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
 
         # maximization
         if (w.ub.est == TRUE) {
-          data[["c"]] <- ECOS_get_c(xt, ns)
+          data[["c"]] <- c.ub[[hor]]
 
           solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
                                                   G = data[["G"]],
@@ -1032,19 +1042,19 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
 
       zeta    <- rnorm(length(beta))
       G       <- Sigma.root %*% zeta
-      a <- -2 * G - 2 * Q %*% beta
-      d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-      if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
+      a <- -2 * G - 2 * Qbeta
+      d <- 2 * sum(G * beta) + betaQbeta
+      if (Q.is.dge == TRUE) a <- as.matrix(a)
 
       data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
       data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
 
       for (hor in seq_len(jj)) {
-        xt <- P.na[hor, ]
+        xt <- P.rows[[hor]]
 
         # minimization
         if (w.lb.est == TRUE) {
-          data[["c"]] <- ECOS_get_c(-xt, ns)
+          data[["c"]] <- c.lb[[hor]]
 
           solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
                                                   G = data[["G"]],
@@ -1065,7 +1075,7 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
 
         # maximization
         if (w.ub.est == TRUE) {
-          data[["c"]] <- ECOS_get_c(xt, ns)
+          data[["c"]] <- c.ub[[hor]]
 
           solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
                                                   G = data[["G"]],
@@ -1167,6 +1177,16 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
     data[["A"]] <- ECOS_get_A(J, Jtot, KMI, I, w.constr.inf, ns)
     data[["b"]] <- ECOS_get_b(Q.star, w.constr.inf)
 
+    Qbeta <- Q %*% beta
+    betaQbeta <- sum(beta * Qbeta)
+    Q.is.dge <- methods::is(Q, "dgeMatrix")
+    P.rows <- c.lb <- c.ub <- vector("list", jj)
+    for (hor in seq_len(jj)) {
+      P.rows[[hor]] <- P.na[hor, ]
+      if (w.lb.est == TRUE) c.lb[[hor]] <- ECOS_get_c(-P.rows[[hor]], ns)
+      if (w.ub.est == TRUE) c.ub[[hor]] <- ECOS_get_c(P.rows[[hor]], ns)
+    }
+
     use.parallel <- cores > 1 && sims >= 1000
 
     if (!use.parallel) {
@@ -1183,19 +1203,19 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
         }
 
         G <- zeta[, sim, drop = FALSE]
-        a <- -2 * G - 2 * Q %*% beta
-        d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-        if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
+        a <- -2 * G - 2 * Qbeta
+        d <- 2 * sum(G * beta) + betaQbeta
+        if (Q.is.dge == TRUE) a <- as.matrix(a)
 
         data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
         data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
 
         for (hor in seq_len(jj)) {
-          xt <- P.na[hor, ]
+          xt <- P.rows[[hor]]
 
           # minimization
           if (w.lb.est == TRUE) {
-            data[["c"]] <- ECOS_get_c(-xt, ns)
+            data[["c"]] <- c.lb[[hor]]
 
             solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
                                                     G = data[["G"]],
@@ -1216,7 +1236,7 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
 
           # maximization
           if (w.ub.est == TRUE) {
-            data[["c"]] <- ECOS_get_c(xt, ns)
+            data[["c"]] <- c.ub[[hor]]
 
             solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
                                                     G = data[["G"]],
@@ -1267,20 +1287,20 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
                                   .combine  = rbind,
                                   .options.snow = opts) %dopar% {
         G <- zeta[, sim, drop = FALSE]
-        a <- -2 * G - 2 * Q %*% beta
-        d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-        if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
+        a <- -2 * G - 2 * Qbeta
+        d <- 2 * sum(G * beta) + betaQbeta
+        if (Q.is.dge == TRUE) a <- as.matrix(a)
 
         data[["G"]] <- ECOS_get_G_worker(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
         data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
 
         lb.sim <- ub.sim <- c()
         for (hor in seq_len(jj)) {
-          xt <- P.na[hor, ]
+          xt <- P.rows[[hor]]
 
           # minimization
           if (w.lb.est == TRUE) {
-            data[["c"]] <- ECOS_get_c(-xt, ns)
+            data[["c"]] <- c.lb[[hor]]
 
             solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
                                                     G = data[["G"]],
@@ -1301,7 +1321,7 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
 
           # maximization
           if (w.ub.est == TRUE) {
-            data[["c"]] <- ECOS_get_c(xt, ns)
+            data[["c"]] <- c.ub[[hor]]
 
             solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
                                                     G = data[["G"]],
