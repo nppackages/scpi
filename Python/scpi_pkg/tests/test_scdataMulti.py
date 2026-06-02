@@ -86,19 +86,20 @@ def test_scpi_reuses_scest_output_single_unit():
         verbose=False,
     )
     estimate = scest(result, w_constr={"name": "simplex"})
+    w_bounds = np.zeros((len(estimate.Y_post_fit), 2))
 
-    np.random.seed(8894)
     direct = scpi(
         result,
         w_constr={"name": "simplex"},
+        w_bounds=w_bounds,
         sims=10,
         cores=1,
         e_method="gaussian",
         verbose=False,
     )
-    np.random.seed(8894)
     reused = scpi(
         estimate,
+        w_bounds=w_bounds,
         sims=10,
         cores=1,
         e_method="gaussian",
@@ -130,19 +131,20 @@ def test_scpi_reuses_scest_output_multi_unit():
         verbose=False,
     )
     estimate = scest(result, w_constr={"name": "simplex"})
+    w_bounds = np.zeros((len(estimate.Y_post_fit), 2))
 
-    np.random.seed(8894)
     direct = scpi(
         result,
         w_constr={"name": "simplex"},
+        w_bounds=w_bounds,
         sims=10,
         cores=1,
         e_method="gaussian",
         verbose=False,
     )
-    np.random.seed(8894)
     reused = scpi(
         estimate,
+        w_bounds=w_bounds,
         sims=10,
         cores=1,
         e_method="gaussian",

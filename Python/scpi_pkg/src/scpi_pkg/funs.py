@@ -1303,8 +1303,9 @@ def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_de
                         e_des_1, w_lb_est, w_ub_est, w_bounds, w_name, effect, out_feat,
                         e_lb=None, e_ub=None, e_1=None):
 
-    vsigLB = vsig[:, :T1_tot]
-    vsigUB = vsig[:, T1_tot:]
+    if w_lb_est is True or w_ub_est is True:
+        vsigLB = vsig[:, :T1_tot]
+        vsigUB = vsig[:, T1_tot:]
 
     if e_lb is None or e_ub is None or e_1 is None:
         e_lb, e_ub, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
@@ -1317,11 +1318,13 @@ def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_de
     for i in range(iota):
         jmax = T1[i] + jmin
 
-        lb_joint = numpy.nanquantile(numpy.nanmin(vsigLB[:, jmin:jmax], axis=0), q=(u_alpha / 2), axis=0)
-        ub_joint = numpy.nanquantile(numpy.nanmax(vsigUB[:, jmin:jmax], axis=0), q=(1 - u_alpha / 2), axis=0)
+        if w_lb_est is True:
+            lb_joint = numpy.nanquantile(numpy.nanmin(vsigLB[:, jmin:jmax], axis=0), q=(u_alpha / 2), axis=0)
+            w_lb_joint = w_lb_joint + [lb_joint] * T1[i]
 
-        w_lb_joint = w_lb_joint + [lb_joint] * T1[i]
-        w_ub_joint = w_ub_joint + [ub_joint] * T1[i]
+        if w_ub_est is True:
+            ub_joint = numpy.nanquantile(numpy.nanmax(vsigUB[:, jmin:jmax], axis=0), q=(1 - u_alpha / 2), axis=0)
+            w_ub_joint = w_ub_joint + [ub_joint] * T1[i]
         jmin = jmax
 
     eps = 1

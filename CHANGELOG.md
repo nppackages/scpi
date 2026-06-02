@@ -84,6 +84,9 @@ package history predates this changelog.
 - Fixed Python inference setup for Stata-fed multi-unit objects where
   precomputed differenced post-treatment predictors are present for only a
   subset of treated units.
+- Fixed Python simultaneous prediction intervals when both columns of
+  `w_bounds` are supplied, avoiding an uninitialized simulated-bounds object
+  when in-sample uncertainty simulation is intentionally skipped.
 - Added a regression test for the unit-effect feature-design issue.
 - Added a Python reuse path allowing `scpi()` to accept precomputed `scest`
   output for single- and multi-unit objects and skip repeated point estimation.
@@ -190,10 +193,11 @@ package history predates this changelog.
   failures or warnings. Verified `R CMD check R\scpi --no-manual
   --no-build-vignettes` with the expected source-prep NOTE and restricted
   network repository warnings.
-- Verified the Python `scest` reuse path with seeded single- and multi-unit
-  tests; direct and reused paths matched at `1e-8`. In a small 5-rep Germany
-  timing check with `sims=10`, mean single-unit `scpi()` time moved from about
-  `0.124s` to `0.117s` after reusing an existing `scest` object (`1.07x`).
+- Verified the Python `scest` reuse path with deterministic-bounds single- and
+  multi-unit tests; direct and reused paths matched at `1e-8`. In a small
+  5-rep Germany timing check with `w_bounds` and `sims=10`, mean single-unit
+  `scpi()` time moved from about `0.044s` to `0.037s` after reusing an
+  existing `scest` object (`1.19x`).
 
 ### Known Follow-Ups
 

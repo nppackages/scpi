@@ -841,6 +841,8 @@ def scpi(data,
         if sum(numpy.isnan(w_bounds[:, 1])) == 0:
             w_ub_est = False
 
+    vsig = None
+
     # if V is diagonal, we can solve the optimization problem independently for
     # each treated unit, otherwise we solve it jointly
     if (isDiagonal(V.to_numpy()) is True) and (force_joint_PI_optim is False):
