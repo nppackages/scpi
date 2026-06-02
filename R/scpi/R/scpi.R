@@ -22,7 +22,9 @@
 #'
 #' For an introduction to synthetic control methods, see \insertCite{abadie2021UsingSyntheticControls;textual}{scpi} and references therein.
 #'
-#' @param data a class 'scdata' object, obtained by calling \code{\link{scdata}}, or class 'scdataMulti' obtained via \code{\link{scdataMulti}}.
+#' @param data a class 'scdata' object, obtained by calling \code{\link{scdata}}, a class 'scdataMulti' obtained via
+#' \code{\link{scdataMulti}}, or a class 'scest' object obtained by calling \code{\link{scest}}. When a class 'scest'
+#' object is provided, \code{\link{scpi}} reuses its point estimates and skips the internal \code{\link{scest}} call.
 #' @param w.constr a list specifying the constraint set the estimated weights of the donors must belong to.
 #' \code{w.constr} can contain up to five elements:
 #' - `\code{p}', a scalar indicating the norm to be used (\code{p} should be one of "no norm", "L1", and "L2")
@@ -328,11 +330,21 @@ scpi  <- function(data,
                   verbose      = TRUE) {
 
 
-  if ((methods::is(data, "scdata") || methods::is(data, "scdataMulti")) == FALSE) {
-    stop("data should be the object returned by running scdata or scdata_multi!")
+  data.is.scest <- inherits(data, "scest")
+  if ((methods::is(data, "scdata") || methods::is(data, "scdataMulti") || data.is.scest) == FALSE) {
+    stop("data should be the object returned by running scdata, scdata_multi, or scest!")
   }
 
-  if (methods::is(data, "scdata") == TRUE) {
+  if (data.is.scest) {
+    class.type <- data$data$specs$class.type
+    if (class.type == "scpi_scest") {
+      class.type <- "scpi_data"
+    } else if (class.type == "scpi_scest_multi") {
+      class.type <- "scpi_data_multi"
+    } else {
+      stop("The class 'scest' object provided to data is not recognized.")
+    }
+  } else if (methods::is(data, "scdata") == TRUE) {
     class.type <- "scpi_data"
   } else if (methods::is(data, "scdataMulti") == TRUE) {
     class.type <- "scpi_data_multi"
@@ -343,9 +355,22 @@ scpi  <- function(data,
   ## Estimation of synthetic weights
   if (verbose) {
     cat("---------------------------------------------------------------\n")
-    cat("Estimating Weights...\n")
+    if (data.is.scest) {
+      cat("Reusing Estimated Weights...\n")
+    } else {
+      cat("Estimating Weights...\n")
+    }
   }
-  sc.pred <- scest(data = data, w.constr = w.constr, V = V, V.mat = V.mat, solver = solver)
+  if (data.is.scest) {
+    if (!is.null(w.constr) || !identical(V, "separate") || !is.null(V.mat) || !identical(solver, "CLARABEL")) {
+      warning("When data is a class 'scest' object, w.constr, V, V.mat, and solver are ignored because point estimates are reused.",
+              immediate. = TRUE, call. = FALSE)
+    }
+    sc.pred <- data
+    data <- sc.pred$data
+  } else {
+    sc.pred <- scest(data = data, w.constr = w.constr, V = V, V.mat = V.mat, solver = solver)
+  }
 
 
   #############################################################################
@@ -356,7 +381,7 @@ scpi  <- function(data,
   B           <- sc.pred$data$B                           # Features of control units
   C           <- sc.pred$data$C                           # Covariates for adjustment
   Z           <- sc.pred$data$Z                           # B and C column-bind
-  Y.donors    <- data$Y.donors                            # Outcome variable of control units
+  Y.donors    <- sc.pred$data$Y.donors                    # Outcome variable of control units
   K           <- sc.pred$data$specs$K                     # Number of covs for adjustment per feature
   KM          <- sc.pred$data$specs$KM                    # Dimension of r (total number of covs for adj)
   J           <- sc.pred$data$specs$J                     # Number of donors
@@ -394,9 +419,9 @@ scpi  <- function(data,
   } else if (class.type == "scpi_data_multi") {
     J               <- unlist(J)
     Jtot            <- sum(J)
-    KMI             <- data$specs$KMI                              # total number of covariates used for adjustment
-    I               <- data$specs$I                                # number of treated units
-    T0.M            <- unlist(lapply(data$specs$T0.features, sum)) # observations per treated unit
+    KMI             <- sc.pred$data$specs$KMI                              # total number of covariates used for adjustment
+    I               <- sc.pred$data$specs$I                                # number of treated units
+    T0.M            <- unlist(lapply(sc.pred$data$specs$T0.features, sum)) # observations per treated unit
     T0.tot          <- sum(T0.M)                                   # Total number of observations used in estimation
     T1.tot          <- sum(unlist(T1))                             # Total number of observations post-treatment
   }

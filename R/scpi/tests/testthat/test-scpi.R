@@ -81,6 +81,82 @@ test_that("an error is returned",
            expect_error(scpi(test_obj, P = xx, cores = 2, verbose = F))
           })
 
+test_that("scpi reuses scest objects in the single treated-unit case", {
+  test_obj <- test.data()
+  est <- scest(test_obj, w.constr = list(name = "simplex"))
+  w.bounds <- matrix(0, nrow = length(est$est.results$Y.post.fit), ncol = 2)
+  e.bounds <- matrix(0, nrow = length(est$est.results$Y.post.fit), ncol = 2)
+
+  direct <- scpi(
+    test_obj,
+    w.constr = list(name = "simplex"),
+    w.bounds = w.bounds,
+    e.bounds = e.bounds,
+    sims = 10,
+    cores = 1,
+    e.method = "gaussian",
+    verbose = FALSE
+  )
+
+  reused <- scpi(
+    est,
+    w.bounds = w.bounds,
+    e.bounds = e.bounds,
+    sims = 10,
+    cores = 1,
+    e.method = "gaussian",
+    verbose = FALSE
+  )
+
+  expect_equal(reused$est.results$b, direct$est.results$b, tolerance = 1e-8)
+  expect_equal(reused$inference.results$CI.in.sample,
+               direct$inference.results$CI.in.sample,
+               tolerance = 1e-8)
+  expect_equal(reused$inference.results$CI.all.gaussian,
+               direct$inference.results$CI.all.gaussian,
+               tolerance = 1e-8)
+})
+
+test_that("scpi reuses scest objects in the multiple treated-unit case", {
+  test_obj <- test.dataMulti(
+    effect = "unit-time",
+    features = list(c("gdp", "trade")),
+    cov.adj = list(c("constant", "trend"))
+  )
+  est <- scest(test_obj, w.constr = list(name = "simplex"))
+  w.bounds <- matrix(0, nrow = length(est$est.results$Y.post.fit), ncol = 2)
+  e.bounds <- matrix(0, nrow = length(est$est.results$Y.post.fit), ncol = 2)
+
+  direct <- scpi(
+    test_obj,
+    w.constr = list(name = "simplex"),
+    w.bounds = w.bounds,
+    e.bounds = e.bounds,
+    sims = 10,
+    cores = 1,
+    e.method = "gaussian",
+    verbose = FALSE
+  )
+
+  reused <- scpi(
+    est,
+    w.bounds = w.bounds,
+    e.bounds = e.bounds,
+    sims = 10,
+    cores = 1,
+    e.method = "gaussian",
+    verbose = FALSE
+  )
+
+  expect_equal(reused$est.results$b, direct$est.results$b, tolerance = 1e-8)
+  expect_equal(reused$inference.results$CI.in.sample,
+               direct$inference.results$CI.in.sample,
+               tolerance = 1e-8)
+  expect_equal(reused$inference.results$CI.all.gaussian,
+               direct$inference.results$CI.all.gaussian,
+               tolerance = 1e-8)
+})
+
 test_that("time-effect aggregate intervals keep row names", {
   set.seed(8894)
   test_obj <- test.dataMulti(effect = "time")

@@ -36,7 +36,9 @@ scpi(
 )
 }
 \arguments{
-\item{data}{a class 'scdata' object, obtained by calling \code{\link{scdata}}, or class 'scdataMulti' obtained via \code{\link{scdataMulti}}.}
+\item{data}{a class 'scdata' object, obtained by calling \code{\link{scdata}}, a class 'scdataMulti' obtained via
+\code{\link{scdataMulti}}, or a class 'scest' object obtained by calling \code{\link{scest}}. When a class 'scest'
+object is provided, \code{\link{scpi}} reuses its point estimates and skips the internal \code{\link{scest}} call.}
 
 \item{w.constr}{a list specifying the constraint set the estimated weights of the donors must belong to.
 \code{w.constr} can contain up to five elements:

@@ -69,6 +69,10 @@ package history predates this changelog.
   `shrinkage.EST()` ridge hyperparameter routine with an `lm.wfit()` helper
   that preserves the same weighted residual variance calculation with less
   setup overhead.
+- Added an R reuse path allowing `scpi()` to accept a precomputed `scest`
+  object and skip repeated point estimation. `scest` return objects now retain
+  `Y.donors` in their data block, matching the documented return shape and
+  making the object self-contained for inference reuse.
 
 ### Python
 
@@ -175,7 +179,12 @@ package history predates this changelog.
   `1e-8` over common numeric leaves. Single-run total time moved from about
   `8.07s` to `8.03s` on RESTAT and from about `3.76s` to `3.65s` on
   multi-illustration.
-- Verified R tests with `devtools::test('R/scpi')`: 132 passing tests, no
+- Verified the R `scest` reuse path with deterministic bounds in single- and
+  multi-unit tests; reused and direct paths matched at `1e-8`. In a small
+  deterministic timing check, median bounded `scpi()` time moved from about
+  `0.03s` to `0.00s` in the single-unit case and from about `0.07s` to
+  `0.02s` in the multi-unit case after reusing an existing `scest` object.
+- Verified R tests with `devtools::test('R/scpi')`: 138 passing tests, no
   failures or warnings. Verified `R CMD check R\scpi --no-manual
   --no-build-vignettes` with the expected source-prep NOTE and restricted
   network repository warnings.
