@@ -52,8 +52,10 @@ def scpi(data,
     """
     Parameters
     ----------
-    data : scdata_output
-        a class scdata_output object, obtained by calling scdata
+    data : scdata_output, scdata_multi_output, scest_output, or scest_multi_output
+        a class scdata_output object obtained by calling scdata, a class scdata_multi_output object obtained by
+        calling scdataMulti, or a class scest_output/scest_multi_output object obtained by calling scest. When a
+        scest output object is provided, scpi reuses its point estimates and skips the internal scest call.
 
     w_constr : dict, default {"name": "simplex"}
         a dictionary specifying the constraint set the estimated weights of the donors must belong to.
@@ -366,10 +368,13 @@ def scpi(data,
 
     """
 
-    if data.__class__.__name__ not in ['scdata_output', 'scdata_multi_output']:
-        raise Exception("data should be the object returned by running scdata or scdataMulti!")
+    data_class = data.__class__.__name__
+    data_is_scest = data_class in ['scest_output', 'scest_multi_output']
+    valid_classes = ['scdata_output', 'scdata_multi_output', 'scest_output', 'scest_multi_output']
+    if data_class not in valid_classes:
+        raise Exception("data should be the object returned by running scdata, scdataMulti, or scest!")
 
-    if data.__class__.__name__ == "scdata_output":
+    if data_class in ["scdata_output", "scest_output"]:
         class_type = "scpi_data"
     else:
         class_type = "scpi_data_multi"
@@ -378,8 +383,16 @@ def scpi(data,
     # Estimation of synthetic weights
     if pass_stata is False and verbose:
         print("-----------------------------------------------")
-        print("Estimating Weights...")
-    sc_pred = scest(df=data, w_constr=w_constr, V=V, Vmat=Vmat)
+        if data_is_scest:
+            print("Reusing Estimated Weights...")
+        else:
+            print("Estimating Weights...")
+    if data_is_scest:
+        if w_constr is not None or not isinstance(V, str) or V != "separate" or Vmat is not None:
+            warnings.warn("When data is a scest output object, w_constr, V, and Vmat are ignored because point estimates are reused.")
+        sc_pred = data
+    else:
+        sc_pred = scest(df=data, w_constr=w_constr, V=V, Vmat=Vmat)
 
     ######################################
     # Retrieve processed data from scest
