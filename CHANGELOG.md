@@ -184,6 +184,11 @@ package history predates this changelog.
   `1e-8` over common numeric leaves. Single-run total time moved from about
   `8.07s` to `8.03s` on RESTAT and from about `3.76s` to `3.65s` on
   multi-illustration.
+- Tested avoiding dense `Omega` multiplication in R `u.sigma.est()`. A
+  row-weighted `crossprod()` rewrite caused interval drift above `1e-8`; an
+  order-preserving sparse-diagonal rewrite matched at `1e-8` on
+  multi-illustration and RESTAT WaveAll but did not improve timing
+  consistently, so neither experiment was retained.
 - Verified the R `scest` reuse path with deterministic bounds in single- and
   multi-unit tests; reused and direct paths matched at `1e-8`. In a small
   deterministic timing check, median bounded `scpi()` time moved from about
