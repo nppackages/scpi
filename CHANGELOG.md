@@ -209,6 +209,18 @@ package history predates this changelog.
   arrays instead of object arrays. Multi-illustration and RESTAT WaveAll
   snapshots matched at `1e-8`, but single-run timing did not improve, so the
   experiment was not retained.
+- Tested batching final Python `scdataMulti()` `Y_pre`/`Y_post` assembly into a
+  single concatenation. Common numeric leaves matched at `1e-8`, but the change
+  altered the serialized dtype surface and did not improve single-run timing,
+  so the experiment was not retained.
+- Tested replacing Python `deepcopy()` calls on input pandas DataFrames in
+  `scdata()` and `scdataMulti()` with `DataFrame.copy(deep=True)`. Multi-
+  illustration and RESTAT WaveAll snapshots matched at `1e-8`, but single-run
+  timing did not improve, so the experiment was not retained.
+- Tested replacing the balanced-panel `deepcopy(data.unstack().stack(...))` in
+  Python `scdata()` with a pandas `.copy()`. Multi-illustration and RESTAT
+  WaveAll snapshots matched at `1e-8`, but single-run timing was slower, so the
+  experiment was not retained.
 
 ### Known Follow-Ups
 
