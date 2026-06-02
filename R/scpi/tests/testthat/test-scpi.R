@@ -30,6 +30,29 @@ test.data <- function(df = NULL,
   return(out) 
 }
 
+test.dataMulti <- function(effect = "unit-time",
+                           post.est = 2,
+                           constant = TRUE,
+                           cointegrated.data = TRUE) {
+  data <- scpi_germany
+  data$treatment <- 0
+  data[(data$country == "West Germany" & data$year >= 1991), "treatment"] <- 1
+  data[(data$country == "Italy" & data$year >= 1992), "treatment"] <- 1
+
+  scdataMulti(
+    data,
+    id.var = "country",
+    outcome.var = "gdp",
+    treatment.var = "treatment",
+    time.var = "year",
+    constant = constant,
+    cointegrated.data = cointegrated.data,
+    post.est = post.est,
+    units.est = c("West Germany", "Italy"),
+    effect = effect
+  )
+}
+
 ###############################################################################
 ###############################################################################
 
@@ -51,3 +74,23 @@ test_that("an error is returned",
            expect_error(scpi(test_obj, u.design = xx, cores = 2, verbose = F))
            expect_error(scpi(test_obj, P = xx, cores = 2, verbose = F))
           })
+
+test_that("time-effect aggregate intervals keep row names", {
+  set.seed(8894)
+  test_obj <- test.dataMulti(effect = "time")
+
+  res <- scpi(
+    test_obj,
+    sims = 10,
+    cores = 1,
+    w.constr = list(name = "simplex"),
+    u.missp = TRUE,
+    e.method = "gaussian",
+    verbose = FALSE
+  )
+
+  ci_names <- rownames(res$inference.results$CI.in.sample)
+  expect_length(ci_names, nrow(test_obj$P))
+  expect_true(all(grepl("^aggregate\\.", ci_names)))
+  expect_equal(rownames(res$inference.results$bounds$insample), ci_names)
+})

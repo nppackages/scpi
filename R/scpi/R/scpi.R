@@ -432,6 +432,17 @@ scpi  <- function(data,
     }
   }
 
+  if (sc.effect == "time") {
+    P.names <- rownames(P)
+    if (is.null(P.names) || length(P.names) != nrow(P)) {
+      P.names <- rownames(sc.pred$data$Y.post.agg)
+    }
+    if (is.null(P.names) || length(P.names) != nrow(P)) {
+      P.names <- seq_len(nrow(P))
+    }
+    rownames(P) <- sub("^aggregate\\.", "", as.character(P.names))
+  }
+
   if (!(e.method %in% c("gaussian", "ls", "qreg", "all"))) {
     stop("The object e.method should be one of 'gaussian', 'ls', 'qreg', or 'all'.")
   }
