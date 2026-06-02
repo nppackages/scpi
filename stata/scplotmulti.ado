@@ -395,7 +395,6 @@ version 16.0
 	
 		
 	qui erase "__scpi__stata_plot.dta"
-	qui erase "__scpi__stata_plot.csv"
 	
 	if !mi("`gphsave'") graph export "`gphsave'.png", replace 
 	if !mi("`savedata'") save "`savedata'.dta", replace
@@ -429,9 +428,7 @@ def scplot_loader(last_object, ptype, joint, e_out, e_method):
 	else:
 		joint_bool = True
 	
-	p = scplotMulti(result=result, ptype=ptype, e_out=e_out_bool, joint=joint_bool, save_data="__scpi__stata_plot", verbose=False)
-	df = pandas.read_csv("__scpi__stata_plot.csv")
-	df.drop(columns='Unnamed: 0', inplace=True)
+	p, df = scplotMulti(result=result, ptype=ptype, e_out=e_out_bool, joint=joint_bool, verbose=False, _return_data=True)
 	df.to_stata("__scpi__stata_plot.dta", write_index = False)
 	
 	Macro.setLocal("effect", result.effect)

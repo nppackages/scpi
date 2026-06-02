@@ -28,7 +28,8 @@ def scplotMulti(result,
                 dateFormat='%Y',
                 e_method_input=None,
                 save_data=None,
-                verbose=True):
+                verbose=True,
+                _return_data=False):
 
     """
 
@@ -601,13 +602,18 @@ def scplotMulti(result,
 
     if class_input == "scpi_multi_output":
         if e_out is False:
-            return plot_w
+            plot_out = plot_w
         elif e_method == "gaussian":
-            return plot_w1
+            plot_out = plot_w1
         elif e_method == "ls":
-            return plot_w2
+            plot_out = plot_w2
         elif e_method == "qreg":
-            return plot_w3
+            plot_out = plot_w3
 
     else:
-        return plot
+        plot_out = plot
+
+    if _return_data:
+        return plot_out, toplot
+
+    return plot_out
