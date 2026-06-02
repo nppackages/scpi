@@ -23,7 +23,7 @@ test_that("diagonal in-sample uncertainty is stable across core counts", {
   set.seed(8894)
   serial <- scpi(
     df,
-    sims = 10,
+    sims = 100,
     w.constr = list(name = "simplex"),
     cores = 1,
     u.order = 1,
@@ -39,7 +39,7 @@ test_that("diagonal in-sample uncertainty is stable across core counts", {
   set.seed(8894)
   parallel <- scpi(
     df,
-    sims = 10,
+    sims = 100,
     w.constr = list(name = "simplex"),
     cores = 2,
     u.order = 1,

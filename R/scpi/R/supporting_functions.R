@@ -1167,7 +1167,9 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
     data[["A"]] <- ECOS_get_A(J, Jtot, KMI, I, w.constr.inf, ns)
     data[["b"]] <- ECOS_get_b(Q.star, w.constr.inf)
 
-    if (cores == 1) {
+    use.parallel <- cores > 1 && sims >= 100
+
+    if (!use.parallel) {
 
       vsig.tr.lb <- matrix(NA, nrow = sims, ncol = jj)
       vsig.tr.ub <- matrix(NA, nrow = sims, ncol = jj)
@@ -1250,13 +1252,18 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
       }
       opts <- list(progress=progress)
 
+      ECOS_get_G_worker <- ECOS_get_G
+      ecos_get_g_env <- new.env(parent = environment(ECOS_get_G))
+      ecos_get_g_env$blockdiag <- blockdiag
+      ecos_get_g_env$blockdiagRidge <- blockdiagRidge
+      environment(ECOS_get_G_worker) <- ecos_get_g_env
+
       cl <- parallel::makeCluster(cores)
       doSNOW::registerDoSNOW(cl)
 
       vsig.tr <- foreach::foreach(sim = 1 : sims,
                                   .packages = c("ECOSolveR", "Matrix", "methods"),
-                                  .export   = c("ECOS_get_G", "ECOS_get_h", "ECOS_get_c",
-                                                "blockdiag", "blockdiagRidge", "sqrtm"),
+                                  .export   = c("ECOS_get_h", "ECOS_get_c"),
                                   .combine  = rbind,
                                   .options.snow = opts) %dopar% {
         G <- zeta[, sim, drop = FALSE]
@@ -1264,7 +1271,7 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
         d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
         if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
 
-        data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
+        data[["G"]] <- ECOS_get_G_worker(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
         data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
 
         lb.sim <- ub.sim <- c()
