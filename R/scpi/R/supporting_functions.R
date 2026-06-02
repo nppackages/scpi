@@ -1167,74 +1167,165 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
     data[["A"]] <- ECOS_get_A(J, Jtot, KMI, I, w.constr.inf, ns)
     data[["b"]] <- ECOS_get_b(Q.star, w.constr.inf)
 
-    vsig.tr.lb <- matrix(NA, nrow = sims, ncol = jj)
-    vsig.tr.ub <- matrix(NA, nrow = sims, ncol = jj)
+    if (cores == 1) {
 
-    for (sim in seq_len(sims)) {
-      rem <- sim %% iters
-      if ((rem == 0) && verbose) {
-        perc <- perc + 10
-        cat(paste("Treated unit ", tr, ": ", sim, "/", sims, " iterations completed (", perc, "%)", " \r", sep = ""))
-        utils::flush.console()
-      }
+      vsig.tr.lb <- matrix(NA, nrow = sims, ncol = jj)
+      vsig.tr.ub <- matrix(NA, nrow = sims, ncol = jj)
 
-      G <- zeta[, sim, drop = FALSE]
-      a <- -2 * G - 2 * Q %*% beta
-      d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
-      if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
+      for (sim in seq_len(sims)) {
+        rem <- sim %% iters
+        if ((rem == 0) && verbose) {
+          perc <- perc + 10
+          cat(paste("Treated unit ", tr, ": ", sim, "/", sims, " iterations completed (", perc, "%)", " \r", sep = ""))
+          utils::flush.console()
+        }
 
-      data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
-      data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
+        G <- zeta[, sim, drop = FALSE]
+        a <- -2 * G - 2 * Q %*% beta
+        d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
+        if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
 
-      for (hor in seq_len(jj)) {
-        xt <- P.na[hor, ]
+        data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
+        data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
 
-        # minimization
-        if (w.lb.est == TRUE) {
-          data[["c"]] <- ECOS_get_c(-xt, ns)
-          
-          solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
-                                                  G = data[["G"]],
-                                                  h = data[["h"]],
-                                                  dims = data[["dims"]],
-                                                  A = data[["A"]],
-                                                  b = data[["b"]])
+        for (hor in seq_len(jj)) {
+          xt <- P.na[hor, ]
 
-          if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+          # minimization
+          if (w.lb.est == TRUE) {
+            data[["c"]] <- ECOS_get_c(-xt, ns)
+
+            solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
+                                                    G = data[["G"]],
+                                                    h = data[["h"]],
+                                                    dims = data[["dims"]],
+                                                    A = data[["A"]],
+                                                    b = data[["b"]])
+
+            if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+              lb.f <- NA
+            } else {
+              xx <- solver_output$x[1:(Jtot + KMI)]
+              lb.f <- -sum(xt * (xx - beta))
+            }
+          } else {
             lb.f <- NA
-          } else {
-            xx <- solver_output$x[1:(Jtot + KMI)]
-            lb.f <- -sum(xt * (xx - beta))
           }
-        } else {
-          lb.f <- NA
-        }
 
-        # maximization
-        if (w.ub.est == TRUE) {
-          data[["c"]] <- ECOS_get_c(xt, ns)
+          # maximization
+          if (w.ub.est == TRUE) {
+            data[["c"]] <- ECOS_get_c(xt, ns)
 
-          solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
-                                                  G = data[["G"]],
-                                                  h = data[["h"]],
-                                                  dims = data[["dims"]],
-                                                  A = data[["A"]],
-                                                  b = data[["b"]])
+            solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
+                                                    G = data[["G"]],
+                                                    h = data[["h"]],
+                                                    dims = data[["dims"]],
+                                                    A = data[["A"]],
+                                                    b = data[["b"]])
 
-          if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+            if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+              ub.f <- NA
+            } else {
+              xx <- solver_output$x[1:(Jtot+KMI)]
+              ub.f <- -sum(xt * (xx - beta))
+            }
+          } else {
             ub.f <- NA
-          } else {
-            xx <- solver_output$x[1:(Jtot+KMI)]
-            ub.f <- -sum(xt * (xx - beta))
           }
-        } else {
-          ub.f <- NA
+
+          vsig.tr.lb[sim, hor] <- lb.f
+          vsig.tr.ub[sim, hor] <- ub.f
+        }
+      }
+
+    } else if (cores >= 1) {
+
+      progress <- function(n) {
+        rem <- n %% iters
+        if ((rem == 0) && verbose) {
+          perc <- n/sims * 100
+          cat(paste("Treated unit ", tr, ": ", n, "/", sims, " iterations completed (", perc, "%)", " \r", sep = ""))
+          utils::flush.console()
+        }
+      }
+      opts <- list(progress=progress)
+
+      cl <- parallel::makeCluster(cores)
+      doSNOW::registerDoSNOW(cl)
+
+      vsig.tr <- foreach::foreach(sim = 1 : sims,
+                                  .packages = c("ECOSolveR", "Matrix", "methods"),
+                                  .export   = c("ECOS_get_G", "ECOS_get_h", "ECOS_get_c",
+                                                "blockdiag", "blockdiagRidge", "sqrtm"),
+                                  .combine  = rbind,
+                                  .options.snow = opts) %dopar% {
+        G <- zeta[, sim, drop = FALSE]
+        a <- -2 * G - 2 * Q %*% beta
+        d <- 2 * sum(G * beta) + sum(beta * (Q %*% beta))
+        if (methods::is(Q, "dgeMatrix") == TRUE) a <- as.matrix(a)
+
+        data[["G"]] <- ECOS_get_G(Jtot, KMI, J, I, a, Qreg, w.constr.inf, ns, dimred, scale)
+        data[["h"]] <- ECOS_get_h(d, lb, J, Jtot, KMI, I, w.constr.inf, Q.star, Q2.star, dimred)
+
+        lb.sim <- ub.sim <- c()
+        for (hor in seq_len(jj)) {
+          xt <- P.na[hor, ]
+
+          # minimization
+          if (w.lb.est == TRUE) {
+            data[["c"]] <- ECOS_get_c(-xt, ns)
+
+            solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
+                                                    G = data[["G"]],
+                                                    h = data[["h"]],
+                                                    dims = data[["dims"]],
+                                                    A = data[["A"]],
+                                                    b = data[["b"]])
+
+            if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+              lb.f <- NA
+            } else {
+              xx <- solver_output$x[1:(Jtot + KMI)]
+              lb.f <- -sum(xt * (xx - beta))
+            }
+          } else {
+            lb.f <- NA
+          }
+
+          # maximization
+          if (w.ub.est == TRUE) {
+            data[["c"]] <- ECOS_get_c(xt, ns)
+
+            solver_output <- ECOSolveR::ECOS_csolve(c = data[["c"]],
+                                                    G = data[["G"]],
+                                                    h = data[["h"]],
+                                                    dims = data[["dims"]],
+                                                    A = data[["A"]],
+                                                    b = data[["b"]])
+
+            if (!(solver_output$infostring %in% c("Optimal solution found", "Close to optimal solution found"))) {
+              ub.f <- NA
+            } else {
+              xx <- solver_output$x[1:(Jtot+KMI)]
+              ub.f <- -sum(xt * (xx - beta))
+            }
+          } else {
+            ub.f <- NA
+          }
+
+          lb.sim <- append(lb.sim, lb.f)
+          ub.sim <- append(ub.sim, ub.f)
         }
 
-        vsig.tr.lb[sim, hor] <- lb.f
-        vsig.tr.ub[sim, hor] <- ub.f
+        c(lb.sim, ub.sim)
       }
+
+      parallel::stopCluster(cl)
+
+      vsig.tr.lb <- vsig.tr[, seq_len(jj), drop = FALSE]
+      vsig.tr.ub <- vsig.tr[, jj + seq_len(jj), drop = FALSE]
     }
+
     if (sc.effect != "time") {
       vsig.lb <- cbind(vsig.lb, vsig.tr.lb)
       vsig.ub <- cbind(vsig.ub, vsig.tr.ub)
