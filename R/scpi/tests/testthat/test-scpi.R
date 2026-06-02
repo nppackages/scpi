@@ -33,7 +33,10 @@ test.data <- function(df = NULL,
 test.dataMulti <- function(effect = "unit-time",
                            post.est = 2,
                            constant = TRUE,
-                           cointegrated.data = TRUE) {
+                           cointegrated.data = TRUE,
+                           features = NULL,
+                           cov.adj = NULL,
+                           sparse.matrices = FALSE) {
   data <- scpi_germany
   data$treatment <- 0
   data[(data$country == "West Germany" & data$year >= 1991), "treatment"] <- 1
@@ -47,9 +50,12 @@ test.dataMulti <- function(effect = "unit-time",
     time.var = "year",
     constant = constant,
     cointegrated.data = cointegrated.data,
+    features = features,
+    cov.adj = cov.adj,
     post.est = post.est,
     units.est = c("West Germany", "Italy"),
-    effect = effect
+    effect = effect,
+    sparse.matrices = sparse.matrices
   )
 }
 
@@ -93,4 +99,26 @@ test_that("time-effect aggregate intervals keep row names", {
   expect_length(ci_names, nrow(test_obj$P))
   expect_true(all(grepl("^aggregate\\.", ci_names)))
   expect_equal(rownames(res$inference.results$bounds$insample), ci_names)
+})
+
+test_that("unit-effect feature designs stay conformable", {
+  for (sparse.matrices in c(FALSE, TRUE)) {
+    set.seed(8894)
+    test_obj <- test.dataMulti(
+      effect = "unit",
+      constant = FALSE,
+      features = list(c("gdp", "trade")),
+      cov.adj = list("gdp" = c("constant"), "trade" = c("trend")),
+      sparse.matrices = sparse.matrices
+    )
+
+    res <- scpi(
+      test_obj,
+      sims = 10,
+      cores = 1,
+      verbose = FALSE
+    )
+
+    expect_equal(nrow(res$inference.results$CI.in.sample), nrow(test_obj$P))
+  }
 })

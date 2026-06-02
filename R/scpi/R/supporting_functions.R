@@ -749,6 +749,7 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
 
   } else if (out.feat == TRUE) {    # outcome variable is among features
     e.res <- res[1:T0[1], , drop = FALSE]
+    nolag <- FALSE
 
     ## Construct the polynomial terms in B (e.des.0) and P (e.des.1)
     if (e.order == 0) {
@@ -803,6 +804,11 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
         e.des.1 <- P[, index, drop = FALSE]
       }
 
+      if (is.null(P.diff.pre) == FALSE) {
+        e.des.1 <- P.diff.pre[, index, drop = FALSE]
+        nolag <- TRUE
+      }
+
       # Augment H with powers and interactions of B (not of C!!!)
       if (e.order > 1) {
         act.B <- sum(index.w)
@@ -823,12 +829,6 @@ e.des.prep <- function(B, C, P, e.order, e.lags, res, sc.pred, Y.donors, out.fea
           e.des.1 <- cbind(e.des.1, rep(1, nrow(e.des.1)))
         }
       }
-    }
-
-    nolag <- FALSE
-    if (is.null(P.diff.pre) == FALSE) {
-      e.des.1 <- P.diff.pre[, index, drop = FALSE]
-      nolag <- TRUE
     }
 
     if (e.lags > 0 && nolag == FALSE) {
@@ -912,7 +912,8 @@ insampleUncertaintyGet <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KMI, I
                                    w.constr.inf, Q.star, Q2.star, lb, TT, sims, cores, verbose,
                                    w.lb.est, w.ub.est) {
 
-  Q <- t(Z.na) %*% V.na %*% Z.na / TT
+  Z.na.t <- Matrix::t(Z.na)
+  Q <- Z.na.t %*% V.na %*% Z.na / TT
   colnames(Q) <- colnames(Z.na)
 
   jj <- nrow(P.na)
@@ -1113,7 +1114,8 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
                                        w.constr.inf, Q.star, Q2.star, lb, TT, sims, cores, verbose,
                                        w.lb.est, w.ub.est, sc.effect) {
 
-  Q <- t(Z.na) %*% V.na %*% Z.na / TT
+  Z.na.t <- Matrix::t(Z.na)
+  Q <- Z.na.t %*% V.na %*% Z.na / TT
   colnames(Q) <- colnames(Z.na)
 
   # prepare matrices
@@ -1123,7 +1125,7 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
   zeta.list <- mat2list(zeta.mat, cols = FALSE)
 
   if (sc.effect == "time") {
-    P.list <- mat2list(t(P.na), cols = FALSE)
+    P.list <- mat2list(Matrix::t(P.na), cols = FALSE)
   } else {
     P.list <- mat2list(P.na)
   }
@@ -1151,7 +1153,7 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
   for (tr in seq_len(Ieff)) {
 
     P.na <- P.list[[tr]]
-    if (sc.effect == "time") P.na <- t(P.na)
+    if (sc.effect == "time") P.na <- Matrix::t(P.na)
     Q <- Q.list[[tr]]
     KMI <- KM[[tr]]
     beta <- beta.list[[tr]]
@@ -1601,18 +1603,20 @@ df.EST <- function(w.constr, w, B, J, KM){
 
 u.sigma.est <- function(u.mean, u.sigma, res, Z, V, index, TT, df) {
 
+  Z.t <- Matrix::t(Z)
+
   if (u.sigma == "HC0") { # White (1980)
     vc <- 1
   } else if (u.sigma == "HC1") { # MacKinnon and White (1985)
     vc <- TT / (TT - df)
   } else if (u.sigma == "HC2") { # MacKinnon and White (1985)
-    PP <- Z %*% Matrix::solve(t(Z) %*% V %*% Z) %*% t(Z) %*% V
+    PP <- Z %*% Matrix::solve(Z.t %*% V %*% Z) %*% Z.t %*% V
     vc <- 1 / (1 - diag(PP))
   } else if (u.sigma == "HC3") { # Davidson and MacKinnon (1993)
-    PP <- Z %*% Matrix::solve(t(Z) %*% V %*% Z) %*% t(Z) %*% V
+    PP <- Z %*% Matrix::solve(Z.t %*% V %*% Z) %*% Z.t %*% V
     vc <- 1 / (1 - diag(PP))^2
   } else if (u.sigma == "HC4") { # Cribari-Neto (2004)
-    PP <- Z %*% Matrix::solve(t(Z) %*% V %*% Z) %*% t(Z) %*% V
+    PP <- Z %*% Matrix::solve(Z.t %*% V %*% Z) %*% Z.t %*% V
     CN <- as.matrix((TT) * diag(PP) / df)
     dd <- apply(CN, 1, function(x) min(4, x))
     vc <- as.matrix(NA, length(res), 1)
@@ -1622,7 +1626,7 @@ u.sigma.est <- function(u.mean, u.sigma, res, Z, V, index, TT, df) {
   }
 
   Omega  <- diag(c((res - u.mean)^2) * vc)
-  Sigma  <- t(Z) %*% V %*% Omega %*% V %*% Z / (TT^2)
+  Sigma  <- Z.t %*% V %*% Omega %*% V %*% Z / (TT^2)
 
   return(list(Omega = Omega, Sigma = Sigma))
 }
