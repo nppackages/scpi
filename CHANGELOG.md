@@ -31,6 +31,8 @@ package history predates this changelog.
 - Kept local auxiliary scripts under `script/`, which remains ignored by git.
 - Added and refined local benchmark/check scripts for R, Python, and Stata
   numerical comparisons.
+- Added an explicit local compatibility benchmark lane for running local source
+  against older public Python dependency environments.
 - Documented the Stata 16 embedded-Python setup: use base Python 3.10 and
   provide local package/dependency paths through `PYTHONPATH`.
 
@@ -96,6 +98,15 @@ package history predates this changelog.
   tolerance and RESTAT WaveAll Stata/Python outputs within `1e-6` tolerance.
 - Observed public-vs-local inference drift in multi-unit interval/Sigma objects;
   deterministic RESTAT cross-platform fitted objects remain within tolerance.
+- Verified that `origin/main` source and current local Python source produce
+  identical RESTAT WaveAll snapshots under the same public Python dependency
+  stack (`1e-8` tolerance over common numeric leaves).
+- Isolated the larger RESTAT WaveAll Python inference drift to the installed
+  PyPI package snapshot versus the GitHub source baseline, not to the
+  modernization commits.
+- Bounded RESTAT WaveAll Python/Stata dependency-stack drift at about `2e-6` in
+  interval outputs when comparing public-compatible dependencies with the
+  current local dependency stack.
 
 ### Known Follow-Ups
 
