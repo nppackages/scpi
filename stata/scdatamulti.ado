@@ -48,6 +48,7 @@ version 16.0
 	else {
 		if !inlist("`effect'", "unit-time", "unit", "time") {
 			di as error "The option 'effect' should be either 'unit', 'time', or 'unit-time'!"
+			exit 198
 		}
 	}
 	
@@ -243,9 +244,9 @@ def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, cova
 				tr_coint = False
 			
 			if i == 1:
-				coint_dict = {tr_name: tr_cons}
+				coint_dict = {tr_name: tr_coint}
 			else:
-				coint_dict[tr_name] = tr_cons
+				coint_dict[tr_name] = tr_coint
 			i += 1
 	else:
 		if cointegrated == "True":
@@ -269,9 +270,9 @@ def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, cova
 			tr_antic = int(aux[1].strip())
 							
 			if i == 1:
-				antic_dict = {tr_name: tr_cons}
+				antic_dict = {tr_name: tr_antic}
 			else:
-				antic_dict[tr_name] = tr_cons
+				antic_dict[tr_name] = tr_antic
 			i += 1
 	else:
 		antic_dict = int(anticipation)
