@@ -586,21 +586,22 @@ scpi  <- function(data,
     w.constr.list <- w.constr
   }
 
-  w.star <- index.w <- rho.vec <- Q.star <- Q2.star <- f.id <- e.res <- u.names <- e.rownames <- e.colnames <- e1.rownames <- c()
-  u.des.0 <- e.des.0 <- e.des.1 <- matrix(NA, 0, 0)
-  w.constr.inf <- list()
+  w.star.blocks <- index.w.blocks <- rho.vec.blocks <- Q.star.blocks <- Q2.star.blocks <- vector("list", I)
+  f.id.blocks <- e.res.blocks <- u.names.blocks <- e.rownames.blocks <- e.colnames.blocks <- e1.rownames.blocks <- vector("list", I)
+  u.des.0.blocks <- e.des.0.blocks <- e.des.1.blocks <- vector("list", I)
+  w.constr.inf <- vector("list", I)
 
   for (i in seq_len(I)) {
     ## Regularize W and local geometry (treated unit by treated unit)
     loc.geom <- local.geom(w.constr.list[[i]], rho, rho.max, res.list[[i]], B.list[[i]],
                            T0.M[[i]], J[[i]], KM[[i]], w.list[[i]], verbose)
 
-    w.star       <- c(w.star, loc.geom$w.star)
-    index.w      <- c(index.w, loc.geom$index.w)
-    w.constr.inf <- append(w.constr.inf, list(loc.geom$w.constr))
-    rho.vec      <- c(rho.vec, loc.geom$rho)
-    Q.star       <- c(Q.star, loc.geom$Q.star)
-    Q2.star      <- c(Q2.star, loc.geom$Q2.star)
+    w.star.blocks[[i]] <- loc.geom$w.star
+    index.w.blocks[[i]] <- loc.geom$index.w
+    w.constr.inf[[i]] <- loc.geom$w.constr
+    rho.vec.blocks[[i]] <- loc.geom$rho
+    Q.star.blocks[[i]] <- loc.geom$Q.star
+    Q2.star.blocks[[i]] <- loc.geom$Q2.star
     index.i      <- c(loc.geom$index.w, rep(TRUE, KM[[i]]))
 
     # Extract feature id from rownames of B
@@ -621,10 +622,9 @@ scpi  <- function(data,
                       T0.M[i], constant[[i]], index.i, loc.geom$index.w,
                       features[[i]], feature.id, u.design, res.list[[i]])
 
-    u.names <- c(u.names, colnames(obj$u.des.0))
-
-    u.des.0 <- Matrix::bdiag(u.des.0, obj$u.des.0)
-    f.id <- c(f.id, as.factor(feature.id))
+    u.names.blocks[[i]] <- colnames(obj$u.des.0)
+    u.des.0.blocks[[i]] <- obj$u.des.0
+    f.id.blocks[[i]] <- as.factor(feature.id)
 
     ## Prepare design matrices for out-of-sample uncertainty
     e.des <- e.des.prep(B.list[[i]], C.list[[i]], P.list[[i]], e.order, e.lags,
@@ -633,20 +633,35 @@ scpi  <- function(data,
                         coig.data[[i]], T0[[i]][outcome.var], T1[[i]], constant[[i]], 
                         e.design, Pd.list[[i]], sc.pred$data$specs$effect, I, class.type)
 
-    e.res   <- c(e.res, e.des$e.res)
-    e.rownames <- c(e.rownames, rownames(e.des$e.res))
+    e.res.blocks[[i]] <- e.des$e.res
+    e.rownames.blocks[[i]] <- rownames(e.des$e.res)
     cnames <- rep(paste0(names(w.constr.list)[[i]], "."), ncol(e.des$e.des.0))
-    e.colnames <- c(e.colnames, cnames)
+    e.colnames.blocks[[i]] <- cnames
 
     if (sc.pred$data$specs$effect == "time") {
       trname <- unlist(purrr::map(stringr::str_split(rownames(e.des$e.des.0)[1], "\\."), 1))
       rnames <- paste(trname, as.character(c(1:nrow(e.des$e.des.1))), sep = ".")
-      e1.rownames <- c(e1.rownames, rnames)
+      e1.rownames.blocks[[i]] <- rnames
     }
 
-    e.des.0 <- Matrix::bdiag(e.des.0, e.des$e.des.0)
-    e.des.1 <- Matrix::bdiag(e.des.1, e.des$e.des.1)
+    e.des.0.blocks[[i]] <- e.des$e.des.0
+    e.des.1.blocks[[i]] <- e.des$e.des.1
   }
+
+  w.star <- do.call(c, w.star.blocks)
+  index.w <- do.call(c, index.w.blocks)
+  rho.vec <- do.call(c, rho.vec.blocks)
+  Q.star <- do.call(c, Q.star.blocks)
+  Q2.star <- do.call(c, Q2.star.blocks)
+  f.id <- do.call(c, f.id.blocks)
+  e.res <- do.call(c, e.res.blocks)
+  u.names <- do.call(c, u.names.blocks)
+  e.rownames <- do.call(c, e.rownames.blocks)
+  e.colnames <- do.call(c, e.colnames.blocks)
+  e1.rownames <- do.call(c, e1.rownames.blocks)
+  u.des.0 <- do.call(Matrix::bdiag, u.des.0.blocks)
+  e.des.0 <- do.call(Matrix::bdiag, e.des.0.blocks)
+  e.des.1 <- do.call(Matrix::bdiag, e.des.1.blocks)
 
   # Create an index that selects all non-zero weights and additional covariates
   index <- c(index.w, rep(TRUE, KMI))
