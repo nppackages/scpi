@@ -65,6 +65,10 @@ package history predates this changelog.
 - Fixed a unit-effect feature-design conformability issue when precomputed
   differenced post-treatment predictors are used with constants.
 - Added regression tests for the unit-effect feature-design issue.
+- Replaced formula-based weighted least squares inside the internal
+  `shrinkage.EST()` ridge hyperparameter routine with an `lm.wfit()` helper
+  that preserves the same weighted residual variance calculation with less
+  setup overhead.
 
 ### Python
 
@@ -163,6 +167,18 @@ package history predates this changelog.
   restored old-path equality at `1e-8` on single-smoke, multi-illustration, and
   RESTAT WaveAll checks, but did not improve runtime, so the experiment was not
   retained.
+- Tested using `OSQP` for the lasso subproblems inside `shrinkage.EST()` and
+  rejected it because RESTAT `Q2` values drifted materially and runtime did not
+  improve.
+- Verified the `lm.wfit()` shrinkage helper against the previous local R path:
+  RESTAT WaveAll (`sims=10`) and multi-illustration (`sims=20`) matched at
+  `1e-8` over common numeric leaves. Single-run total time moved from about
+  `8.07s` to `8.03s` on RESTAT and from about `3.76s` to `3.65s` on
+  multi-illustration.
+- Verified R tests with `devtools::test('R/scpi')`: 132 passing tests, no
+  failures or warnings. Verified `R CMD check R\scpi --no-manual
+  --no-build-vignettes` with the expected source-prep NOTE and restricted
+  network repository warnings.
 
 ### Known Follow-Ups
 

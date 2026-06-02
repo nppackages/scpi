@@ -368,14 +368,25 @@ w.constr.OBJ <- function(w.constr, A, Z, V, J, KM, M) {
   return(w.constr)
 }
 
+shrinkage.wls <- function(A, Z, V) {
+  fit <- stats::lm.wfit(as.matrix(Z), as.matrix(A), w = diag(V))
+  sig <- if (fit$df.residual > 0) {
+    sqrt(sum(fit$weights * fit$residuals^2, na.rm = TRUE) / fit$df.residual)
+  } else {
+    NaN
+  }
+
+  list(coef = fit$coefficients, sigma = sig)
+}
+
 shrinkage.EST <- function(method, A, Z, V, J, KM) {
 
   lambd <- NULL
   if (method == "lasso") Q <- 1
 
   if (method == "ridge") {
-    wls     <- lm(A ~ Z - 1, weights = diag(V))
-    sig.wls <- sigma(wls)
+    wls     <- shrinkage.wls(A, Z, V)
+    sig.wls <- wls$sigma
     lambd   <- sig.wls^2 * (J + KM) / sum(wls$coef^2, na.rm = TRUE)           # rule of thumb for lambda (Hoerl et al, 1975)
     Q       <- sqrt(sum(wls$coef^2, na.rm = TRUE)) / (1 + lambd)              # convert lambda into Q
 
@@ -388,8 +399,8 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
         active.cols <-  rank(-abs(lasso.cols)) <= max(nrow(A) - 10, 2)
       }
       Z.sel <- Z[, active.cols, drop = FALSE]
-      wls     <- lm(A ~ Z.sel - 1, weights = diag(V))
-      sig.wls <- sigma(wls)
+      wls     <- shrinkage.wls(A, Z.sel, V)
+      sig.wls <- wls$sigma
       lambd   <- sig.wls^2 * (ncol(Z.sel) + KM) / sum(wls$coef^2, na.rm = TRUE)     # rule of thumb for lambda (Hoerl et al, 1975)
       Q       <- sqrt(sum(wls$coef^2, na.rm = TRUE)) / (1 + lambd)                  # convert lambda into Q
     }
