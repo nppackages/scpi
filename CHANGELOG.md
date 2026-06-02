@@ -298,6 +298,13 @@ package history predates this changelog.
   within `5e-5`, with remaining drift concentrated in `b`/`r` and Gaussian
   interval objects. The existing RESTAT WaveAll checks remain the cleaner
   cross-platform validation target.
+- Ran the final validation sweep for this modernization round: `R CMD check
+  scpi --no-manual --no-build-vignettes` passed with the expected source-prep
+  NOTE and restricted-network repository warnings; Python tests passed (`5
+  passed`, with expected statsmodels quantile-regression iteration warnings);
+  Stata 16 rebuilt/validated `lscpi.mlib`, resolved all six ado commands, and
+  regenerated all six Stata help PDFs. The current Stata source tree has no
+  `.mata` or `.mo` files, so the rebuilt `lscpi.mlib` contains 0 members.
 
 ### Known Follow-Ups
 
