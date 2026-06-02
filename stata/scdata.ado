@@ -35,11 +35,7 @@ version 16.0
 		local constant "False"
 	}
 
-	qui export delimited using "__scpi__data_to_python.csv", replace
-
 	python: scdata_wrapper("`features'", "`id'", "`time'", "`outcome'", "`covadj'", `anticipation', "`cointegrated'", "`constant'", "False", "`treatment'", "`dfname'")
-
-	erase "__scpi__data_to_python.csv"
 
 	ereturn clear
 
@@ -67,7 +63,7 @@ python:
 import pandas, pickle, numpy, urllib, luddite
 from scpi_pkg.scdata import scdata
 from scpi_pkg import version as lver
-from sfi import Scalar, Matrix, Macro
+from sfi import Scalar, Matrix, Macro, Data
 
 def ix2rn(s):
     return str(s).replace('(','').replace(')','').replace("'",'').replace(", ","_")
@@ -89,10 +85,20 @@ def version_checker():
     Macro.setLocal("python_local_version", local_version)
     Macro.setLocal("python_pypi_version", pypi_version)
 
+def stata_dataframe():
+    df = pandas.DataFrame(Data.getAsDict(missingval=numpy.nan))
+    for col in df.columns:
+        if pandas.api.types.is_numeric_dtype(df[col]):
+            values = df[col]
+            nonmissing = values.dropna()
+            if len(nonmissing) == len(values) and numpy.all(numpy.isclose(nonmissing, numpy.rint(nonmissing))):
+                df[col] = values.astype(numpy.int64)
+    return df
+
 def scdata_wrapper(features, id_var, time_var, outcome_var, covadj, anticipation, cointegrated, constant, reportmissing, treatment, dfname):
 
     # Create dataframe
-    df = pandas.read_csv('__scpi__data_to_python.csv')
+    df = stata_dataframe()
 
     # Create treatment and control groups
     NperiodsT = df[[treatment, id_var]].groupby([id_var]).sum()

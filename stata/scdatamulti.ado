@@ -61,11 +61,7 @@ version 16.0
 		global scpi_version_checked "yes"
 	}
 	
-	qui export delimited using "__scpi__data_to_python.csv", replace
-
 	python: scdatamulti_wrapper("`features'", "`id'", "`time'", "`outcome'", "`treatment'", "`covadj'", "`anticipation'", "`cointegrated'", "`constant'", "`dfname'", "`effect'", "`post_est'", "`units_est'", "`donors_est'")
-	
-	erase "__scpi__data_to_python.csv"
 	
 	ereturn clear
 
@@ -93,13 +89,24 @@ python:
 import pandas, pickle, numpy, urllib, luddite, re
 from scpi_pkg.scdataMulti import scdataMulti
 from scpi_pkg import version as lver
-from sfi import Scalar, Matrix, Macro
+from sfi import Scalar, Matrix, Macro, Data
+
+
+def stata_dataframe():
+	df = pandas.DataFrame(Data.getAsDict(missingval=numpy.nan))
+	for col in df.columns:
+		if pandas.api.types.is_numeric_dtype(df[col]):
+			values = df[col]
+			nonmissing = values.dropna()
+			if len(nonmissing) == len(values) and numpy.all(numpy.isclose(nonmissing, numpy.rint(nonmissing))):
+				df[col] = values.astype(numpy.int64)
+	return df
 
 
 def scdatamulti_wrapper(features, id_var, time_var, outcome_var, treatment, covadj, anticipation, cointegrated, constant, dfname, effect, post_est, units_est, donors_est):
 	
 	# Create dataframe
-	df = pandas.read_csv('__scpi__data_to_python.csv')
+	df = stata_dataframe()
 
 	# Compute number of treatment periods for each unit to distinguish between single and multiple treated units
 	NperiodsT = df[[treatment, id_var]].groupby([id_var]).sum()
