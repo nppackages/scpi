@@ -251,6 +251,17 @@ package history predates this changelog.
   Multi-illustration and RESTAT WaveAll snapshots matched at `1e-8`; in
   single-run checks, the `scpi()` segment moved from about `2.79s` to `2.76s`
   on multi-illustration and from about `9.54s` to `9.42s` on RESTAT WaveAll.
+- Checked the Python quantile-regression prediction helper after the R
+  `Qtools::rrq()` cleanup; unlike the R path, the Python helper already fits
+  `statsmodels` quantile regressions once per requested quantile, so there was
+  no duplicate-fit cleanup to retain.
+- Re-ran focused current-source cross-platform drift checks after the latest R
+  and Python speed checkpoints. RESTAT WaveAll R/Python deterministic outputs
+  remained within `5e-5`; RESTAT WaveAll Stata/Python deterministic and
+  Gaussian interval matrices remained within `1e-6`, with the largest Gaussian
+  interval difference about `4.2e-7`. Multi-illustration remains the noisier
+  cross-platform check and continues to show the previously observed fitted and
+  interval drift.
 - Tested storing Python quantile-regression predictions as numeric `float`
   arrays instead of object arrays. Multi-illustration and RESTAT WaveAll
   snapshots matched at `1e-8`, but single-run timing did not improve, so the
