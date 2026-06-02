@@ -376,7 +376,15 @@ scdataMulti <- function(df,
   rownames.Y.donors <- c()
   colnames.Y.donors <- c()
 
-  tr.count <- 1
+  A.blocks <- list()
+  B.blocks <- list()
+  C.blocks <- list()
+  P.blocks <- list()
+  Pd.blocks <- list()
+  Y.donors.blocks <- list()
+  Y.pre.blocks <- list()
+  Y.post.blocks <- list()
+
   for (treated.unit in treated.units) {
 
     # handle numeric identifier for treated units
@@ -553,36 +561,14 @@ scdataMulti <- function(df,
       colnames(P.tr) <- c("aux_id", colnames(P.tr)[-1])
     }
 
-    if (tr.count == 1) {
-      A.stacked <- A.tr
-      B.stacked <- B.tr
-      C.stacked <- C.tr
-      if (effect == "time") {
-        P.stacked <- as.data.frame(P.tr)
-      } else {
-        P.stacked <- P.tr
-      }
-
-      Pd.stacked <- P.diff
-      Y.donors.stacked <- Y.donors.tr
-      Y.pre.stacked <- Y.pre.tr
-      Y.post.stacked <- Y.post.tr
-
-    } else {
-      A.stacked <- rbind(A.stacked, A.tr)
-      B.stacked <- Matrix::bdiag(B.stacked, B.tr)
-      C.stacked <- Matrix::bdiag(C.stacked, C.tr)
-      if (effect == "time") {
-        P.stacked <- merge(P.stacked, as.data.frame(P.tr), by = "aux_id", all = TRUE)
-      } else {
-        P.stacked <- Matrix::bdiag(P.stacked, P.tr)
-      }
-      if (is.null(Pd.stacked) == FALSE) Pd.stacked <- Matrix::bdiag(Pd.stacked, P.diff)
-
-      Y.donors.stacked <- Matrix::bdiag(Y.donors.stacked, Y.donors.tr)
-      Y.pre.stacked <- rbind(Y.pre.stacked, Y.pre.tr)
-      Y.post.stacked <- rbind(Y.post.stacked, Y.post.tr)
-    }
+    A.blocks[[treated.unit]] <- A.tr
+    B.blocks[[treated.unit]] <- B.tr
+    C.blocks[[treated.unit]] <- C.tr
+    P.blocks[[treated.unit]] <- if (effect == "time") as.data.frame(P.tr) else P.tr
+    if (!is.null(P.diff)) Pd.blocks[[treated.unit]] <- P.diff
+    Y.donors.blocks[[treated.unit]] <- Y.donors.tr
+    Y.pre.blocks[[treated.unit]] <- Y.pre.tr
+    Y.post.blocks[[treated.unit]] <- Y.post.tr
 
     J.list[[treated.unit]] <- scdata.out$specs$J
     K.list[[treated.unit]] <- scdata.out$specs$K
@@ -594,8 +580,20 @@ scdataMulti <- function(df,
     T1.list[[treated.unit]] <- scdata.out$specs$T1.outcome
     out.in.features.list[[treated.unit]] <- scdata.out$specs$out.in.features
     donors.list[[treated.unit]] <- scdata.out$specs$donors.units
-    tr.count <- tr.count + 1
   }
+
+  A.stacked <- do.call(rbind, A.blocks)
+  B.stacked <- do.call(Matrix::bdiag, B.blocks)
+  C.stacked <- do.call(Matrix::bdiag, C.blocks)
+  if (effect == "time") {
+    P.stacked <- Reduce(function(x, y) merge(x, y, by = "aux_id", all = TRUE), P.blocks)
+  } else {
+    P.stacked <- do.call(Matrix::bdiag, P.blocks)
+  }
+  Pd.stacked <- if (length(Pd.blocks) > 0) do.call(Matrix::bdiag, Pd.blocks) else NULL
+  Y.donors.stacked <- do.call(Matrix::bdiag, Y.donors.blocks)
+  Y.pre.stacked <- do.call(rbind, Y.pre.blocks)
+  Y.post.stacked <- do.call(rbind, Y.post.blocks)
 
   # Handle names of stacked matrices
   rownames(A.stacked) <- rownames.A
