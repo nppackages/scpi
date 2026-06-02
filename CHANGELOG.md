@@ -133,6 +133,26 @@ package history predates this changelog.
   from about `22.99s` to `16.03s` against the GitHub source baseline under the
   same public Python dependency stack, and to about `14.40s` with the current
   local dependency stack.
+- Ran 3-rep timing benchmarks for RESTAT WaveAll and multi-illustration. Median
+  Python RESTAT runtime improved from `14.263s` (`origin/main`) to `10.186s`
+  with current source under public-compatible dependencies (`1.40x`) and
+  `8.771s` with current dependencies (`1.63x`).
+- In the same 3-rep suite, median Python multi-illustration runtime improved
+  from `2.454s` to `2.351s` under public-compatible dependencies (`1.04x`) and
+  `2.244s` with current dependencies (`1.09x`).
+- Median Stata RESTAT runtime improved from `19.632s` (`origin/main`) to
+  `14.676s` with current source under public-compatible dependencies (`1.34x`)
+  and `13.114s` with current dependencies (`1.50x`).
+- Median Stata multi-illustration runtime improved modestly from `4.916s` to
+  `4.704s` under public-compatible dependencies (`1.05x`) and `4.720s` with
+  current dependencies (`1.04x`), with the same interval-matrix drift noted
+  above.
+- Median R multi-illustration runtime was `1.600s` for `origin/main` and
+  `1.740s` locally in the 3-rep suite, while numerical outputs remained
+  identical at `1e-8`; this small scenario is not yet evidence of an R speedup.
+- The R RESTAT `origin/main` source baseline still fails with the known
+  aggregate time-effect dimname issue, while current local R RESTAT completed
+  with median runtime `5.890s`.
 
 ### Known Follow-Ups
 
