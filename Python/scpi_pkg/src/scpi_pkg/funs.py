@@ -896,13 +896,14 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
     c_ub = [ECOS_get_c(pt, ns) if w_ub_est is True else None for pt in P_rows]
 
     if cores == 1:
+        zeta_draws = numpy.random.normal(loc=0, scale=1, size=(sims, len(beta)))
         for i in range(sims):
             rem = (i + 1) % iters
             perc = printIter(i, rem, perc, pass_stata, verbose, sims)
 
             res = scpi_in_simul(i, dataEcos, ns, beta, beta_q, beta_q_beta, Sigma_root, Qreg, scale, dimred,
                                 P_rows, c_lb, c_ub, Jval, Jtot, KMval, KMI, iota,
-                                w_lb_est, w_ub_est, p, p_int, Qval, Q2val, dire, lb)
+                                w_lb_est, w_ub_est, p, p_int, Qval, Q2val, dire, lb, zeta_draws[i, :])
             sims_res.append(res)
 
         vsig = numpy.array(sims_res)
@@ -1040,9 +1041,10 @@ def scpi_in_diag(sims, beta, Q, P, J, KM, iota, w_lb_est,
 
 def scpi_in_simul(i, dataEcos, ns, beta, beta_q, beta_q_beta, Sigma_root, Qreg, scale, dimred,
                   P_rows, c_lb, c_ub, J, Jtot, KM, KMI, iota, w_lb_est,
-                  w_ub_est, p, p_int, QQ, QQ2, dire, lb):
+                  w_ub_est, p, p_int, QQ, QQ2, dire, lb, zeta=None):
 
-    zeta = numpy.random.normal(loc=0, scale=1, size=len(beta))
+    if zeta is None:
+        zeta = numpy.random.normal(loc=0, scale=1, size=len(beta))
     G = Sigma_root.dot(zeta)
 
     a = -2 * G - 2 * beta_q

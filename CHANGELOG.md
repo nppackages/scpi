@@ -90,6 +90,8 @@ package history predates this changelog.
 - Added a regression test for the unit-effect feature-design issue.
 - Added a Python reuse path allowing `scpi()` to accept precomputed `scest`
   output for single- and multi-unit objects and skip repeated point estimation.
+- Pre-generated serial Python in-sample uncertainty simulation draws in
+  `scpi_in()` while preserving the existing random stream.
 
 ### Numerical Checks and Testing
 
@@ -230,6 +232,10 @@ package history predates this changelog.
   WaveAll snapshots matched at `1e-8`; the `scpi()` segment improved modestly
   from `1.935s` to `1.921s` on multi-illustration and from `6.823s` to
   `6.790s` on RESTAT in single-run checks.
+- Pre-generated normal draws for serial Python `scpi_in()` simulations.
+  Multi-illustration and RESTAT WaveAll snapshots matched at `1e-8`; in
+  single-run checks, the `scpi()` segment moved from about `2.79s` to `2.76s`
+  on multi-illustration and from about `9.54s` to `9.42s` on RESTAT WaveAll.
 - Tested storing Python quantile-regression predictions as numeric `float`
   arrays instead of object arrays. Multi-illustration and RESTAT WaveAll
   snapshots matched at `1e-8`, but single-run timing did not improve, so the
