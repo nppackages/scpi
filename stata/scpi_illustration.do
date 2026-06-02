@@ -98,7 +98,7 @@ scdata gdp trade, dfname("python_scdata") id(country) outcome(gdp) time(year) //
 
 * I) we want to include "trade" just for some selected periods, i.e., 1960, 1970, 1980, 1990
 
-g tradeAux = trade 
+generate double tradeAux = trade
 replace tradeAux = . if !inlist(year, 1960, 1970, 1980, 1990)
 
 scdata gdp tradeAux, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
@@ -108,7 +108,7 @@ mat list e(B)
 		
 * II) we want to include just the pre-treatment average of "infrate"
 
-bysort country: egen infrateAvg = mean(infrate) if year <= 1990 
+bysort country: egen double infrateAvg = mean(infrate) if year <= 1990
 replace infrateAvg = . if year != 1990 // any other pre-treatment period works 
 scdata gdp infrateAvg, dfname("python_scdata") id(country) outcome(gdp) time(year) ///
 				  treatment(status) cointegrated pypinocheck

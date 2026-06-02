@@ -146,36 +146,36 @@ version 16.0
 	qui levelsof ID, local(tr_units)
 	
 	if "`ptype'" == "series" {
-		qui g `outvar' = Outcome
+		qui gen double `outvar' = Outcome
 		local ytitle = "Outcome Variable"
 	}
 	else {
-		qui g `outvar' = Effect
+		qui gen double `outvar' = Effect
 		local ytitle = "Effect"
 	}
 
 	if mi("`scest'") {
 		if "`uncertainty'" == "insample" {
-			qui g `CIlb' = Lower_insample
-			qui g `CIub' = Upper_insample
+			qui gen double `CIlb' = Lower_insample
+			qui gen double `CIub' = Upper_insample
 			local graph_note "In-sample uncertainty"
 		}
 
 		if "`uncertainty'" == "gaussian" {
-			qui g `CIlb' = Lower_gaussian
-			qui g `CIub' = Upper_gaussian
+			qui gen double `CIlb' = Lower_gaussian
+			qui gen double `CIub' = Upper_gaussian
 			local graph_note "Out-of-sample uncertainty: subgaussian bounds"
 		}
 
 		if "`uncertainty'" == "ls" {
-			qui g `CIlb' = Lower_ls
-			qui g `CIub' = Upper_ls
+			qui gen double `CIlb' = Lower_ls
+			qui gen double `CIub' = Upper_ls
 			local graph_note "Out-of-sample uncertainty: location-scale model"
 		}
 
 		if "`uncertainty'" == "qreg" {
-			qui g `CIlb' = Lower_qreg
-			qui g `CIub' = Upper_qreg
+			qui gen double `CIlb' = Lower_qreg
+			qui gen double `CIub' = Upper_qreg
 			local graph_note "Out-of-sample uncertainty: quantile regression"
 		}	
 	}
