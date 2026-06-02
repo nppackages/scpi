@@ -71,6 +71,9 @@ package history predates this changelog.
   `pandas.concat()` growth.
 - Fixed the Python counterpart of the unit-effect feature-design conformability
   issue.
+- Fixed Python inference setup for Stata-fed multi-unit objects where
+  precomputed differenced post-treatment predictors are present for only a
+  subset of treated units.
 - Added a regression test for the unit-effect feature-design issue.
 
 ### Numerical Checks and Testing
@@ -87,6 +90,12 @@ package history predates this changelog.
   environment.
 - Verified the Stata 16 smoke workflow using base Python 3.10 plus local
   `PYTHONPATH` dependency paths.
+- Ran local `single-smoke`, `single-illustration`, `multi-illustration`, and
+  `restat-waveall` benchmark scenarios across R, Python, and Stata.
+- Verified RESTAT WaveAll deterministic R/Python outputs within `5e-5`
+  tolerance and RESTAT WaveAll Stata/Python outputs within `1e-6` tolerance.
+- Observed public-vs-local inference drift in multi-unit interval/Sigma objects;
+  deterministic RESTAT cross-platform fitted objects remain within tolerance.
 
 ### Known Follow-Ups
 
