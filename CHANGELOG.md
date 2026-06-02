@@ -198,6 +198,17 @@ package history predates this changelog.
   5-rep Germany timing check with `w_bounds` and `sims=10`, mean single-unit
   `scpi()` time moved from about `0.044s` to `0.037s` after reusing an
   existing `scest` object (`1.19x`).
+- Profiled current local Python on multi-illustration (`sims=20`) and RESTAT
+  WaveAll (`sims=10`) scenarios. In multi-illustration, `scpi()` took about
+  `2.36s`, with ECOS simulation solves accounting for about `1.50s` of self
+  time across 2,052 small solver calls. In RESTAT WaveAll, `scdataMulti()` took
+  about `3.27s` and `scpi()` about `8.97s`; remaining hotspots include ECOS
+  simulation solves, out-of-sample quantile regression, and pseudo-inverse/SVD
+  work.
+- Tested storing Python quantile-regression predictions as numeric `float`
+  arrays instead of object arrays. Multi-illustration and RESTAT WaveAll
+  snapshots matched at `1e-8`, but single-run timing did not improve, so the
+  experiment was not retained.
 
 ### Known Follow-Ups
 
