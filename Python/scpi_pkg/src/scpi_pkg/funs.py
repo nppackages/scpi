@@ -887,13 +887,19 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
     dataEcos['A'] = ECOS_get_A(Jval, Jtot, KMI, iota, p, dire, ns)
     dataEcos['b'] = ECOS_get_b(Qval, p, dire)
     sims_res = []
+    beta_q = beta.T.dot(Q)
+    beta_q_beta = beta.dot(Q.dot(beta))
+    P_rows = [numpy.array(P.iloc[hor, :]) for hor in range(len(P))]
+    c_lb = [ECOS_get_c(-pt, ns) if w_lb_est is True else None for pt in P_rows]
+    c_ub = [ECOS_get_c(pt, ns) if w_ub_est is True else None for pt in P_rows]
 
     if cores == 1:
         for i in range(sims):
             rem = (i + 1) % iters
             perc = printIter(i, rem, perc, pass_stata, verbose, sims)
 
-            res = scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, Jval, Jtot, KMval, KMI, iota,
+            res = scpi_in_simul(i, dataEcos, ns, beta, beta_q, beta_q_beta, Sigma_root, Qreg, scale, dimred,
+                                P_rows, c_lb, c_ub, Jval, Jtot, KMval, KMI, iota,
                                 w_lb_est, w_ub_est, p, p_int, Qval, Q2val, dire, lb)
             sims_res.append(res)
 
@@ -908,7 +914,8 @@ def scpi_in(sims, beta, Sigma_root, Q, P, J, KM, iota, w_lb_est,
         config.set(scheduler='multiprocessing')
         client = Client(n_workers=cores)
         for i in range(sims):
-            res = delayed(scpi_in_simul)(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, Jval, Jtot, KMval, KMI, iota, w_lb_est,
+            res = delayed(scpi_in_simul)(i, dataEcos, ns, beta, beta_q, beta_q_beta, Sigma_root, Qreg, scale, dimred,
+                                         P_rows, c_lb, c_ub, Jval, Jtot, KMval, KMI, iota, w_lb_est,
                                          w_ub_est, p, p_int, Qval, Q2val, dire, lb)
             sims_res.append(res)
 
@@ -986,6 +993,11 @@ def scpi_in_diag(sims, beta, Q, P, J, KM, iota, w_lb_est,
         dataEcos['dims'] = ECOS_get_dims(Jtot, Jval, KMI, p, dire, iota, dimred)
         dataEcos['A'] = ECOS_get_A(Jval, Jtot, KMI, iota, p, dire, ns)
         dataEcos['b'] = ECOS_get_b(Qval, p, dire)
+        beta_q = beta.T.dot(Q)
+        beta_q_beta = beta.dot(Q.dot(beta))
+        P_rows = [numpy.array(P.iloc[hor, :]) for hor in range(len(P))]
+        c_lb = [ECOS_get_c(-pt, ns) if w_lb_est is True else None for pt in P_rows]
+        c_ub = [ECOS_get_c(pt, ns) if w_ub_est is True else None for pt in P_rows]
 
         sims_res_lb = []
         sims_res_ub = []
@@ -995,7 +1007,7 @@ def scpi_in_diag(sims, beta, Q, P, J, KM, iota, w_lb_est,
             perc = printIter(i, rem, perc, pass_stata, verbose, sims, tr)
 
             res_lb, res_ub = scpi_in_simul_diag(i, dataEcos, ns, beta, Q, Qreg, scale, dimred,
-                                                P, Jval, Jtot, KMval, KMI, iota,
+                                                P_rows, c_lb, c_ub, beta_q, beta_q_beta, Jval, Jtot, KMval, KMI, iota,
                                                 w_lb_est, w_ub_est, p, p_int, Qval, Q2val, dire, lb, zeta[:, i])
             sims_res_lb.append(res_lb)
             sims_res_ub.append(res_ub)
@@ -1024,14 +1036,15 @@ def scpi_in_diag(sims, beta, Q, P, J, KM, iota, w_lb_est,
     return vsig
 
 
-def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, J, Jtot, KM, KMI, iota, w_lb_est,
+def scpi_in_simul(i, dataEcos, ns, beta, beta_q, beta_q_beta, Sigma_root, Qreg, scale, dimred,
+                  P_rows, c_lb, c_ub, J, Jtot, KM, KMI, iota, w_lb_est,
                   w_ub_est, p, p_int, QQ, QQ2, dire, lb):
 
     zeta = numpy.random.normal(loc=0, scale=1, size=len(beta))
     G = Sigma_root.dot(zeta)
 
-    a = -2 * G - 2 * beta.T.dot(Q)
-    d = 2 * G.dot(beta) + beta.dot(Q.dot(beta))
+    a = -2 * G - 2 * beta_q
+    d = 2 * G.dot(beta) + beta_q_beta
 
     dataEcos['G'] = ECOS_get_G(Jtot, KMI, J, iota, a, Qreg, p, dire, ns, dimred, scale)
     dataEcos['h'] = ECOS_get_h(d, lb, J, Jtot, KMI, iota, p, dire, QQ, QQ2, dimred)
@@ -1046,12 +1059,11 @@ def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, 
     #     pickle.dump([dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, J, Jtot, KM, KMI, iota,
     #                  p, p_int, QQ, QQ2, dire, lb], f)
 
-    for hor in range(0, len(P)):
-        pt = numpy.array(P.iloc[hor, :])
+    for hor, pt in enumerate(P_rows):
 
         # minimization
         if w_lb_est is True:
-            dataEcos['c'] = ECOS_get_c(-pt, ns)
+            dataEcos['c'] = c_lb[hor]
 
             solution = ecos.solve(c=dataEcos['c'],
                                   G=dataEcos['G'],
@@ -1072,7 +1084,7 @@ def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, 
 
         # maximization
         if w_ub_est is True:
-            dataEcos['c'] = ECOS_get_c(pt, ns)
+            dataEcos['c'] = c_ub[hor]
 
             solution = ecos.solve(c=dataEcos['c'],
                                   G=dataEcos['G'],
@@ -1097,12 +1109,13 @@ def scpi_in_simul(i, dataEcos, ns, beta, Sigma_root, Q, Qreg, scale, dimred, P, 
     return res_lb
 
 
-def scpi_in_simul_diag(i, dataEcos, ns, beta, Q, Qreg, scale, dimred, P, J, Jtot,
+def scpi_in_simul_diag(i, dataEcos, ns, beta, Q, Qreg, scale, dimred,
+                       P_rows, c_lb, c_ub, beta_q, beta_q_beta, J, Jtot,
                        KM, KMI, iota, w_lb_est, w_ub_est, p, p_int, QQ, QQ2, dire, lb, zeta):
 
     G = zeta
-    a = -2 * G - 2 * beta.T.dot(Q)
-    d = 2 * G.dot(beta) + beta.dot(Q.dot(beta))
+    a = -2 * G - 2 * beta_q
+    d = 2 * G.dot(beta) + beta_q_beta
 
     dataEcos['G'] = ECOS_get_G(Jtot, KMI, J, iota, a, Qreg, p, dire, ns, dimred, scale)
     dataEcos['h'] = ECOS_get_h(d, lb, J, Jtot, KMI, iota, p, dire, QQ, QQ2, dimred)
@@ -1110,12 +1123,11 @@ def scpi_in_simul_diag(i, dataEcos, ns, beta, Q, Qreg, scale, dimred, P, J, Jtot
     res_ub = []
     res_lb = []
 
-    for hor in range(0, len(P)):
-        pt = numpy.array(P.iloc[hor, :])
+    for hor, pt in enumerate(P_rows):
 
         # minimization
         if w_lb_est is True:
-            dataEcos['c'] = ECOS_get_c(-pt, ns)
+            dataEcos['c'] = c_lb[hor]
 
             solution = ecos.solve(c=dataEcos['c'],
                                   G=dataEcos['G'],
@@ -1136,7 +1148,7 @@ def scpi_in_simul_diag(i, dataEcos, ns, beta, Q, Qreg, scale, dimred, P, J, Jtot
 
         # maximization
         if w_ub_est is True:
-            dataEcos['c'] = ECOS_get_c(pt, ns)
+            dataEcos['c'] = c_ub[hor]
 
             solution = ecos.solve(c=dataEcos['c'],
                                   G=dataEcos['G'],
