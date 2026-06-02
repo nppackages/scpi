@@ -438,7 +438,29 @@ def scdataMulti(df,
     aux = data.loc[data['__Treatment'] == 1, ['__ID', '__time']]
     treated_periods = aux.groupby('__ID').min()
 
-    tr_count = 1
+    A_blocks = []
+    B_blocks = []
+    C_blocks = []
+    P_blocks = []
+    Pd_blocks = []
+    Y_donors_blocks = []
+
+    J_dict = {}
+    K_dict = {}
+    KM_dict = {}
+    M_dict = {}
+    Y_pre_dict = {}
+    Y_post_dict = {}
+    period_pre_dict = {}
+    period_post_dict = {}
+    T0_features_dict = {}
+    T1_dict = {}
+    out_in_features_dict = {}
+    constant_dict = {}
+    cointegrated_data_dict = {}
+    donors_dict = {}
+    anticipation_dict = {}
+
     for treated_unit in treated_units:
 
         # parse options
@@ -599,59 +621,39 @@ def scdataMulti(df,
                                     index=idx,
                                     columns=P_tr.columns)
 
-        if tr_count == 1:
-            A_stacked = deepcopy(A_tr)
-            B_stacked = deepcopy(B_tr)
-            C_stacked = deepcopy(C_tr)
-            P_stacked = deepcopy(P_tr)
-            Pd_stacked = deepcopy(P_diff)
-            Y_donors_stacked = deepcopy(Y_donors_tr)
+        A_blocks.append(A_tr)
+        B_blocks.append(B_tr)
+        C_blocks.append(C_tr)
+        P_blocks.append(P_tr)
+        if P_diff is not None:
+            Pd_blocks.append(P_diff)
+        Y_donors_blocks.append(Y_donors_tr)
 
-            J_dict = {treated_unit: scdata_out.J}
-            K_dict = {treated_unit: scdata_out.K}
-            KM_dict = {treated_unit: scdata_out.KM}
-            M_dict = {treated_unit: scdata_out.M}
-            Y_pre_dict = {treated_unit: scdata_out.Y_pre}
-            Y_post_dict = {treated_unit: scdata_out.Y_post}
-            period_pre_dict = {treated_unit: scdata_out.period_pre}
-            period_post_dict = {treated_unit: scdata_out.period_post}
-            T0_features_dict = {treated_unit: scdata_out.T0_features}
-            T1_dict = {treated_unit: scdata_out.T1_outcome}
-            out_in_features_dict = {treated_unit: scdata_out.out_in_features}
-            constant_dict = {treated_unit: scdata_out.glob_cons}
-            cointegrated_data_dict = {treated_unit: scdata_out.cointegrated_data}
-            donors_dict = {treated_unit: scdata_out.donors_units}
-            anticipation_dict = {treated_unit: anticipation_tr}
+        J_dict[treated_unit] = scdata_out.J
+        K_dict[treated_unit] = scdata_out.K
+        KM_dict[treated_unit] = scdata_out.KM
+        M_dict[treated_unit] = scdata_out.M
+        Y_pre_dict[treated_unit] = scdata_out.Y_pre
+        Y_post_dict[treated_unit] = scdata_out.Y_post
+        period_pre_dict[treated_unit] = scdata_out.period_pre
+        period_post_dict[treated_unit] = scdata_out.period_post
+        T0_features_dict[treated_unit] = scdata_out.T0_features
+        T1_dict[treated_unit] = scdata_out.T1_outcome
+        out_in_features_dict[treated_unit] = scdata_out.out_in_features
+        constant_dict[treated_unit] = scdata_out.glob_cons
+        cointegrated_data_dict[treated_unit] = scdata_out.cointegrated_data
+        donors_dict[treated_unit] = scdata_out.donors_units
+        anticipation_dict[treated_unit] = anticipation_tr
 
-        else:
-            A_stacked = pandas.concat([A_stacked, A_tr], axis=0)
-            B_stacked = pandas.concat([B_stacked, B_tr], axis=0)
-            C_stacked = pandas.concat([C_stacked, C_tr], axis=0)
-            if effect == "time":
-                P_stacked = pandas.concat([P_stacked, P_tr], axis=1, join='inner')  # stack horizontally
-            else:
-                P_stacked = pandas.concat([P_stacked, P_tr], axis=0)  # stack diagonally
-            if Pd_stacked is not None:
-                Pd_stacked = pandas.concat([Pd_stacked, P_diff], axis=0)
-            Y_donors_stacked = pandas.concat([Y_donors_stacked, Y_donors_tr], axis=0)
-
-            J_dict[treated_unit] = scdata_out.J
-            K_dict[treated_unit] = scdata_out.K
-            KM_dict[treated_unit] = scdata_out.KM
-            M_dict[treated_unit] = scdata_out.M
-            Y_pre_dict[treated_unit] = scdata_out.Y_pre
-            Y_post_dict[treated_unit] = scdata_out.Y_post
-            period_pre_dict[treated_unit] = scdata_out.period_pre
-            period_post_dict[treated_unit] = scdata_out.period_post
-            T0_features_dict[treated_unit] = scdata_out.T0_features
-            T1_dict[treated_unit] = scdata_out.T1_outcome
-            out_in_features_dict[treated_unit] = scdata_out.out_in_features
-            constant_dict[treated_unit] = scdata_out.glob_cons
-            cointegrated_data_dict[treated_unit] = scdata_out.cointegrated_data
-            donors_dict[treated_unit] = scdata_out.donors_units
-            anticipation_dict[treated_unit] = anticipation_tr
-
-        tr_count = tr_count + 1
+    A_stacked = pandas.concat(A_blocks, axis=0)
+    B_stacked = pandas.concat(B_blocks, axis=0)
+    C_stacked = pandas.concat(C_blocks, axis=0)
+    if effect == "time":
+        P_stacked = pandas.concat(P_blocks, axis=1, join='inner')  # stack horizontally
+    else:
+        P_stacked = pandas.concat(P_blocks, axis=0)  # stack diagonally
+    Pd_stacked = pandas.concat(Pd_blocks, axis=0) if len(Pd_blocks) > 0 else None
+    Y_donors_stacked = pandas.concat(Y_donors_blocks, axis=0)
 
     B_stacked.set_index(A_stacked.index, inplace=True)
     C_stacked.set_index(A_stacked.index, inplace=True)
