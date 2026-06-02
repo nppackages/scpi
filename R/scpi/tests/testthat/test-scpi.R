@@ -157,6 +157,42 @@ test_that("scpi reuses scest objects in the multiple treated-unit case", {
                tolerance = 1e-8)
 })
 
+test_that("scpi reuse matches direct simulated inference when RNG stream is aligned", {
+  test_obj <- test.dataMulti(
+    effect = "unit-time",
+    features = list(c("gdp", "trade")),
+    cov.adj = list(c("constant", "trend"))
+  )
+
+  set.seed(8894)
+  direct <- scpi(
+    test_obj,
+    w.constr = list(name = "simplex"),
+    sims = 10,
+    cores = 1,
+    e.method = "gaussian",
+    verbose = FALSE
+  )
+
+  set.seed(8894)
+  est <- scest(test_obj, w.constr = list(name = "simplex"))
+  reused <- scpi(
+    est,
+    sims = 10,
+    cores = 1,
+    e.method = "gaussian",
+    verbose = FALSE
+  )
+
+  expect_equal(reused$est.results$b, direct$est.results$b, tolerance = 1e-8)
+  expect_equal(reused$inference.results$CI.in.sample,
+               direct$inference.results$CI.in.sample,
+               tolerance = 1e-8)
+  expect_equal(reused$inference.results$CI.all.gaussian,
+               direct$inference.results$CI.all.gaussian,
+               tolerance = 1e-8)
+})
+
 test_that("time-effect aggregate intervals keep row names", {
   set.seed(8894)
   test_obj <- test.dataMulti(effect = "time")

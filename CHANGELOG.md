@@ -194,7 +194,14 @@ package history predates this changelog.
   deterministic timing check, median bounded `scpi()` time moved from about
   `0.03s` to `0.00s` in the single-unit case and from about `0.07s` to
   `0.02s` in the multi-unit case after reusing an existing `scest` object.
-- Verified R tests with `devtools::test('R/scpi')`: 138 passing tests, no
+- Added R regression coverage for unbounded simulated inference through the
+  `scpi(scest_object, ...)` reuse path. With the same RNG stream as the direct
+  `scpi(scdata_object, ...)` workflow, multi-illustration matched at `1e-8`;
+  local timing checks moved the `scpi()` segment from `2.23s` to `1.97s` on
+  multi-illustration and from `6.93s` to `3.19s` on RESTAT WaveAll, with total
+  runtime changes of about `1.04x` and `1.01x`, respectively, after accounting
+  for separately timed `scest()`.
+- Verified R tests with `devtools::test('R/scpi')`: 141 passing tests, no
   failures or warnings. Verified `R CMD check R\scpi --no-manual
   --no-build-vignettes` with the expected source-prep NOTE and restricted
   network repository warnings.
