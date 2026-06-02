@@ -14,7 +14,7 @@ version 16.0
 	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
 		python: version_checker()
 		if "`alert_version'" == "y" {
-			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_pypi_version' needed! Please update the package in Python and restart Stata!"
+			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_required_version' needed! Please update the package in Python and restart Stata!"
 			exit 198
 		}
 		global scpi_version_checked "yes"
@@ -173,7 +173,7 @@ end
 
 version 16.0
 python:
-import pickle, numpy, urllib, luddite, random
+import pickle, numpy, random
 from scpi_pkg.scpi import scpi
 from scpi_pkg import version as lver
 from sfi import Scalar, Matrix, Macro
@@ -184,8 +184,8 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
                  e_alpha, sims, rho, rho_max, cores, dfname, setTheSeed, set_seed, force_joint_pi_optim):
 
     filename = dfname + '.obj'
-    filehandler = open(filename, 'rb')
-    df = pickle.load(filehandler)
+    with open(filename, 'rb') as filehandler:
+        df = pickle.load(filehandler)
 
     if lb == "0":
         lb = 0
@@ -243,8 +243,8 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
         res_pi.iota = 1
 
     filename = '__scpi__output.obj'
-    file     = open(filename, 'wb')
-    pickle.dump(res_pi, file)
+    with open(filename, 'wb') as file:
+        pickle.dump(res_pi, file)
 
     if res_pi.KMI > 0:
         Matrix.create("rmat", len(res_pi.r), 1, 0)
@@ -480,21 +480,16 @@ def scpi_wrapper(p, dir, q, lb, name, V, u_missp, u_sigma, u_order, u_lags, u_al
 
 
 def version_checker():
-    # try to connect to pypi and get the latest version of scpi_pkg
-    try:
-        local_version = str(lver.__version__)
-        pypi_version = luddite.get_version_pypi("scpi_pkg")
-        if local_version == pypi_version:
-            alert_version = "n"
-        else:
-            alert_version = "y"
-    except urllib.error.URLError:
+    local_version = str(lver.__version__)
+    required_version = "4.0.0"
+    if local_version == required_version:
         alert_version = "n"
-        pypi_version = "none"
+    else:
+        alert_version = "y"
 
     Macro.setLocal("alert_version", alert_version)
     Macro.setLocal("python_local_version", local_version)
-    Macro.setLocal("python_pypi_version", pypi_version)
+    Macro.setLocal("python_required_version", required_version)
 
 def ix2rn(s):
     return str(s).replace('(','').replace(')','').replace("'",'').replace(", ","_")
@@ -514,8 +509,8 @@ def dict2glob(keys, vals):
 def executionTime(cores, sims, dfname):
 
     filename = dfname + '.obj'
-    filehandler = open(filename, 'rb')
-    df = pickle.load(filehandler)
+    with open(filename, 'rb') as filehandler:
+        df = pickle.load(filehandler)
     class_type = df.__class__.__name__
 
     if class_type == "scdata_output":

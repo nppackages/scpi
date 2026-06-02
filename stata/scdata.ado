@@ -9,12 +9,12 @@ program define scdata, eclass
 version 16.0
 
 	syntax varlist [if] [in], id(varname) time(varname) outcome(varname) treatment(varname) dfname(string) ///
-							  [covadj(string) anticipation(integer 0) cointegrated pypinocheck constant]
+							  [covadj(string) anticipation(integer 0) cointegrated pypinocheck constant precision(string)]
 
 	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
 		python: version_checker()
 		if "`alert_version'" == "y" {
-			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_pypi_version' needed! Please update the package in Python and restart Stata!"
+			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_required_version' needed! Please update the package in Python and restart Stata!"
 			exit 198
 		}
 		global scpi_version_checked "yes"
@@ -35,7 +35,23 @@ version 16.0
 		local constant "False"
 	}
 
-	python: scdata_wrapper("`features'", "`id'", "`time'", "`outcome'", "`covadj'", `anticipation', "`cointegrated'", "`constant'", "False", "`treatment'", "`dfname'")
+	if mi("`precision'") {
+		local precision "double"
+	}
+	if !inlist("`precision'", "single", "double") {
+		di as error "{err}The option 'precision' should be one of 'single' or 'double'!"
+		exit 198
+	}
+
+	if "`precision'" == "single" {
+		qui export delimited using "__scpi__data_to_python.csv", replace
+	}
+
+	python: scdata_wrapper("`features'", "`id'", "`time'", "`outcome'", "`covadj'", `anticipation', "`cointegrated'", "`constant'", "False", "`treatment'", "`dfname'", "`precision'")
+
+	if "`precision'" == "single" {
+		erase "__scpi__data_to_python.csv"
+	}
 
 	ereturn clear
 
@@ -60,7 +76,7 @@ end
 
 version 16.0
 python:
-import pandas, pickle, numpy, urllib, luddite
+import pandas, pickle, numpy
 from scpi_pkg.scdata import scdata
 from scpi_pkg import version as lver
 from sfi import Scalar, Matrix, Macro, Data
@@ -69,23 +85,21 @@ def ix2rn(s):
     return str(s).replace('(','').replace(')','').replace("'",'').replace(", ","_")
 
 def version_checker():
-    # try to connect to pypi and get the latest version of scpi_pkg
-    try:
-        local_version = str(lver.__version__)
-        pypi_version = luddite.get_version_pypi("scpi_pkg")
-        if local_version == pypi_version:
-            alert_version = "n"
-        else:
-            alert_version = "y"
-    except urllib.error.URLError:
+    local_version = str(lver.__version__)
+    required_version = "4.0.0"
+    if local_version == required_version:
         alert_version = "n"
-        pypi_version = "none"
+    else:
+        alert_version = "y"
 
     Macro.setLocal("alert_version", alert_version)
     Macro.setLocal("python_local_version", local_version)
-    Macro.setLocal("python_pypi_version", pypi_version)
+    Macro.setLocal("python_required_version", required_version)
 
-def stata_dataframe():
+def stata_dataframe(precision):
+    if precision == "single":
+        return pandas.read_csv("__scpi__data_to_python.csv")
+
     df = pandas.DataFrame(Data.getAsDict(missingval=numpy.nan))
     for col in df.columns:
         if pandas.api.types.is_numeric_dtype(df[col]):
@@ -95,10 +109,10 @@ def stata_dataframe():
                 df[col] = values.astype(numpy.int64)
     return df
 
-def scdata_wrapper(features, id_var, time_var, outcome_var, covadj, anticipation, cointegrated, constant, reportmissing, treatment, dfname):
+def scdata_wrapper(features, id_var, time_var, outcome_var, covadj, anticipation, cointegrated, constant, reportmissing, treatment, dfname, precision):
 
     # Create dataframe
-    df = stata_dataframe()
+    df = stata_dataframe(precision)
 
     # Create treatment and control groups
     NperiodsT = df[[treatment, id_var]].groupby([id_var]).sum()
@@ -151,8 +165,8 @@ def scdata_wrapper(features, id_var, time_var, outcome_var, covadj, anticipation
     data_prep = scdata(df, id_var, time_var, outcome_var, period_pre, period_post, unit_tr[0], unit_co, f_list, cov_adj_list, cointegrated_bool, anticipation, constant_bool)
 
     filename = dfname + '.obj'
-    file     = open(filename, 'wb')
-    pickle.dump(data_prep, file, protocol = pickle.HIGHEST_PROTOCOL)
+    with open(filename, 'wb') as file:
+        pickle.dump(data_prep, file, protocol = pickle.HIGHEST_PROTOCOL)
 
     Matrix.create("A", len(data_prep.A), 1, 0)
     Matrix.store("A", data_prep.A.values)

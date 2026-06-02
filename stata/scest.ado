@@ -13,7 +13,7 @@ version 16.0
 	if mi("`pypinocheck'") & mi("$scpi_version_checked") {
 		python: version_checker()
 		if "`alert_version'" == "y" {
-			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_pypi_version' needed! Please update the package in Python and restart Stata!"
+			di as error "The current version of scpi_pkg in Python is `python_local_version', but version `python_required_version' needed! Please update the package in Python and restart Stata!"
 			exit 198
 		}
 		global scpi_version_checked "yes"
@@ -120,7 +120,7 @@ end
 version 16.0
 python:
 
-import pickle, numpy, urllib, luddite
+import pickle, numpy
 from collections import Counter
 from scpi_pkg.scest import scest
 from scpi_pkg import version as lver
@@ -129,8 +129,8 @@ from sfi import Scalar, Matrix, Macro
 def scest_wrapper(p, dir, QQ, lb, name, V, dfname):
 
     filename = dfname + '.obj'
-    filehandler = open(filename, 'rb')
-    df = pickle.load(filehandler)
+    with open(filename, 'rb') as filehandler:
+        df = pickle.load(filehandler)
 
     if dir == "None":
         dire = None
@@ -159,8 +159,8 @@ def scest_wrapper(p, dir, QQ, lb, name, V, dfname):
         print(res_est)
 
     filename = '__scest__output.obj'
-    file     = open(filename, 'wb')
-    pickle.dump(res_est, file)
+    with open(filename, 'wb') as file:
+        pickle.dump(res_est, file)
 
     Matrix.create("wmat", len(res_est.w), 1, 0)
     Matrix.store("wmat", res_est.w.values)
@@ -325,21 +325,16 @@ def scest_wrapper(p, dir, QQ, lb, name, V, dfname):
 
 
 def version_checker():
-    # try to connect to pypi and get the latest version of scpi_pkg
-    try:
-        local_version = str(lver.__version__)
-        pypi_version = luddite.get_version_pypi("scpi_pkg")
-        if local_version == pypi_version:
-            alert_version = "n"
-        else:
-            alert_version = "y"
-    except urllib.error.URLError:
+    local_version = str(lver.__version__)
+    required_version = "4.0.0"
+    if local_version == required_version:
         alert_version = "n"
-        pypi_version = "none"
+    else:
+        alert_version = "y"
 
     Macro.setLocal("alert_version", alert_version)
     Macro.setLocal("python_local_version", local_version)
-    Macro.setLocal("python_pypi_version", pypi_version)
+    Macro.setLocal("python_required_version", required_version)
 
 def ix2rn(s):
     return str(s).replace('(','').replace(')','').replace("'",'').replace(", ","_")

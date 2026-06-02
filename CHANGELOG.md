@@ -38,10 +38,11 @@ package history predates this changelog.
 
 ### Stata
 
-- Added `precision(single|double)` to Stata commands where generated-variable
-  storage precision matters.
+- Added `precision(single|double)` to Stata commands where data-transfer or
+  generated-variable storage precision matters.
 - Made `precision(double)` the default while preserving prior behavior through
-  `precision(single)`.
+  `precision(single)`, including the earlier CSV-based data-transfer path for
+  `scdata` and `scdatamulti`.
 - Updated Stata help files for the new precision option.
 - Switched Stata wrappers to use direct SFI data access where possible.
 - Removed a CSV round trip from Stata multi-unit plotting by passing plot data
@@ -153,6 +154,17 @@ package history predates this changelog.
   dependencies: `precision(double)` stores generated plot variables as double,
   `precision(single)` preserves earlier single-precision generated storage, and
   invalid precision values return the expected error.
+- Updated the Stata/Python version guard to require the matching bundled
+  `scpi_pkg` version (`4.0.0`) instead of treating the current public PyPI
+  version as the required local development version.
+- Closed Stata embedded-Python pickle file handles after every read/write so
+  Windows can erase local `.obj` artifacts during examples and tests.
+- Added a built-in `graph combine` fallback for Stata multi-unit plots when the
+  optional SSC command `grc1leg` is not installed.
+- Aligned the Stata single-unit illustration setup with the R/Python examples
+  by removing the constant term from the initial lasso/ridge/OLS workflow; the
+  constant-plus-lasso case can return `optimal_inaccurate` under current
+  CVXPY/OSQP.
 - Recorded preliminary single-rep speed checks: Python RESTAT WaveAll improved
   from about `14.50s` to `9.93s` against the GitHub source baseline under the
   same public dependency stack, and Python multi-illustration improved from
@@ -305,11 +317,27 @@ package history predates this changelog.
   Stata 16 rebuilt/validated `lscpi.mlib`, resolved all six ado commands, and
   regenerated all six Stata help PDFs. The current Stata source tree has no
   `.mata` or `.mo` files, so the rebuilt `lscpi.mlib` contains 0 members.
+- Certified the local examples after the Stata fixes: all four Python
+  illustration scripts completed under the local Python 3.12 environment, and
+  all four Stata illustration do-files completed under Stata 16 with embedded
+  Python 3.10.
+- Re-ran the local benchmark harness for `single-smoke`,
+  `single-illustration`, `multi-illustration`, and `restat-waveall`; all R,
+  Python, and Stata local runs completed with status `ok`.
+- Re-ran the Stata `precision(single)` compatibility lane for the same four
+  scenarios; all completed with status `ok`. Public-vs-local-compat Stata
+  snapshots matched exactly for single-unit and RESTAT checks, while the Germany
+  multi-unit drift remains isolated to uncertainty matrices/intervals.
+- Final local RESTAT timing means in the 3-rep benchmark were about `13.09s`
+  for R, `18.48s` for Python, and `24.83s` for Stata. Relative to installed
+  public baselines, Python RESTAT improved from about `28.95s` (`1.57x`) and
+  Stata RESTAT improved from about `39.01s` (`1.57x`); R RESTAT was slower in
+  this pass and remains the main profiling target.
 
 ### Known Follow-Ups
 
-- Run the broader public-vs-local numerical drift benchmark suite across R,
-  Python, and Stata.
+- Expand the public-vs-local numerical drift benchmark suite beyond the current
+  four scenarios and add paper-replication scripts as separate named scenarios.
 - Continue profiling repeated R point-estimation calls; any replacement for
   CVXR setup in `b.est()` needs strict old-path numerical validation and a real
   speed gain before it is kept.

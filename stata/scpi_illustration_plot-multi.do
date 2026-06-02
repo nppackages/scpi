@@ -6,7 +6,7 @@
 ** net install scpi, from(https://raw.githubusercontent.com/nppackages/scpi/main/stata) replace
 ********************************************************************************
 
-* ssc install grc1leg
+* Optional: ssc install grc1leg
 
 ********************************************************************************
 *** Multiple Treated Unit
@@ -55,8 +55,15 @@ foreach tr of local tr_units {
 			
 }
 
-grc1leg $graph_names, l1title("Outcome Variable", size(small)) b1title("Time", size(small)) graphregion(color(white)) plotregion(color(white)) scheme(s2manual) ///
-			  title("") ring(2) ycommon xcommon  
+capture which grc1leg
+if _rc {
+	graph combine $graph_names, l1title("Outcome Variable", size(small)) b1title("Time", size(small)) graphregion(color(white)) plotregion(color(white)) scheme(s2manual) ///
+				  title("") ycommon xcommon
+}
+else {
+	grc1leg $graph_names, l1title("Outcome Variable", size(small)) b1title("Time", size(small)) graphregion(color(white)) plotregion(color(white)) scheme(s2manual) ///
+				  title("") ring(2) ycommon xcommon
+}
 
 erase "scplot_data.dta"
 erase "python_scdata.obj"

@@ -31,6 +31,7 @@
 {cmd:post_est(}{it:string}{cmd:)}
 {cmd:units_est(}{it:string}{cmd:)}
 {cmd:donors_est(}{it:string}{cmd:)}
+{cmd:precision(}{it:string}{cmd:)}
 {cmd:pypinocheck}]{p_end}
 
 {synoptset 28 tabbed}{...}
@@ -115,6 +116,8 @@ See Details section for more.{p_end}
 {dlgtab:Others}
 
 {p 4 8}{cmd:dfname(}{it:string}{cmd:)} specifies the name of the Python object that is saved and that will be passed to {help scest:scest} or {help scpi:scpi}.{p_end}
+
+{p 4 8}{cmd:precision(}{it:string}{cmd:)} specifies the Stata-to-Python data-transfer precision. Options are {opt double} (default) and {opt single}. {opt precision(double)} uses direct Stata-to-Python data transfer. {opt precision(single)} uses the earlier CSV-based transfer path for backward-compatible numerical checks.{p_end}
 
 {p 4 8}{cmd:pypinocheck)} if specified avoids to check that the version of scpi_pkg in Python is the one required by {cmd:scdata} in Stata. When not specified performs the check and stores a macro called to avoid checking it multiple times.{p_end}
 

@@ -19,6 +19,7 @@ rm(list = ls(all = TRUE))
 
 ### Load SCPI package
 library(scpi)
+library(ggplot2)
 
 set.seed(8894)
 
