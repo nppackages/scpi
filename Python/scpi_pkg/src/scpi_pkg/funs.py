@@ -1336,14 +1336,14 @@ def regularize_w(rho, rho_max, res, B, T0_tot, J, KM, d0):
 
     if rho == 'type-1':
         ssr = (res - res.mean())**2
-        sigma_u = sqrt(ssr.mean())
+        sigma_u = sqrt(float(numpy.asarray(ssr.mean()).reshape(-1)[0]))
         sigma_bj = min(B.std(axis=0))
         denomCheck(sigma_bj)
         CC = sigma_u / sigma_bj
 
     elif rho == 'type-2':
         ssr = (res - res.mean())**2
-        sigma_u = sqrt(ssr.mean())
+        sigma_u = sqrt(float(numpy.asarray(ssr.mean()).reshape(-1)[0]))
         sigma_bj2 = min(B.var(axis=0))
         sigma_bj = max(B.std(axis=0))
         denomCheck(sigma_bj2)
@@ -1417,7 +1417,7 @@ def local_geom(w_constr, rho, rho_max, res, B, T0_tot, J, KM, w, verbose):
         # to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
         # w_star.loc[to_regularize, ] = 0
         w_star.loc[index_w, ] = 0
-        Q_star = numpy.sum(w_star)[0]
+        Q_star = float(numpy.asarray(w_star).sum())
 
     elif (w_constr['name'] == "lasso") | ((w_constr['p'] == "L1") & (w_constr['dir'] == "<=")):
         l1 = float(numpy.sum(abs(w)))
@@ -1450,7 +1450,7 @@ def local_geom(w_constr, rho, rho_max, res, B, T0_tot, J, KM, w, verbose):
         # to_regularize = [col.split("_")[1] not in index_w for col in B.columns]
         # w_star.loc[to_regularize, ] = 0
         w_star.loc[index_w, ] = 0
-        Q_star = numpy.sum(w_star)[0]
+        Q_star = float(numpy.asarray(w_star).sum())
 
         l2 = float(sqrt(numpy.sum(w**2)))
 
@@ -1485,10 +1485,10 @@ def localgeom2step(w, r, rho_dict, rho_max, w_constr, Q, treated_units):
 
         elif w_constr[tr]['p'] == "L1":
             rhoj_dict[tr] = rho_dict[tr]
-            w_norm = numpy.sum(abs(w_dict[tr]))[0]
+            w_norm = float(numpy.asarray(abs(w_dict[tr])).sum())
 
         elif w_constr[tr]['p'] in ["L1-L2", "L2"]:
-            w_norm = numpy.sum(w_dict[tr]**2)[0]
+            w_norm = float(numpy.asarray(w_dict[tr]**2).sum())
             rhoj_dict[tr] = min(2 * numpy.sqrt(w_norm) * rho_dict[tr], rho_max)
 
         # Check if constraint is equality or inequality

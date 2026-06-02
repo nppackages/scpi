@@ -371,7 +371,12 @@ def scdata(df,
     # Data preparation
 
     # Make the panel balanced
-    data_bal = deepcopy(data.unstack().stack(dropna=False))
+    try:
+        data_bal = deepcopy(data.unstack().stack(dropna=False))
+    except ValueError as err:
+        if "dropna must be unspecified" not in str(err):
+            raise
+        data_bal = deepcopy(data.unstack().stack())
     data_bal['__ID'] = data_bal.index.get_level_values('__ID')
     data_bal['__time'] = data_bal.index.get_level_values('__time')
 

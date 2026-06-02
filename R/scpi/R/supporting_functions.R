@@ -402,6 +402,10 @@ shrinkage.EST <- function(method, A, Z, V, J, KM) {
 # depending on the desired method
 b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "CLARABEL") {
 
+  A <- as.matrix(A)
+  Z <- as.matrix(Z)
+  V <- as.matrix(V)
+
   dire <- w.constr[["dir"]]
   lb   <- w.constr[["lb"]]
   p    <- w.constr[["p"]]
@@ -466,6 +470,10 @@ b.est <- function(A, Z, J, KM, w.constr, V, CVXR.solver = "CLARABEL") {
 # Auxiliary function that solves the (un)constrained problem to estimate b
 # depending on the desired method - Multiple treated units case
 b.est.multi <- function(A, Z, J, KMI, I, w.constr, V, CVXR.solver = "CLARABEL") {
+
+  A <- as.matrix(A)
+  Z <- as.matrix(Z)
+  V <- as.matrix(V)
 
   # The constraint is symmetric in the shape across treated units (J, KM, Q might change)
   dire  <- w.constr[[1]]$dir
@@ -1067,7 +1075,7 @@ insampleUncertaintyGetDiag <- function(Z.na, V.na, P.na, beta, Sigma.root, J, KM
 
   # prepare matrices
   zeta.mat <- matrix(rnorm(length(beta) * sims), nrow = length(beta), ncol = sims)
-  zeta.mat <- apply(zeta.mat, 2, function(col) Sigma.root %*% col) # note that the whole vector is multiplied
+  zeta.mat <- Sigma.root %*% zeta.mat # note that the whole vector is multiplied
   rownames(zeta.mat) <- colnames(Z.na)
   zeta.list <- mat2list(zeta.mat, cols = FALSE)
 
@@ -1897,5 +1905,3 @@ outcomeGet <- function(Y.pre.fit, Y.post.fit, Y.df, units.est, treated.units,
  
   return(list(toplot=toplot, treated.reception=treated.reception, plot.type=plot.type)) 
 }
-
-
