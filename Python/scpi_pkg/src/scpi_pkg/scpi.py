@@ -611,7 +611,7 @@ def scpi(data,
                                   e_lags, res_dict[tr], sc_pred, Yd_dict[tr],
                                   out_feat[tr], J[tr], index_i, iw_dict[tr],
                                   coig_data[tr], T0[tr][outcome_var], T1[tr],
-                                  constant[tr], e_design, outcome_var, Pd_dict[tr],
+                                  constant[tr], e_design, outcome_var, Pd_dict.get(tr),
                                   sc_effect, iota, tr)
 
         ###########################################################################
