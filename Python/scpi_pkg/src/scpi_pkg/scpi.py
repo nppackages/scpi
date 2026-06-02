@@ -1017,11 +1017,17 @@ def scpi(data,
     e_des_0_na.fillna(0, inplace=True)
     e_des_1.fillna(0, inplace=True)
 
+    joint_e_lb = joint_e_ub = joint_e_1 = None
+
     if e_method == 'gaussian' or e_method == 'all':
         e_lb_gau, e_ub_gau, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
                                                 e_method="gaussian", alpha=e_alpha / 2,
                                                 e_lb_est=e_lb_est, e_ub_est=e_ub_est,
                                                 effect=sc_effect, out_feat=out_feat[tr])
+
+        joint_e_lb = e_lb_gau if e_lb_est is True and e_ub_est is True else None
+        joint_e_ub = e_ub_gau if e_lb_est is True and e_ub_est is True else None
+        joint_e_1 = e_1 if e_lb_est is True and e_ub_est is True else None
 
         # Overwrite with user's input
         if e_lb_est is False:
@@ -1082,19 +1088,22 @@ def scpi(data,
         ML, MU = simultaneousPredGet(vsig, T1val, len(P_na), iota, u_alpha,
                                      e_alpha, e_res_na, e_des_0_na, e_des_1,
                                      w_lb_est, w_ub_est, w_bounds,
-                                     w_constr_aux[tr_units[0]]['name'], sc_effect, out_feat)
+                                     w_constr_aux[tr_units[0]]['name'], sc_effect, out_feat,
+                                     joint_e_lb, joint_e_ub, joint_e_1)
 
     elif sc_effect == "unit":  # joint across units
         ML, MU = simultaneousPredGet(vsig, [len(P_na)], len(P_na), 1, u_alpha,
                                      e_alpha, e_res_na, e_des_0_na, e_des_1,
                                      w_lb_est, w_ub_est, w_bounds,
-                                     w_constr_aux[tr_units[0]]['name'], sc_effect, out_feat)
+                                     w_constr_aux[tr_units[0]]['name'], sc_effect, out_feat,
+                                     joint_e_lb, joint_e_ub, joint_e_1)
 
     elif sc_effect == "time":  # joint within aggregate unit
         ML, MU = simultaneousPredGet(vsig, [len(P_na)], len(P_na), 1, u_alpha,
                                      e_alpha, e_res_na, e_des_0_na, e_des_1,
                                      w_lb_est, w_ub_est, w_bounds,
-                                     w_constr_aux[tr_units[0]]['name'], sc_effect, out_feat)
+                                     w_constr_aux[tr_units[0]]['name'], sc_effect, out_feat,
+                                     joint_e_lb, joint_e_ub, joint_e_1)
 
     ML.set_index(P_na.index, inplace=True, append=False)
     MU.set_index(P_na.index, inplace=True, append=False)

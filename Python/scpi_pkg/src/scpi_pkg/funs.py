@@ -1301,14 +1301,16 @@ def scpi_out(y, x, preds, e_method, alpha, e_lb_est, e_ub_est, effect, out_feat)
 
 
 def simultaneousPredGet(vsig, T1, T1_tot, iota, u_alpha, e_alpha, e_res_na, e_des_0_na,
-                        e_des_1, w_lb_est, w_ub_est, w_bounds, w_name, effect, out_feat):
+                        e_des_1, w_lb_est, w_ub_est, w_bounds, w_name, effect, out_feat,
+                        e_lb=None, e_ub=None, e_1=None):
 
     vsigLB = vsig[:, :T1_tot]
     vsigUB = vsig[:, T1_tot:]
 
-    e_lb, e_ub, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
-                                    e_method="gaussian", alpha=e_alpha / 2,
-                                    e_lb_est=True, e_ub_est=True, effect=effect, out_feat=out_feat)
+    if e_lb is None or e_ub is None or e_1 is None:
+        e_lb, e_ub, e_1, e_2 = scpi_out(y=e_res_na, x=e_des_0_na, preds=e_des_1,
+                                        e_method="gaussian", alpha=e_alpha / 2,
+                                        e_lb_est=True, e_ub_est=True, effect=effect, out_feat=out_feat)
 
     jmin = 0
     w_lb_joint = []

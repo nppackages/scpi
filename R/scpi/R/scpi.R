@@ -984,6 +984,8 @@ scpi  <- function(data,
   rownames(e.des.0.na) <- e0.rnames
   rownames(e.des.1) <- e1.rnames
 
+  joint.e.lb <- joint.e.ub <- joint.e.1 <- NULL
+
   if (e.method == "gaussian" || e.method == "all") {
     pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1,
                        e.method = "gaussian", alpha = e.alpha / 2,
@@ -994,6 +996,11 @@ scpi  <- function(data,
     e.ub.gau <- pi.e$ub
     e.mean <- pi.e$e.1
     e.var <- pi.e$e.2
+    if (e.lb.est == TRUE && e.ub.est == TRUE) {
+      joint.e.lb <- e.lb.gau
+      joint.e.ub <- e.ub.gau
+      joint.e.1 <- e.mean
+    }
 
     # Overwrite with user's input
     if (e.lb.est == FALSE) e.lb.gau <- e.bounds[, 1]
@@ -1061,18 +1068,21 @@ scpi  <- function(data,
     joint.bounds <- simultaneousPredGet(vsig, T1, nrow(P.na), I, u.alpha, e.alpha,
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est,
                                         w.bounds, w.constr.inf[[1]]["name"],
-                                        sc.pred$data$specs$effect, out.feat)
+                                        sc.pred$data$specs$effect, out.feat,
+                                        joint.e.lb, joint.e.ub, joint.e.1)
 
   } else if (sc.effect == "unit") { # joint across units
     joint.bounds <- simultaneousPredGet(vsig, nrow(P.na), nrow(P.na), I = 1, u.alpha, e.alpha,
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est, w.bounds,
-                                        w.constr.inf[[1]]["name"], sc.pred$data$specs$effect, out.feat)
+                                        w.constr.inf[[1]]["name"], sc.pred$data$specs$effect, out.feat,
+                                        joint.e.lb, joint.e.ub, joint.e.1)
 
   } else if (sc.effect == "time") { # joint within aggregate unit
     joint.bounds <- simultaneousPredGet(vsig, min(unlist(T1)), nrow(P.na), 1, u.alpha, e.alpha,
                                         e.res.na, e.des.0.na, e.des.1, w.lb.est, w.ub.est,
                                         w.bounds, w.constr.inf[[1]]["name"],
-                                        sc.pred$data$specs$effect, out.feat)
+                                        sc.pred$data$specs$effect, out.feat,
+                                        joint.e.lb, joint.e.ub, joint.e.1)
   }
 
   ML <- joint.bounds$ML

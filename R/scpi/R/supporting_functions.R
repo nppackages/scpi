@@ -1485,14 +1485,20 @@ scpi.out <- function(res, x, eval, e.method, alpha, e.lb.est, e.ub.est, verbose,
 
 
 simultaneousPredGet <- function(vsig, T1, T1.tot, I, u.alpha, e.alpha, e.res.na, e.des.0.na, e.des.1,
-                                w.lb.est, w.ub.est, w.bounds, w.name, effect, out.feat) {
+                                w.lb.est, w.ub.est, w.bounds, w.name, effect, out.feat,
+                                e.lb = NULL, e.ub = NULL, e.1 = NULL) {
 
   vsigUB <- vsig[, (T1.tot + 1):(2 * T1.tot), drop = FALSE]
   vsigLB <- vsig[, 1:T1.tot, drop = FALSE]
 
-  pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1, 
-                     e.method = "gaussian", alpha = e.alpha / 2, e.lb.est = TRUE,
-                     e.ub.est =  TRUE, effect = effect, out.feat = out.feat)
+  if (is.null(e.lb) || is.null(e.ub) || is.null(e.1)) {
+    pi.e   <- scpi.out(res = e.res.na, x = e.des.0.na, eval = e.des.1,
+                       e.method = "gaussian", alpha = e.alpha / 2, e.lb.est = TRUE,
+                       e.ub.est =  TRUE, effect = effect, out.feat = out.feat)
+    e.lb <- pi.e$lb
+    e.ub <- pi.e$ub
+    e.1 <- pi.e$e.1
+  }
 
   w.lb.joint <- w.ub.joint <- c()
 
@@ -1511,15 +1517,15 @@ simultaneousPredGet <- function(vsig, T1, T1.tot, I, u.alpha, e.alpha, e.res.na,
   }
 
   eps <- 1
-  if (length(pi.e$e.1) > 1) {
+  if (length(e.1) > 1) {
     eps <- c()
     for (i in seq_len(I)) {
       eps <- c(eps, rep(sqrt(log(T1[[i]] + 1)), T1[[i]]))
     }
   }
 
-  e.lb.joint <- pi.e$lb * eps
-  e.ub.joint <- pi.e$ub * eps
+  e.lb.joint <- e.lb * eps
+  e.ub.joint <- e.ub * eps
 
   if (w.lb.est == FALSE) w.lb.joint <- w.bounds[, 1]
   if (w.ub.est == FALSE) w.ub.joint <- w.bounds[, 2]
