@@ -153,11 +153,24 @@ package history predates this changelog.
 - The R RESTAT `origin/main` source baseline still fails with the known
   aggregate time-effect dimname issue, while current local R RESTAT completed
   with median runtime `5.890s`.
+- Profiled current local R on multi-illustration and RESTAT WaveAll scenarios.
+  The remaining R hotspots are repeated `b.est()` calls inside `scest()` and
+  diagonal in-sample uncertainty simulation: in the RESTAT profile with
+  `sims=10`, `scest()` took about `3.90s`, repeated `b.est()` calls accounted
+  for about `3.70s`, and `insampleUncertaintyGetDiag()` took about `1.88s`.
+- Tested a direct `ECOSolveR` point-estimation fast path for simplex problems.
+  Loose solver tolerances caused unacceptable numerical drift; tight tolerances
+  restored old-path equality at `1e-8` on single-smoke, multi-illustration, and
+  RESTAT WaveAll checks, but did not improve runtime, so the experiment was not
+  retained.
 
 ### Known Follow-Ups
 
 - Run the broader public-vs-local numerical drift benchmark suite across R,
   Python, and Stata.
+- Continue profiling repeated R point-estimation calls; any replacement for
+  CVXR setup in `b.est()` needs strict old-path numerical validation and a real
+  speed gain before it is kept.
 - Continue profiling remaining inference hotspots after drift checks are in
   place.
 - Install or provision `pytest` in the Python benchmark environment if full
