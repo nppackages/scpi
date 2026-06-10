@@ -57,7 +57,7 @@
 #' @import tidyr
 #'
 #' @rawNamespace import(stats, except = c(lag,filter,power))
-#' @rawNamespace import(CVXR, except = c(sd, var))
+#' @rawNamespace import(CVXR, except = c(sd, var, convolve))
 #' @rawNamespace import(rlang, except = c(is_vector,is_complex))
 #'
 #' @aliases scpi-package

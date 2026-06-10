@@ -4,7 +4,14 @@ This file tracks notable changes made during the 2026 modernization and
 refactoring effort for the `scpi` packages in R, Python, and Stata. Earlier
 package history predates this changelog.
 
-## 4.0.0 - In Progress
+## 4.0.1 - In Progress
+
+### R
+
+- Updated the CVXR namespace import exclusions for CVXR 1.9.1 compatibility
+  and raised the R package dependency requirement to `CVXR > 1.9`.
+
+## 4.0.0 - 2026-06-03
 
 ### Repository Modernization
 

@@ -1,36 +1,29 @@
 ## Release summary
 
-This is a major release updating the package to version 4.0.0.
+This is a patch release updating the package to version 4.0.1.
 
 This release:
 
-* updates the maintainer to Matias D. Cattaneo;
-* updates package metadata, references, README files, and GitHub workflow
-  support;
-* adds GitHub issue-tracker metadata through `BugReports`;
-* modernizes the Stata workflow for Stata 16 compatibility and distribution
-  through a single Mata library;
-* adds and validates the Stata `precision(single|double)` option, with
-  `double` as the default and `single` preserving the previous behavior;
-* improves and validates selected R, Python, and Stata internals while
-  preserving numerical behavior.
-
-The previous CRAN maintainer was Filippo Palomba
-<fpalomba@princeton.edu>. The current maintainer is Matias D. Cattaneo
-<matias.d.cattaneo@gmail.com>. This maintainer change is intentional and has
-been coordinated by the package authors.
+* updates the CVXR namespace import exclusions for CVXR 1.9.1 compatibility;
+* raises the CVXR dependency requirement to `CVXR > 1.9`.
 
 ## R CMD check results
 
-Checked locally on Windows 11 x64 using R version 4.6.0 (2026-04-24 ucrt).
+Checked locally on Windows 11 x64 using R version 4.6.0 (2026-04-24 ucrt)
+with `R CMD check --no-manual`.
 
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 notes
 
-The NOTE is the expected CRAN incoming feasibility NOTE for the maintainer
-change:
+Also checked locally with `R CMD check --as-cran` after disabling the CRAN
+incoming check because the local R process could not reach the CRAN and
+Bioconductor package indexes.
 
-* New maintainer: Matias D. Cattaneo <matias.d.cattaneo@gmail.com>
-* Old maintainer: Filippo Palomba <fpalomba@princeton.edu>
+0 errors | 0 warnings | 2 notes
+
+The NOTEs are local-environment artifacts:
+
+* unable to verify the current time remotely;
+* a temporary MiKTeX file named `lastMiKTeXException`.
 
 ## Reverse dependencies
 
